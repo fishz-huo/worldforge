@@ -26,7 +26,8 @@ npm install           # 安装依赖
 npm run dev           # 开发服务器（默认 http://localhost:5173）
 npm run build         # 类型检查 + 生产构建 → dist/
 npm run preview       # 预览生产构建
-npm test              # 运行 104 项自测（8 个套件，Node 环境，无需浏览器）
+npm test              # 运行 239 项自测（9 个套件，Node 环境，无需浏览器）
+npm run test:sample   # 由测试世界观手册重新生成 samples/ 里的可导入备份并校验
 npm run icons         # 重新生成 PWA / Tauri 图标（零依赖脚本）
 ```
 
@@ -47,6 +48,10 @@ npm run tauri:build   # Windows 安装包（NSIS + MSI）→ src-tauri/target/re
 
 > 第一次使用建议对着 [`docs/使用说明.md`](docs/使用说明.md) 走一遍：那里按「点哪个按钮 →
 > 出现什么界面 → 选什么选项」写清了每个功能怎么用。
+>
+> 想把每个功能都喂上真实数据，用 [`docs/猫猫的冒险·世界观设定.txt`](docs/猫猫的冒险·世界观设定.txt)：
+> 那是一套完整的测试世界观（48 张卡片 / 7 个标签 / 16 条关联 / 2 张地图 / 5 条泳道 / 3 条平行世界分支），
+> 可以照着文本手动录入，也可以直接导入 `samples/猫猫的冒险.worldforge.json`（同内容、机器可读）。
 
 ---
 
@@ -80,13 +85,17 @@ React 18 + Vite 6 + TypeScript 5 + Tailwind CSS 3 + shadcn/ui(Radix) + sql.js(SQ
 
 | 资源 | 原始 | gzip |
 | --- | --- | --- |
-| `index.js`（业务代码，含内置插件源码） | 358 KB | 103 KB |
-| `vendor-react` | 166 KB | 55 KB |
-| `vendor-radix` | 112 KB | 35 KB |
-| `vendor-sqljs` | 40 KB | 15 KB |
-| `index.css` | 41 KB | 8 KB |
-| `sql-wasm.wasm`（按需加载） | 658 KB | 323 KB |
-| **合计** | **≈ 1.38 MB** | **≈ 538 KB** |
+| `index.js`（业务代码，含内置插件源码） | 350 KB | 101 KB |
+| `vendor-react` | 162 KB | 54 KB |
+| `vendor-radix` | 109 KB | 34 KB |
+| `vendor-sqljs` | 40 KB | 14 KB |
+| `index.css` | 40 KB | 8 KB |
+| `sql-wasm.wasm`（按需加载） | 644 KB | 315 KB |
+| **合计（含按需加载的 wasm）** | **≈ 1.31 MB** | **≈ 527 KB** |
+
+> 只算首屏必需的 JS + CSS 是 **≈ 0.68 MB / ≈ 211 KB（gzip）**；
+> SQLite 的 wasm 在初始化数据库时才拉取。表里的数字用 `gzip` 实测，
+> 与打包器打印的 kB（十进制）略有差异。
 
 刻意**没有**引入的重量级依赖：TipTap/ProseMirror（自研 Markdown 编辑器）、ECharts/Recharts
 （地图、时间轴、思维导图、资源图全部手绘 SVG/DOM）、MUI/AntD、idb/dexie（自写 IndexedDB 封装）、
@@ -116,9 +125,11 @@ src/
 ├── features/       board、cards、map、timeline、writer、outline、versions、plugins、settings
 └── hooks/          资源 URL、插件注册表订阅、快捷键、去抖
 
-docs/               需求规格说明书、架构设计、数据模型、插件开发指南
+docs/               需求规格说明书、架构设计、数据模型、插件开发指南、使用说明、
+                    测试世界观手册（猫猫的冒险 · 纯文本，可直接照抄录入）
+samples/            由手册生成的测试数据备份（可用「设置 → 数据 → 导入设定」直接导入）
 plugins/            以独立 .js 文件发布的插件源码（内置「图库灯箱」就在这里，可单独分享）
-scripts/            图标生成 + 8 个自测套件（运行器、解析钩子、假 IndexedDB、selector / 表描述 / 插件静态检查器，均零依赖）
+scripts/            图标生成 + 9 个自测套件（运行器、解析钩子、假 IndexedDB、selector / 表描述 / 插件静态检查器，均零依赖）
 src-tauri/          Tauri 2 壳（Cargo 配置、权限清单、入口）
 public/             PWA manifest、Service Worker、图标
 ```
@@ -141,7 +152,7 @@ public/             PWA manifest、Service Worker、图标
 
 ```bash
 npm run typecheck   # TypeScript 严格模式，0 错误
-npm test            # 104 项自测（8 个套件，全部跑在 Node 里，不需要浏览器）
+npm test            # 239 项自测（9 个套件，全部跑在 Node 里，不需要浏览器）
 ```
 
 | 套件 | 项数 | 覆盖内容 |
@@ -151,19 +162,25 @@ npm test            # 104 项自测（8 个套件，全部跑在 Node 里，不�
 | `scripts/selftest-source.mjs` | 26 | **zustand selector 静态检查**（禁止在 selector 里 `.filter()` 等产生新引用的写法）+ **源码行数检查**（每文件 ≤ 200 行）+ **Radix 面板检查**（`TabsContent` 上禁止 display 类，否则 `hidden` 失效、未激活面板仍占高度）；每项检查都以可证伪样本验证过有效性 |
 | `scripts/selftest-specs.mjs` | 12 | **表描述 ↔ 领域类型一致性**（通用仓储用列名当属性名，字段名写错会静默失效）+ **插件 API 文档与源码一致**（指南里那行 `worldforge:plugin-api` 清单与 `PluginAPI` 强制比对） |
 | `scripts/plugin-selftest.mjs` | 11 | **插件源码检查**（幽灵 API、`import`、全局监听未移除、声明了却没人读的设置项、缺 `activate`/清理函数）+ **宿主 DOM 契约防漂移**（插件依赖的每个 `data-wf-*` 必须在宿主源码里真实存在）+ **内置清单接线**（`?raw` 引用的文件、manifest id 一致）+ **`api.settings` 实时性**（行为测试：改完设置立刻读到新值） |
+| `scripts/sample-check.mjs` | 135 | **测试世界观数据自测**：手册里的字段名与 `card-types.ts` 的 FieldDef 逐个对照、下拉取值必须在 options 内、id 引用与坐标刻度约束、手册声明的数量必须等于实际数量、**把生成的备份喂给真实 `importBackup()` 走一遍事务写库再读回核对**、手册指纹比对（改了手册忘记重新生成会直接报错） |
 | `scripts/db-selftest.mjs` | 13 | 建表 DDL（19 张表）、首次播种、落盘到 IndexedDB、卡片/标签/关联/地图/区域 CRUD、图库封面引用清理与装载自愈、插件记录字段完整性与往返 |
 | `scripts/db-selftest-scene.mjs` | 10 | 时间轴条目（含瞬时事件判定、从卡片生成）、大纲树重建与回写、平行世界派生与清理 |
 | `scripts/db-selftest-persist.mjs` | 6 | 版本快照 → 改动 → 还原、关闭应用后重新开库读回数据、级联删除不留孤儿数据 |
 
-后三个套件使用**真实 sql.js**（SQLite WASM）+ 内存版 IndexedDB（`scripts/fake-idb.mjs`），
-通过模块解析钩子（`scripts/alias-hook.mjs`）把 `@/` 别名与 Vite 的 `?url` / `?raw` 资源导入补齐，
-因此无需浏览器即可端到端验证数据层与内置插件源码的装载路径。
+前 5 个套件是纯逻辑与静态检查，后 4 个套件使用**真实 sql.js**（SQLite WASM）+ 内存版
+IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alias-hook.mjs`）
+把 `@/` 别名与 Vite 的 `?url` / `?raw` 资源导入补齐，
+因此无需浏览器即可端到端验证数据层、内置插件源码的装载路径，以及导入备份的完整流程。
 
-> 这些脚本在开发中抓到了真实缺陷：版本还原时 `saveMany` 与外层事务嵌套，
+> 这些脚本在开发中抓到了真实缺陷。一例：版本还原时 `saveMany` 与外层事务嵌套，
 > 触发 SQLite `cannot start a transaction within a transaction`，
-> 导致「清空了但没写回」。修复方式（可重入事务）见 `docs/数据模型.md` §6.1。
+> 导致「清空了但没写回」（修复方式：可重入事务，见 `docs/数据模型.md` §6.1）。
+> 另一例：**导入备份没有改写 `world_id`** —— 导出是按当前世界观做的，文件里带着来源世界的 id，
+> 导入到另一个世界观（例如新建一个空世界观再导入）时所有行仍属于来源世界，
+> 界面上一条都看不到，而导入确认框已经把当前世界观清空了。
+> 这个缺陷是写测试世界观数据时由 `scripts/sample-check.mjs` 的真实导入用例抓出来的。
 
-代码规范自查：181 个源文件中**没有任何文件超过 200 行**（`README`/文档除外），
+代码规范自查：审计范围内共 **187 个源文件，没有任何文件超过 200 行**（`README`/文档除外），
 该规则由 `scripts/selftest-source.mjs` 自动校验，不依赖人工统计。
 
 > ⚠️ 统计行数时不要用 PowerShell 的 `Get-Content` / `Measure-Object -Line`：
@@ -187,6 +204,7 @@ npm test            # 104 项自测（8 个套件，全部跑在 Node 里，不�
 | 文档 | 内容 |
 | --- | --- |
 | [`docs/使用说明.md`](docs/使用说明.md) | **用户手册**：逐功能的分步操作（点哪个按钮 → 出现什么界面 → 选什么选项），含界面总览、快捷键、每个模块的完整流程、常见问题与已知边界 |
+| [`docs/猫猫的冒险·世界观设定.txt`](docs/猫猫的冒险·世界观设定.txt) | **测试世界观手册**（纯文本）：一整套「猫猫的冒险」设定，按 9 种卡片 / 标签 / 关联 / 地图 / 时间轴 / 文稿 / 大纲逐项列好，可照抄录入；由它生成的 `samples/猫猫的冒险.worldforge.json` 可直接导入 |
 | [`docs/需求规格说明书-v0.1.md`](docs/需求规格说明书-v0.1.md) | FR-01~FR-14 详述：用户故事、交互流程、数据落点、验收清单、范围边界、路线图、风险 |
 | [`docs/架构设计.md`](docs/架构设计.md) | 分层架构、目录职责、九大关键机制、性能与体积预算、代码规范 |
 | [`docs/数据模型.md`](docs/数据模型.md) | 19 张表字段级定义、ER 图、卡片字段字典、典型 SQL、事务可重入要点、迁移策略 |
