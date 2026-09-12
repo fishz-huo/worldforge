@@ -77,8 +77,8 @@ export const createPluginSlice: Slice<PluginSlice> = (set, get) => ({
         author: 'WorldForge 内置示例',
         description: p.description,
         code: p.code,
-        // 只默认启用配色插件，其余让用户自己开，避免一上来就加面板
-        enabled: i === 0 ? 1 : 0,
+        // 默认启用与否由内置清单自己声明（避免用下标判断，加插件时容易错位）
+        enabled: p.defaultEnabled ? 1 : 0,
         builtin: 1,
         settings_schema: {},
         settings: {},

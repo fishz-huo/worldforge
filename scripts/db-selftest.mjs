@@ -158,7 +158,7 @@ group('插件记录（列名必须与字段名一致）');
 
 await test('内置插件写入并从数据库读回后字段完整', () => {
   state().ensureBuiltinPlugins();
-  assert.ok(state().plugins.length >= 3, `应有内置插件，实际 ${state().plugins.length}`);
+  assert.ok(state().plugins.length >= 4, `应有内置插件，实际 ${state().plugins.length}`);
   // 曾经的 bug：类型里字段写成驼峰 settingsSchema，而表列名是 settings_schema。
   // 通用仓储用列名当对象键，于是读回来的对象上根本没有这个属性，
   // 详情页 Object.keys(undefined) 抛 TypeError —— 「插件」模块整个白屏。
@@ -167,6 +167,10 @@ await test('内置插件写入并从数据库读回后字段完整', () => {
     assert.notEqual(p.settings_schema, null, `插件「${p.name}」的 settings_schema 不应为 null`);
     assert.doesNotThrow(() => Object.keys(p.settings_schema), 'Object.keys 不应抛错');
   }
+  // 图库灯箱的源码是 ?raw 从 plugins/ 读进来的：装不上就等于这个功能根本不存在
+  const lightbox = state().plugins.find((p) => p.id === 'builtin.lightbox');
+  assert.equal(lightbox?.enabled, 1, '图库灯箱应默认启用（见内置清单的 defaultEnabled）');
+  assert.match(lightbox?.code ?? '', /data-wf-zoom/, '插件源码应来自 plugins/gallery-lightbox.js');
 });
 
 await test('非空的设置声明能完整往返（不被静默丢弃）', () => {

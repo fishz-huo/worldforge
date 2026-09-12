@@ -16,12 +16,15 @@ import { useStore } from '@/store';
 function GalleryItem({
   linkId,
   assetId,
+  groupId,
   caption,
   isCover,
   onSetCover,
 }: {
   linkId: string;
   assetId: string;
+  /** 同组 id（这里是卡片 id）：插件据此知道「这些图可以左右切换」 */
+  groupId: string;
   caption: string;
   isCover: boolean;
   onSetCover: () => void;
@@ -34,7 +37,18 @@ function GalleryItem({
   return (
     <div className="group relative overflow-hidden rounded-md border border-border">
       {url ? (
-        <img src={url} alt={caption || asset?.name || ''} className="h-24 w-full object-cover" />
+        /*
+         * data-wf-zoom / data-wf-zoom-group 是给插件用的 DOM 契约：
+         * 「图库灯箱」插件据此把图片接进放大预览（见 plugins/gallery-lightbox.js）。
+         * 不加标记的图片（如卡片瓦片上的封面）不会被插件接管，点击行为保持不变。
+         */
+        <img
+          src={url}
+          alt={caption || asset?.name || ''}
+          className="h-24 w-full cursor-zoom-in object-cover"
+          data-wf-zoom={assetId}
+          data-wf-zoom-group={groupId}
+        />
       ) : (
         <div className="flex h-24 w-full items-center justify-center bg-muted text-[10px] text-muted-foreground">
           图片已丢失
@@ -114,6 +128,7 @@ export function CardGallery({ cardId }: { cardId: string }) {
               key={link.id}
               linkId={link.id}
               assetId={link.asset_id}
+              groupId={cardId}
               caption={link.caption}
               isCover={card.cover_asset === link.asset_id}
               onSetCover={() => setCoverAsset(cardId, card.cover_asset === link.asset_id ? null : link.asset_id)}

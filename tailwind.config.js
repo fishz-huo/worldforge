@@ -1,7 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class'],
-  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  // plugins/ 是插件的源码目录（内置示例插件就在那里），
+  // 里面的类名同样要参与扫描，否则灯箱之类的插件界面会没有样式。
+  content: ['./index.html', './src/**/*.{ts,tsx}', './plugins/**/*.js'],
   theme: {
     container: { center: true, padding: '2rem', screens: { '2xl': '1400px' } },
     extend: {

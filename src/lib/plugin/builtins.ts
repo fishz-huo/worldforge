@@ -6,7 +6,12 @@
  *
  * 注意：插件以 Blob 模块载入，不能 `import 'react'`，
  * 需要 React 时使用 `const { React } = api.ui`。
+ *
+ * 第 4 个内置插件（图库灯箱）例外：它的源码是仓库里一个真实的独立文件
+ * `plugins/gallery-lightbox.js`，这里用 Vite 的 `?raw` 当文本读进来。
+ * 同一份文件既能作为内置示例，也能在插件页「从文件载入」，不会两处不同步。
  */
+import GALLERY_LIGHTBOX from '../../../plugins/gallery-lightbox.js?raw';
 
 /** 插件 1：主题插件 —— 注册两套配色 */
 export const THEME_PLUGIN = /* js */ `
@@ -167,9 +172,26 @@ export function activate(api) {
 }
 `;
 
-/** 内置插件清单：id → 源码 */
-export const BUILTIN_PLUGINS: { id: string; name: string; description: string; code: string }[] = [
-  { id: 'builtin.deepsea', name: '深海配色', description: '两套配色方案，可在设置中选用', code: THEME_PLUGIN },
+/**
+ * 内置插件清单：id → 源码
+ * defaultEnabled：装上就默认启用（内置示例里只有「配色」与「图库灯箱」是这种，
+ * 前者只是多两套配色，后者只是在图库上加点开预览，都不会往界面里塞新面板）。
+ */
+export const BUILTIN_PLUGINS: {
+  id: string;
+  name: string;
+  description: string;
+  code: string;
+  defaultEnabled?: boolean;
+}[] = [
+  { id: 'builtin.deepsea', name: '深海配色', description: '两套配色方案，可在设置中选用', code: THEME_PLUGIN, defaultEnabled: true },
   { id: 'builtin.stats', name: '写作统计', description: '统计文稿字数与卡片构成', code: STATS_PLUGIN },
   { id: 'builtin.namer', name: '随机命名器', description: '一键生成人名地名，可留档', code: NAMER_PLUGIN },
+  {
+    id: 'builtin.lightbox',
+    name: '图库灯箱',
+    description: '点击图库里的图片即可放大预览，支持左右切换与键盘翻页',
+    code: GALLERY_LIGHTBOX,
+    defaultEnabled: true,
+  },
 ];

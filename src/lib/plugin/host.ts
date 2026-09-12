@@ -33,17 +33,16 @@ export interface HostBridge {
 export function createPluginAPI(record: PluginRecord, bridge: HostBridge): PluginAPI {
   const pid = record.id;
   const pname = record.name;
-  const settings = bridge.readSettings(pid);
   /** 插件私有存储挂在 settings.__storage 下，随插件记录一起持久化 */
   const storageBag = (): Record<string, unknown> => {
     const current = bridge.readSettings(pid);
     return (current.__storage as Record<string, unknown>) ?? {};
   };
 
-  return {
+  const api: PluginAPI = {
     version: HOST_VERSION,
     pluginId: pid,
-    settings,
+    settings: {}, // 占位：下面立刻换成访问器
 
     registerCardType: (def) => reg.registerCardType(def, pid, pname),
     registerCardField: (cardType, field) => reg.registerCardField(cardType, field, pid, pname),
@@ -67,6 +66,15 @@ export function createPluginAPI(record: PluginRecord, bridge: HostBridge): Plugi
       },
     },
   };
+
+  /**
+   * settings 做成访问器，而不是 activate 时取一次的快照。
+   * 若只给快照，用户在插件设置表单里改完，插件读到的还是旧值，
+   * 必须「停用再启用」才生效——插件作者很难解释这种现象。
+   */
+  Object.defineProperty(api, 'settings', { get: () => bridge.readSettings(pid), enumerable: true });
+
+  return api;
 }
 
 /** 已载入插件的运行时句柄 */

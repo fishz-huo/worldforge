@@ -4,11 +4,11 @@
  * 浏览器打包器（Vite）允许两种写法，Node 的 ESM 解析器默认都不认：
  *   1. 路径别名      `@/lib/utils`
  *   2. 省略扩展名    `./inline`
- * 另外还有 Vite 专有的 `?url` 资源导入（sql.js 的 wasm）。
+ * 另外还有 Vite 专有的资源导入：`?url`（sql.js 的 wasm）与 `?raw`（插件源码）。
  * 这个钩子把三者都补齐，让数据层与核心逻辑能直接在 Node 里跑自测。
  * 仅用于 scripts/*.mjs，不参与构建产物。
  */
-import { statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -44,7 +44,18 @@ function virtualModule(code) {
 }
 
 export function resolve(specifier, context, nextResolve) {
-  // 1) Vite 的 `?url` 资源导入 → 解析成真实文件路径字符串
+  // 1) Vite 的 `?raw` 源码导入 → 读成字符串常量，Node 里也能 import
+  if (specifier.endsWith('?raw')) {
+    const bare = specifier.slice(0, -4);
+    const file = bare.startsWith('.')
+      ? tryFile(join(dirname(fileURLToPath(context.parentURL)), bare))
+      : null;
+    if (file) {
+      const code = `export default ${JSON.stringify(readFileSync(file, 'utf8'))};`;
+      return { url: virtualModule(code), shortCircuit: true };
+    }
+  }
+  // 2) Vite 的 `?url` 资源导入 → 解析成真实文件路径字符串
   if (specifier.endsWith('?url')) {
     const bare = specifier.slice(0, -4);
     let file = null;
@@ -62,12 +73,12 @@ export function resolve(specifier, context, nextResolve) {
       return { url: virtualModule(`export default ${JSON.stringify(file)};`), shortCircuit: true };
     }
   }
-  // 2) 路径别名 @/ → src/
+  // 3) 路径别名 @/ → src/
   if (specifier.startsWith('@/')) {
     const hit = tryFile(join(root, 'src', specifier.slice(2)));
     if (hit) return { url: pathToFileURL(hit).href, shortCircuit: true };
   }
-  // 3) 相对路径省略扩展名
+  // 4) 相对路径省略扩展名
   if (specifier.startsWith('.') && context.parentURL) {
     const hit = tryFile(join(dirname(fileURLToPath(context.parentURL)), specifier));
     if (hit) return { url: pathToFileURL(hit).href, shortCircuit: true };
