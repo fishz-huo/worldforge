@@ -87,6 +87,73 @@ await test('拖动区域顶点会写回数据库', () => {
   assert.deepEqual(stored.points[0], [0.11, 0.22], '顶点坐标应持久化');
 });
 
+group('图库与封面');
+
+await test('删除图片时同步清掉封面引用（封面不再显示已删图片）', () => {
+  const card = state().createCard('character', { title: '封面测试' });
+  // 直接写资源与关联行：真实导入图片要走浏览器才有的解码能力，这里只验证引用关系
+  db.assetsRepo.save({
+    id: 'a-cover',
+    world_id: state().currentWorldId,
+    name: '封面图',
+    mime: 'image/png',
+    size: 1024,
+    width: 100,
+    height: 100,
+    kind: 'image',
+    created_at: 1700000000000,
+  });
+  const linkId = 'l-cover';
+  db.cardAssetsRepo.save({ id: linkId, card_id: card.id, asset_id: 'a-cover', caption: '', order_index: 0 });
+  state().reload();
+
+  state().setCoverAsset(card.id, 'a-cover');
+  assert.equal(db.cardsRepo.get(card.id).cover_asset, 'a-cover', '封面应已落库');
+
+  // 曾经的 bug：只删关联行，cover_asset 仍指向已删除的图片，
+  // 封面要么继续显示旧图（对象 URL 还在缓存里）要么变成空白占位。
+  state().removeCardAsset(linkId);
+  assert.equal(db.cardsRepo.get(card.id).cover_asset, null, '删除图片后封面引用必须清空');
+  assert.equal(state().cards.find((c) => c.id === card.id).cover_asset, null, '内存态也应同步');
+
+  db.assetsRepo.remove('a-cover');
+});
+
+await test('删除非封面的图片不会影响已设封面', () => {
+  const card = state().createCard('character', { title: '多图卡片' });
+  db.assetsRepo.save({
+    id: 'a-keep', world_id: state().currentWorldId, name: '保留图', mime: 'image/png',
+    size: 10, width: 10, height: 10, kind: 'image', created_at: 1700000000000,
+  });
+  db.assetsRepo.save({
+    id: 'a-drop', world_id: state().currentWorldId, name: '待删图', mime: 'image/png',
+    size: 10, width: 10, height: 10, kind: 'image', created_at: 1700000000001,
+  });
+  db.cardAssetsRepo.save({ id: 'l-keep', card_id: card.id, asset_id: 'a-keep', caption: '', order_index: 0 });
+  db.cardAssetsRepo.save({ id: 'l-drop', card_id: card.id, asset_id: 'a-drop', caption: '', order_index: 1 });
+  state().reload();
+
+  state().setCoverAsset(card.id, 'a-keep');
+  state().removeCardAsset('l-drop');
+  assert.equal(db.cardsRepo.get(card.id).cover_asset, 'a-keep', '删掉别的图不应清掉封面');
+
+  db.cardAssetsRepo.remove('l-keep');
+  db.assetsRepo.remove('a-keep');
+  db.assetsRepo.remove('a-drop');
+});
+
+await test('装载时自愈：悬空的封面引用会被清掉并落库', () => {
+  const card = state().createCard('character', { title: '悬空封面' });
+  // 直接写入一个指向不存在资源的封面，模拟旧版本删除图片后留下的脏数据
+  db.cardsRepo.save({ ...db.cardsRepo.get(card.id), cover_asset: 'a-gone' });
+  assert.equal(db.cardsRepo.get(card.id).cover_asset, 'a-gone', '前置条件：库里确有悬空引用');
+
+  state().reload();
+
+  assert.equal(state().cards.find((c) => c.id === card.id).cover_asset, null, '装载后悬空封面应被清空');
+  assert.equal(db.cardsRepo.get(card.id).cover_asset, null, '自愈结果应落库，而不是只改内存');
+});
+
 group('插件记录（列名必须与字段名一致）');
 
 await test('内置插件写入并从数据库读回后字段完整', () => {

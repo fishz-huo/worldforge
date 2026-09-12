@@ -8,6 +8,7 @@
  * 世界观与分支的增删改见 worldSlice.ts。
  */
 import { buildSeed } from '@/lib/seed';
+import type { Card } from '@/types';
 import {
   assetsRepo, branchesRepo, cardAssetsRepo, cardsRepo, docsRepo, entriesRepo, erasRepo,
   flush, getSetting, initDatabase, installLifecycleFlush, listAllCardTags, mapsRepo,
@@ -22,6 +23,20 @@ export interface DataSlice extends DataState {
   bootstrap: () => Promise<void>;
   /** 重新从数据库装载当前世界观的全部数据 */
   reload: () => void;
+}
+
+/**
+ * 自愈：清掉指向「已不存在的图片」的封面引用。
+ * 早期版本删除图库图片时不会清 cover_asset，导入残缺备份也可能留下这种悬空引用，
+ * 表现为卡片封面一直是个空白占位框。装载时顺手修掉并落库，用户无需手动处理。
+ */
+function healCoverRefs(cards: Card[], assetIds: Set<string>): Card[] {
+  const broken = cards.filter((c) => c.cover_asset && !assetIds.has(c.cover_asset));
+  if (broken.length === 0) return cards;
+  const fixed = broken.map((c) => ({ ...c, cover_asset: null }));
+  cardsRepo.saveMany(fixed);
+  const patch = new Map(fixed.map((c) => [c.id, c]));
+  return cards.map((c) => patch.get(c.id) ?? c);
 }
 
 export const createDataSlice: Slice<DataSlice> = (set, get) => ({
@@ -79,7 +94,11 @@ export const createDataSlice: Slice<DataSlice> = (set, get) => ({
   reload: () => {
     const worldId = get().currentWorldId;
     if (!worldId) return;
-    const cards = cardsRepo.list('world_id = ?', [worldId], 'pinned DESC, updated_at DESC');
+    const assets = assetsRepo.list('world_id = ?', [worldId], 'created_at DESC');
+    const cards = healCoverRefs(
+      cardsRepo.list('world_id = ?', [worldId], 'pinned DESC, updated_at DESC'),
+      new Set(assets.map((a) => a.id)),
+    );
     set({
       cards,
       cardAssets: cardAssetsRepo.list(
@@ -99,7 +118,7 @@ export const createDataSlice: Slice<DataSlice> = (set, get) => ({
         'doc_id IN (SELECT id FROM docs WHERE world_id = ?)', [worldId], 'order_index ASC',
       ),
       versions: versionsRepo.list('world_id = ?', [worldId], 'created_at DESC'),
-      assets: assetsRepo.list('world_id = ?', [worldId], 'created_at DESC'),
+      assets,
       plugins: pluginsRepo.list(undefined, undefined, 'created_at ASC'),
       branches: branchesRepo.list('world_id = ?', [worldId], 'created_at ASC'),
     });

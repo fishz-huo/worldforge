@@ -97,24 +97,34 @@ export function CardDetailView({ cardId }: { cardId: string }) {
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[1fr_20rem]">
         {/* 左列：标题 + 摘要 + 正文 */}
         <div className="flex min-h-0 flex-col gap-2 p-3">
-          <AutoInput
-            value={card.title}
-            onCommit={(title) => updateCard(card.id, { title })}
-            placeholder={def.titlePlaceholder ?? '标题'}
-            className="h-auto border-0 bg-transparent px-0 text-xl font-semibold shadow-none focus-visible:ring-0"
-          />
-          <AutoInput
-            value={card.subtitle}
-            onCommit={(subtitle) => updateCard(card.id, { subtitle })}
-            placeholder="副标题 / 称号 / 所属"
-            className="h-auto border-0 bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
-          />
-          <AutoTextarea
-            value={card.summary}
-            onCommit={(summary) => updateCard(card.id, { summary })}
-            placeholder={`${def.summaryLabel ?? '一句话摘要'}（会显示在卡片列表与悬浮预览里）`}
-            className="min-h-[52px] text-xs"
-          />
+          {/*
+            三段输入框只在编辑态出现，预览态的页签栏因此直接置顶，
+            卡片抬头与正文一起渲染进下方的预览框里 —— 预览就从最上方开始。
+            之前它们在两种状态下都占着约 120px，把预览正文压得很靠下；
+            也不能靠「切页签时滚动」来解决：窗口够高时容器不溢出，滚动量为 0。
+          */}
+          {mode === 'edit' && (
+            <>
+              <AutoInput
+                value={card.title}
+                onCommit={(title) => updateCard(card.id, { title })}
+                placeholder={def.titlePlaceholder ?? '标题'}
+                className="h-auto border-0 bg-transparent px-0 text-xl font-semibold shadow-none focus-visible:ring-0"
+              />
+              <AutoInput
+                value={card.subtitle}
+                onCommit={(subtitle) => updateCard(card.id, { subtitle })}
+                placeholder="副标题 / 称号 / 所属"
+                className="h-auto border-0 bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
+              />
+              <AutoTextarea
+                value={card.summary}
+                onCommit={(summary) => updateCard(card.id, { summary })}
+                placeholder={`${def.summaryLabel ?? '一句话摘要'}（会显示在卡片列表与悬浮预览里）`}
+                className="min-h-[52px] text-xs"
+              />
+            </>
+          )}
 
           <Tabs value={mode} onValueChange={(v) => setMode(v as 'edit' | 'preview')} className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-center justify-between">
@@ -130,21 +140,39 @@ export function CardDetailView({ cardId }: { cardId: string }) {
                 {countWords(card.body)} 字 · 更新于 {formatTime(card.updated_at)}
               </span>
             </div>
-            <TabsContent value="edit" className="mt-1 flex min-h-[320px] flex-1 flex-col">
-              <MarkdownEditor
-                value={card.body}
-                onChange={(body) => updateCard(card.id, { body })}
-                className="rounded-lg border border-border"
-                placeholder="写设定正文…支持 Markdown；提到其它卡片标题会自动变成可悬停预览的双链"
-              />
+            {/*
+              注意：TabsContent 上不能写 flex / grid 这类 display 类。
+              Radix 用 hidden 属性隐藏未激活面板，而 Tailwind 的 flex 会覆盖
+              display:none —— 结果是切到预览时编辑器仍然实打实占着 400 多像素，
+              把预览顶到很下面。布局类一律放内层 div，这里只留占位高度。
+            */}
+            <TabsContent value="edit" className="mt-1 min-h-[320px] flex-1">
+              <div className="flex h-full min-h-0 flex-col">
+                <MarkdownEditor
+                  value={card.body}
+                  onChange={(body) => updateCard(card.id, { body })}
+                  className="rounded-lg border border-border"
+                  placeholder="写设定正文…支持 Markdown；提到其它卡片标题会自动变成可悬停预览的双链"
+                />
+              </div>
             </TabsContent>
             <TabsContent value="preview" className="mt-1 flex-1">
-              <div className="rounded-lg border border-border p-3">
-                {card.body.trim() ? (
-                  <MarkdownView text={card.body} onCardClick={(id) => selectCard(id)} />
-                ) : (
-                  <div className="text-xs text-muted-foreground">正文还是空的。</div>
-                )}
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                {/* 抬头直接读渲染值，这样预览就是一张从顶部长起的「卡片页面」 */}
+                <div className="space-y-0.5">
+                  <h1 className="text-xl font-semibold leading-tight">{card.title || '（无标题）'}</h1>
+                  {card.subtitle && <div className="text-xs text-muted-foreground">{card.subtitle}</div>}
+                  {card.summary && (
+                    <p className="text-xs leading-relaxed text-muted-foreground">{card.summary}</p>
+                  )}
+                </div>
+                <div className="border-t border-border pt-2">
+                  {card.body.trim() ? (
+                    <MarkdownView text={card.body} onCardClick={(id) => selectCard(id)} />
+                  ) : (
+                    <div className="text-xs text-muted-foreground">正文还是空的。</div>
+                  )}
+                </div>
               </div>
             </TabsContent>
           </Tabs>

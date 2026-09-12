@@ -121,6 +121,47 @@ await test(`全部 ${allFiles.length} 个源码文件均不超过 200 行`, () =
   assert.equal(tooLong.length, 0, `有 ${tooLong.length} 个文件超长：${detail}`);
 });
 
+/**
+ * Radix 用 hidden 属性隐藏未激活的面板，而 Tailwind 的 flex / grid 会覆盖
+ * display:none —— 面板不会真的消失，仍占着高度，把后面内容顶下去。
+ * 「卡片详情」的预览当初就被这样顶到 603px 的位置。这里静态拦掉。
+ *
+ * 必须按「整类名」比较：flex-1 / flex-col 是尺寸与方向，不会覆盖 hidden，
+ * 用 \bflex\b 去匹配会把它们误判成违规。
+ */
+const DISPLAY_CLASSES = new Set(['flex', 'grid', 'block', 'inline-flex', 'inline-block', 'table', 'inline-grid']);
+
+/** className 里是否含 display 工具类（自动剥掉 md: / hover: 这类变体前缀） */
+function hasDisplayClass(className) {
+  return className
+    .split(/\s+/)
+    .filter(Boolean)
+    .some((token) => DISPLAY_CLASSES.has(token.slice(token.lastIndexOf(':') + 1)));
+}
+
+/** 可证伪的样本：能检出就说明检查器有效 */
+await test('检查器有效：TabsContent 上写 flex 会被识别，flex-1 不算', () => {
+  const bad = `<TabsContent value="edit" className="mt-1 flex flex-1">x</TabsContent>`;
+  const ok = `<TabsContent value="edit" className="mt-1 min-h-[320px] flex-1 flex-col">x</TabsContent>`;
+  const scan = (src) =>
+    [...src.matchAll(/<TabsContent[^>]*className="([^"]*)"/g)].filter((m) => hasDisplayClass(m[1]));
+  assert.equal(scan(bad).length, 1, '应当识别出 display 类');
+  assert.equal(scan(ok).length, 0, 'flex-1 / flex-col 不该被误判（它们不覆盖 hidden）');
+});
+
+await test('TabsContent 上不得出现 flex / grid 等 display 类', () => {
+  const hits = [];
+  for (const file of srcFiles.filter((f) => f.endsWith('.tsx'))) {
+    const src = readFileSync(file, 'utf8');
+    for (const match of src.matchAll(/<TabsContent[^>]*className="([^"]*)"/g)) {
+      if (hasDisplayClass(match[1])) {
+        hits.push(`${relative(ROOT, file)} → className="${match[1]}"`);
+      }
+    }
+  }
+  assert.equal(hits.length, 0, `下列 TabsContent 会盖掉 hidden，需把布局类移到内层 div：\n    ${hits.join('\n    ')}`);
+});
+
 await test('行数统计本身可信（能算出已知长度文件的行数）', () => {
   const self = fileURLToPath(import.meta.url);
   assert.equal(countLines(self), readFileSync(self, 'utf8').split('\n').length - 1);

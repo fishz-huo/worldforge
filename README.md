@@ -26,7 +26,7 @@ npm install           # 安装依赖
 npm run dev           # 开发服务器（默认 http://localhost:5173）
 npm run build         # 类型检查 + 生产构建 → dist/
 npm run preview       # 预览生产构建
-npm test              # 运行 88 项自测（7 个套件，Node 环境，无需浏览器）
+npm test              # 运行 93 项自测（7 个套件，Node 环境，无需浏览器）
 npm run icons         # 重新生成 PWA / Tauri 图标（零依赖脚本）
 ```
 
@@ -137,16 +137,16 @@ public/             PWA manifest、Service Worker、图标
 
 ```bash
 npm run typecheck   # TypeScript 严格模式，0 错误
-npm test            # 88 项自测（7 个套件，全部跑在 Node 里，不需要浏览器）
+npm test            # 93 项自测（7 个套件，全部跑在 Node 里，不需要浏览器）
 ```
 
 | 套件 | 项数 | 覆盖内容 |
 | --- | --- | --- |
 | `scripts/selftest.mjs` | 12 | Markdown 解析、HTML 转义防注入、外链协议白名单、`[[双链]]`、关键词自动关联（含不污染代码块）、行级 diff、超长文本退化路径、快照结构 diff |
 | `scripts/selftest-model.mjs` | 14 | 分支可见性、标签 AND 筛选、标题索引与长标题优先、关联双向反查、大纲文本 ⇄ 树、时间轴刻度与年龄推算、示例数据自洽性 |
-| `scripts/selftest-source.mjs` | 24 | **zustand selector 静态检查**（禁止在 selector 里 `.filter()` 等产生新引用的写法）+ **源码行数检查**（每文件 ≤ 200 行）；检查器本身以真实 bug 样本与安全样本双向验证，避免失效或误报 |
+| `scripts/selftest-source.mjs` | 26 | **zustand selector 静态检查**（禁止在 selector 里 `.filter()` 等产生新引用的写法）+ **源码行数检查**（每文件 ≤ 200 行）+ **Radix 面板检查**（`TabsContent` 上禁止 display 类，否则 `hidden` 失效、未激活面板仍占高度）；每项检查都以可证伪样本验证过有效性 |
 | `scripts/selftest-specs.mjs` | 12 | **表描述 ↔ 领域类型一致性**（通用仓储用列名当属性名，字段名写错会静默失效）+ **插件 API 文档与源码一致**（指南里那行 `worldforge:plugin-api` 清单与 `PluginAPI` 强制比对） |
-| `scripts/db-selftest.mjs` | 10 | 建表 DDL（19 张表）、首次播种、落盘到 IndexedDB、卡片/标签/关联/地图/区域 CRUD、插件记录字段完整性与往返 |
+| `scripts/db-selftest.mjs` | 13 | 建表 DDL（19 张表）、首次播种、落盘到 IndexedDB、卡片/标签/关联/地图/区域 CRUD、图库封面引用清理与装载自愈、插件记录字段完整性与往返 |
 | `scripts/db-selftest-scene.mjs` | 10 | 时间轴条目（含瞬时事件判定、从卡片生成）、大纲树重建与回写、平行世界派生与清理 |
 | `scripts/db-selftest-persist.mjs` | 6 | 版本快照 → 改动 → 还原、关闭应用后重新开库读回数据、级联删除不留孤儿数据 |
 

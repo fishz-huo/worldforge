@@ -163,8 +163,21 @@ export const createCardSlice: Slice<CardSlice> = (set, get) => ({
   },
 
   removeCardAsset: (cardAssetId) => {
+    // 先取出这条关联，删除后就查不到它属于哪张卡片、指向哪个资源了
+    const link = get().cardAssets.find((ca) => ca.id === cardAssetId);
     cardAssetsRepo.remove(cardAssetId);
     set({ cardAssets: removeById(get().cardAssets, cardAssetId) });
+
+    /**
+     * 删掉的正好是封面时必须一并清空卡片的封面引用。
+     * 否则 cover_asset 会指向一张已不在图库里的图片：
+     * 对象 URL 还在缓存中时封面继续显示旧图，刷新后又变成空白占位。
+     */
+    if (!link) return;
+    const card = get().cards.find((c) => c.id === link.card_id);
+    if (card && card.cover_asset === link.asset_id) {
+      get().updateCard(card.id, { cover_asset: null });
+    }
   },
 
   setCoverAsset: (cardId, assetId) => {
