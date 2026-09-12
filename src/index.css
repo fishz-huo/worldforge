@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * 主题变量（shadcn/ui 约定）
+ * --background 等使用 HSL 分量，便于插件通过 registerTheme 覆盖。
+ */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 94%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 262 83% 58%;
+    --radius: 0.6rem;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 96%;
+    --card: 222 40% 10%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 44% 9%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 262 83% 62%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 15%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 14%;
+    --muted-foreground: 215 20% 62%;
+    --accent: 217 33% 18%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 18%;
+    --input: 217 33% 20%;
+    --ring: 262 83% 62%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* 移动端（PWA / Tauri 安卓）安全区适配 */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overscroll-behavior: none;
+  }
+
+  /* 细滚动条，减少视觉噪音 */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}
+
+@layer components {
+  /* ------------------------- Markdown 正文样式 ------------------------- */
+  .md-body {
+    @apply text-[15px] leading-7 text-foreground/90;
+  }
+  .md-body h1 {
+    @apply mb-3 mt-6 border-b border-border pb-2 text-2xl font-semibold text-foreground;
+  }
+  .md-body h2 {
+    @apply mb-2 mt-6 text-xl font-semibold text-foreground;
+  }
+  .md-body h3 {
+    @apply mb-2 mt-4 text-base font-semibold text-foreground;
+  }
+  .md-body h4,
+  .md-body h5,
+  .md-body h6 {
+    @apply mb-1 mt-3 text-sm font-semibold text-foreground;
+  }
+  .md-body p {
+    @apply my-2;
+  }
+  .md-body ul {
+    @apply my-2 list-disc space-y-1 pl-5;
+  }
+  .md-body ol {
+    @apply my-2 list-decimal space-y-1 pl-5;
+  }
+  .md-body blockquote {
+    @apply my-3 border-l-2 border-primary/60 bg-muted/40 py-1 pl-3 text-muted-foreground;
+  }
+  .md-body code {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em];
+  }
+  .md-body pre {
+    @apply my-3 overflow-x-auto rounded-lg border border-border bg-muted/50 p-3;
+  }
+  .md-body pre code {
+    @apply bg-transparent p-0;
+  }
+  .md-body a {
+    @apply text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary;
+  }
+  .md-body hr {
+    @apply my-5 border-border;
+  }
+  .md-body table {
+    @apply my-3 w-full border-collapse text-sm;
+  }
+  .md-body th,
+  .md-body td {
+    @apply border border-border px-2 py-1 text-left;
+  }
+  .md-body th {
+    @apply bg-muted/50 font-medium;
+  }
+  .md-body img {
+    @apply my-3 max-w-full rounded-lg border border-border;
+  }
+
+  /* Wiki 双链：鼠标悬停即可弹出设定卡预览 */
+  .wiki-link {
+    @apply cursor-help rounded bg-primary/10 px-1 py-0.5 text-primary underline decoration-dotted underline-offset-2 transition-colors hover:bg-primary/20;
+  }
+  .wiki-link.is-missing {
+    @apply bg-muted text-muted-foreground line-through decoration-muted-foreground/50;
+  }
+
+  /* 高亮搜索命中的关键词 */
+  .hl-mark {
+    @apply rounded bg-amber-400/30 px-0.5;
+  }
+}
+
+@layer utilities {
+  /* 卡片网格：容器宽度自适应列数 */
+  .grid-cards {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  /* 细密网格背景，用于无底图的地图画布 */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "WorldForge 世界观工坊",
+  "short_name": "WorldForge",
+  "description": "本地优先的轻量 Wiki 与零切换写作工具，用于构筑作品的世界观与角色故事。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "categories": ["productivity", "books", "utilities"],
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "卡片 Wiki", "url": "./index.html?module=cards" },
+    { "name": "写作", "url": "./index.html?module=writer" },
+    { "name": "时间轴", "url": "./index.html?module=timeline" }
+  ]
+}

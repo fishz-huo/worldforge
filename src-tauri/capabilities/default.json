@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "WorldForge 默认权限：只使用 Tauri 核心能力，不申请文件系统与网络权限（数据全部在本地 IndexedDB）。",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

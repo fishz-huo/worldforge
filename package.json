@@ -1,0 +1,60 @@
+{
+  "name": "worldforge",
+  "private": true,
+  "version": "0.1.0",
+  "description": "WorldForge 世界观工坊 — 本地优先的轻量 Wiki + 零切换写作世界观构建软件",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4173",
+    "typecheck": "tsc -b --pretty false",
+    "test": "node scripts/selftest.mjs && node scripts/selftest-model.mjs && node scripts/selftest-source.mjs && node scripts/selftest-specs.mjs && node scripts/db-selftest.mjs && node scripts/db-selftest-scene.mjs && node scripts/db-selftest-persist.mjs",
+    "test:core": "node scripts/selftest.mjs && node scripts/selftest-model.mjs && node scripts/selftest-source.mjs && node scripts/selftest-specs.mjs",
+    "test:db": "node scripts/db-selftest.mjs && node scripts/db-selftest-scene.mjs && node scripts/db-selftest-persist.mjs",
+    "icons": "node scripts/gen-icons.mjs",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@radix-ui/react-checkbox": "^1.1.3",
+    "@radix-ui/react-dialog": "^1.1.4",
+    "@radix-ui/react-dropdown-menu": "^2.1.4",
+    "@radix-ui/react-label": "^2.1.1",
+    "@radix-ui/react-popover": "^1.1.4",
+    "@radix-ui/react-scroll-area": "^1.2.2",
+    "@radix-ui/react-select": "^2.1.4",
+    "@radix-ui/react-separator": "^1.1.1",
+    "@radix-ui/react-slider": "^1.2.2",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-switch": "^1.1.2",
+    "@radix-ui/react-tabs": "^1.1.2",
+    "@radix-ui/react-tooltip": "^1.1.6",
+    "@tauri-apps/api": "^2.1.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.469.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sql.js": "^1.12.0",
+    "tailwind-merge": "^2.6.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/sql.js": "^1.4.9",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  },
+  "allowScripts": {
+    "esbuild": true
+  }
+}

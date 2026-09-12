@@ -1,0 +1,36 @@
+# 依赖与构建产物
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# 包管理器：本项目使用 npm（提交 package-lock.json）
+# 请勿提交其它包管理器的锁文件，避免混装导致 node_modules 结构被推平重装
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript 增量构建信息（tsc -b 生成）
+*.tsbuildinfo
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# 本地数据备份
+*.wfbak.json
