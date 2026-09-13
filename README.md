@@ -32,6 +32,7 @@ npm run test:backup   # 导出 / 导入回归自测（含损坏备份的回滚�
 npm run test:export   # 文档导出（Markdown / 文本 / Word / PDF）的采集、排版与文件清单自测
 npm run test:mobile   # 移动端能力边界（桌面 / 移动壳的判定与「不许假装成功」）
 npm run icons         # 重新生成 PWA / Tauri 图标（零依赖脚本）
+node scripts/license-audit.mjs   # 依赖许可证审计（离线；回答「依赖里有没有传染型协议」）
 ```
 
 打包为桌面应用（需要 Rust 工具链）：
