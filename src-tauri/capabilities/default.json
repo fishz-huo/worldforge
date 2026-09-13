@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "WorldForge 默认权限：只使用 Tauri 核心能力，不申请文件系统与网络权限（数据全部在本地 IndexedDB）。",
+  "description": "WorldForge 默认权限：核心能力 + 系统「另存为」对话框。数据始终存在本机 IndexedDB，文件写入由应用自己的 save_file 命令完成，因此不需要文件系统权限。",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "dialog:default"]
 }
