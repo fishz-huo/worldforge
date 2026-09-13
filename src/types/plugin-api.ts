@@ -11,6 +11,7 @@ import type { CardTypeDef, FieldDef } from './field';
 import type { Doc } from './doc';
 import type { Relation, Tag } from './tag';
 import type { PluginManifest, PluginSettingDef, ThemeDef } from './misc';
+import type { ExportAreaSummary, ExportFile, ExportRequest } from './export';
 
 /** 侧边面板定义：插件可以往「插件面板区」塞入自己的界面 */
 export interface PluginPanelDef {
@@ -73,14 +74,64 @@ export interface PluginQuery {
   currentBranchId: () => string | null;
 }
 
+/** 插件要写盘的一个文件（text 与 bytes 二选一，bytes 优先） */
+export interface PluginOutputFile {
+  name: string;
+  /** 相对子目录（可空）：一次导出很多文件时可以分目录放 */
+  subDir?: string;
+  text?: string;
+  bytes?: Uint8Array;
+  mime?: string;
+}
+
+/** 写盘结果：失败不静默，errors 里逐条列清楚 */
+export interface PluginSaveReport {
+  /** desktop = 直接写进用户选的目录；download = 浏览器逐个下载 */
+  mode: 'desktop' | 'download';
+  dir: string | null;
+  written: string[];
+  errors: string[];
+}
+
+/**
+ * 插件写盘能力。
+ * 插件是浏览器上下文里的代码，拿不到文件系统，跨平台差异（桌面端直写 / 网页端下载）
+ * 一律由宿主兜住，插件只负责「给我这些文件」。
+ */
+export interface PluginFileAPI {
+  /** 桌面版才能选目录（网页版没有目录权限，只能走浏览器下载） */
+  canPickDirectory: () => boolean;
+  /** 让用户挑一个导出目录；用户取消返回 null */
+  pickDirectory: (defaultPath?: string) => Promise<string | null>;
+  /** 写出一组文件 */
+  writeFiles: (files: PluginOutputFile[], dir: string | null) => Promise<PluginSaveReport>;
+  /** 打印一段 HTML：用户在打印对话框里选「另存为 PDF」并挑保存位置 */
+  printDocument: (html: string, title: string) => Promise<{ ok: boolean; error?: string }>;
+}
+
+/**
+ * 文档导出服务。
+ * 采集与排版都在宿主侧（纯函数、可自测）：卡片字段怎么展开、大纲树怎么还原、
+ * Word 与 PDF 怎么排版，插件不需要也不应该重复实现一遍；
+ * 插件负责的是「导出哪些区域、哪些格式、放到哪里、失败了怎么告诉用户」。
+ */
+export interface PluginDocExportAPI {
+  /** 当前世界观里可导出的区域（含条目数与字数，不含正文） */
+  areas: () => ExportAreaSummary[];
+  /** 按请求构建待写盘的文件；pdf 项只带 html，交给 files.printDocument */
+  build: (request: ExportRequest) => Promise<ExportFile[]>;
+}
+
 /** 插件宿主 API */
 export interface PluginAPI {
   /** 宿主版本，插件可据此做兼容判断 */
   version: string;
   /** 当前插件 id */
   pluginId: string;
-  /** 用户为该插件填写的设置值 */
+  /** 用户为该插件填写的设置值（实时读取，改完即生效） */
   settings: Record<string, unknown>;
+  /** 写回一个设置值：插件面板里也可以改设置，不必绕去插件详情页 */
+  setSetting: (key: string, value: unknown) => void;
 
   /** 注册新的卡片类型（出现在卡片库新建菜单） */
   registerCardType: (def: CardTypeDef) => void;
@@ -102,6 +153,10 @@ export interface PluginAPI {
   query: PluginQuery;
   /** 轻提示 */
   toast: (message: string, kind?: 'info' | 'success' | 'warn' | 'error') => void;
+  /** 写盘与打印（导出类插件用；跨平台差异由宿主兜住） */
+  files: PluginFileAPI;
+  /** 文档导出：区域采集与各格式渲染 */
+  docExport: PluginDocExportAPI;
   /**
    * 供插件渲染界面用的 React 运行时。
    * 插件以 Blob 模块方式载入，无法 `import 'react'`（裸模块名不可解析），

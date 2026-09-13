@@ -4,15 +4,17 @@
  * 需求 14：插件区 + 插件插口。
  * 数据落在 plugins 表；运行时句柄（已激活的模块）保存在模块级 Map 里，
  * 停用时调用 dispose 注销注册项与事件订阅，做到「可插可拔」。
+ * 宿主能力（写盘 / 打印 / 文档导出等）的接线见 plugin-bridge.ts。
  */
 import type { PluginRecord } from '@/types';
 import { newPluginId } from '@/lib/id';
 import { pluginsRepo } from '@/lib/db';
 import { BUILTIN_PLUGINS } from '@/lib/plugin/builtins';
-import { loadPlugin, validatePluginCode, type HostBridge, type PluginHandle } from '@/lib/plugin/host';
+import { loadPlugin, validatePluginCode, type PluginHandle } from '@/lib/plugin/host';
 import { clearRegistry, unregisterPlugin } from '@/lib/plugin/registry';
+import { makeBridge } from './plugin-bridge';
 import { upsert } from '../helpers';
-import type { AppStore, Slice } from '../types';
+import type { Slice } from '../types';
 
 /** 已激活插件句柄： pluginId → handle */
 const handles = new Map<string, PluginHandle>();
@@ -30,38 +32,6 @@ export interface PluginSlice {
   updatePluginSettings: (id: string, settings: Record<string, unknown>) => void;
   /** 激活所有已启用的插件（启动流程末尾调用） */
   activatePlugins: () => Promise<void>;
-}
-
-/** 构造宿主桥接：把 store 的能力以最小接口形式暴露给插件 */
-function makeBridge(get: () => AppStore, set: (partial: Partial<AppStore>) => void): HostBridge {
-  return {
-    query: {
-      listCards: () => get().cards,
-      getCard: (id) => get().cards.find((c) => c.id === id),
-      listTags: () => get().tags,
-      listRelations: () => get().relations,
-      listDocs: () => get().docs,
-      currentWorldId: () => get().currentWorldId,
-      currentBranchId: () => get().currentBranchId,
-    },
-    toast: (message, kind = 'info') => get().toast(message, kind),
-    readSettings: (pluginId) => get().plugins.find((p) => p.id === pluginId)?.settings ?? {},
-    saveSettings: (pluginId, settings) => {
-      const record = get().plugins.find((p) => p.id === pluginId);
-      if (!record) return;
-      const next = { ...record, settings };
-      pluginsRepo.save(next);
-      set({ plugins: upsert(get().plugins, next) });
-    },
-    /** 插件声明的设置结构只需回填一次：已有结构就不再覆盖，避免冲掉用户看到过的表单 */
-    applyManifest: (pluginId, schema) => {
-      const record = get().plugins.find((p) => p.id === pluginId);
-      if (!record || Object.keys(record.settings_schema).length > 0) return;
-      const next = { ...record, settings_schema: schema };
-      pluginsRepo.save(next);
-      set({ plugins: upsert(get().plugins, next) });
-    },
-  };
 }
 
 export const createPluginSlice: Slice<PluginSlice> = (set, get) => ({

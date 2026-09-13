@@ -177,3 +177,216 @@
     display: none;
   }
 }
+
+/**
+ * 文档导出（打印成 PDF）的排版
+ * ==================================================================
+ * 「导出插件」把要导出的内容渲染成 HTML 片段，塞进 #wf-print-root，
+ * 然后走系统打印（用户在打印对话框里选「另存为 PDF」并挑保存位置）。
+ *
+ * 为什么不自己画 PDF：中文字体没法随包分发，自己排版要么体积爆炸、要么换台机器变方框。
+ * 借浏览器的排版引擎，字形、断行、分页天然正确，而且正文直接复用预览用的 .md-body，
+ * 做到「PDF 与预览长得一样」。
+ *
+ * 屏幕上一律不显示（避免影响正在编辑的界面），只在打印媒体里出现；
+ * 打印时强制白底黑字，因为应用可能正处在暗色主题下。
+ */
+#wf-print-root {
+  display: none;
+}
+
+@media print {
+  /* 应用外壳固定了视口高度，打印时会只输出一页，这里必须放开 */
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  /* 除了导出内容，页面上的其它东西（应用界面、弹层、提示）都不打印 */
+  body > :not(#wf-print-root) {
+    display: none !important;
+  }
+  #wf-print-root {
+    display: block !important;
+    color: #111827;
+    background: #fff;
+    font-size: 10.5pt;
+    line-height: 1.7;
+    /* 默认不勾「背景图形」也会打印底色，否则引用块与代码块会糊成一片白 */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+
+  /* ---------------------------- 抬头 ---------------------------- */
+  #wf-print-root .wf-doc-head {
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #111827;
+  }
+  #wf-print-root .wf-kicker {
+    font-size: 8.5pt;
+    letter-spacing: 0.14em;
+    color: #6b7280;
+  }
+  #wf-print-root .wf-doc-title {
+    margin: 2px 0;
+    font-size: 20pt;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  #wf-print-root .wf-doc-sub,
+  #wf-print-root .wf-doc-meta {
+    margin: 0;
+    font-size: 9pt;
+    color: #6b7280;
+  }
+
+  /* ---------------------------- 目录 ---------------------------- */
+  #wf-print-root .wf-toc {
+    margin: 10px 0 16px;
+  }
+  #wf-print-root .wf-toc h2 {
+    margin: 0 0 6px;
+    font-size: 12pt;
+    font-weight: 600;
+  }
+  #wf-print-root .wf-toc ol {
+    margin: 0;
+    padding-left: 1.6em;
+    list-style: decimal;
+    column-count: 2;
+    column-gap: 28px;
+    font-size: 9.5pt;
+  }
+  #wf-print-root .wf-toc li {
+    break-inside: avoid;
+    color: #374151;
+  }
+  #wf-print-root .wf-toc li b {
+    display: inline-block;
+    min-width: 1.8em;
+    font-weight: 400;
+    color: #9ca3af;
+  }
+  /* 目录之后另起一页（正文/大纲这类按章节分页的区域） */
+  #wf-print-root .wf-toc-break {
+    break-after: page;
+  }
+
+  /* ---------------------------- 条目 ---------------------------- */
+  #wf-print-root .wf-item {
+    padding-top: 2px;
+  }
+  #wf-print-root .wf-item + .wf-item {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+  }
+  #wf-print-root .wf-item-title {
+    margin: 12px 0 4px;
+    font-size: 15pt;
+    font-weight: 700;
+    line-height: 1.35;
+    break-after: avoid; /* 标题不要单独留在页尾 */
+  }
+  #wf-print-root .wf-item-sub {
+    margin: 0 0 6px;
+    font-size: 10pt;
+    color: #4b5563;
+  }
+  #wf-print-root .wf-meta {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 2px 12px;
+    margin: 6px 0 10px;
+    font-size: 9.5pt;
+  }
+  #wf-print-root .wf-meta dt {
+    color: #6b7280;
+  }
+  #wf-print-root .wf-meta dd {
+    margin: 0;
+    color: #1f2937;
+  }
+  #wf-print-root .wf-line {
+    margin: 8px 0 0;
+    font-size: 9.5pt;
+    color: #4b5563;
+  }
+  #wf-print-root .wf-line span {
+    display: inline-block;
+    min-width: 2.6em;
+    color: #6b7280;
+  }
+  #wf-print-root .wf-img-note {
+    font-size: 9.5pt;
+    color: #6b7280;
+  }
+  /* 按章节分页的区域：每个条目另起一页，分页处不再画分隔线 */
+  #wf-print-root .wf-pages .wf-item + .wf-item {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+    break-before: page;
+  }
+
+  /* ------------------- 正文（复用预览的 .md-body） ------------------- */
+  #wf-print-root .md-body {
+    color: #1f2937 !important;
+    font-size: 10.5pt;
+    line-height: 1.75;
+  }
+  #wf-print-root .md-body h1,
+  #wf-print-root .md-body h2,
+  #wf-print-root .md-body h3,
+  #wf-print-root .md-body h4,
+  #wf-print-root .md-body h5,
+  #wf-print-root .md-body h6 {
+    color: #111827 !important;
+    break-after: avoid;
+  }
+  #wf-print-root .md-body blockquote {
+    color: #4b5563 !important;
+    background: #f3f4f6 !important;
+    border-color: #9ca3af !important;
+  }
+  #wf-print-root .md-body code {
+    color: #111827 !important;
+    background: #f3f4f6 !important;
+  }
+  #wf-print-root .md-body pre {
+    background: #f8fafc !important;
+    border-color: #e5e7eb !important;
+    break-inside: avoid;
+  }
+  #wf-print-root .md-body th,
+  #wf-print-root .md-body td {
+    border-color: #d1d5db !important;
+  }
+  #wf-print-root .md-body th {
+    background: #f3f4f6 !important;
+  }
+  #wf-print-root .md-body img {
+    border-color: #e5e7eb !important;
+  }
+  /* 双链在纸上不是链接，去掉高亮底色，改成淡淡的虚线下划线 */
+  #wf-print-root .wiki-link {
+    padding: 0 !important;
+    color: #111827 !important;
+    background: transparent !important;
+    border-bottom: 1px dotted #9ca3af;
+    text-decoration: none !important;
+  }
+  #wf-print-root .wiki-link.is-missing {
+    color: #6b7280 !important;
+    text-decoration: line-through !important;
+  }
+  #wf-print-root .hl-mark {
+    background: #fef3c7 !important;
+  }
+}

@@ -13,4 +13,5 @@ export * from './map';
 export * from './timeline';
 export * from './doc';
 export * from './misc';
+export * from './export';
 export * from './plugin-api';

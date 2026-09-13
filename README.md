@@ -1,4 +1,4 @@
-# WorldForge 世界观工坊
+﻿# WorldForge 世界观工坊
 
 > **版本：v0.1（需求规划版）**
 > 轻量 Wiki + 零切换写作 —— 本地优先（Local-First）的世界观创作管理软件
@@ -26,9 +26,10 @@ npm install           # 安装依赖
 npm run dev           # 开发服务器（默认 http://localhost:5173）
 npm run build         # 类型检查 + 生产构建 → dist/
 npm run preview       # 预览生产构建
-npm test              # 运行 294 项自测（11 个套件，Node 环境，无需浏览器）
+npm test              # 运行 339 项自测（15 个套件，Node 环境，无需浏览器）
 npm run test:sample   # 由测试世界观手册重新生成 samples/ 里的可导入备份并校验
 npm run test:backup   # 导出 / 导入回归自测（含损坏备份的回滚验证）
+npm run test:export   # 文档导出（Markdown / 文本 / Word / PDF）的采集、排版与文件清单自测
 npm run icons         # 重新生成 PWA / Tauri 图标（零依赖脚本）
 ```
 
@@ -72,8 +73,8 @@ npm run tauri:build   # Windows 安装包（NSIS + MSI）→ src-tauri/target/re
 | 10 | 故事大纲区（可切树形） | `src/features/outline/` | 与写作层同一套 Markdown 编辑器；**文本 / 树形 / 思维导图**三视图共享同一份数据，可双向转换（按标题重建树、把树写回文本），节点可挂卡片、切状态、升降层级 |
 | 11 | tag 系统与筛选 | `src/features/cards/TagPicker.tsx` | 标签自由输入即建；多标签 AND 筛选；颜色可改；卡片列表/悬浮预览/时间轴处处可见 |
 | 12 | 设定版本切换对比 | `src/features/versions/` + `src/lib/snapshot-diff.ts` | 一键存快照；随时与当前设定做**结构化**对比（新增/删除/修改的卡片、字段级变化、文稿行级 diff）；可整体还原、可导出单个快照 |
-| 13 | 小巧不臃肿、构建快 | 见下方「体积」 | 无富文本编辑器、无图表库、无 UI 框架依赖；Markdown 解析器与 diff 均为自研；生产构建约 7 秒 |
-| 14 | 插件区与插件插口 | `src/features/plugins/` + `src/lib/plugin/` | 7 类插口（卡片类型、追加字段、面板、命令、卡片动作、主题、导出器）+ 事件订阅 + 只读查询 + 私有存储；附 4 个可读可改的内置示例插件，其中「图库灯箱」演示了不新增面板、直接给已有界面加交互的写法 |
+| 13 | 小巧不臃肿、构建快 | 见下方「体积」 | 无富文本编辑器、无图表库、无 UI 框架依赖；Markdown 解析器、diff、OOXML + ZIP 写入器均为自研；生产构建约 20 秒 |
+| 14 | 插件区与插件插口 | `src/features/plugins/` + `src/lib/plugin/` | 7 类插口（卡片类型、追加字段、面板、命令、卡片动作、主题、导出器）+ 事件订阅 + 只读查询 + 私有存储 + **写盘 / 打印 / 文档导出**（`api.files`、`api.docExport`）；附 5 个可读可改的内置插件：「图库灯箱」演示不新增面板、直接给已有界面加交互，「文档导出」演示多区域多格式导出与系统「另存为 PDF」 |
 
 ---
 
@@ -86,17 +87,22 @@ React 18 + Vite 6 + TypeScript 5 + Tailwind CSS 3 + shadcn/ui(Radix) + sql.js(SQ
 
 | 资源 | 原始 | gzip |
 | --- | --- | --- |
-| `index.js`（业务代码，含内置插件源码） | 350 KB | 101 KB |
-| `vendor-react` | 162 KB | 54 KB |
-| `vendor-radix` | 109 KB | 34 KB |
-| `vendor-sqljs` | 40 KB | 14 KB |
-| `index.css` | 40 KB | 8 KB |
-| `sql-wasm.wasm`（按需加载） | 644 KB | 315 KB |
-| **合计（含按需加载的 wasm）** | **≈ 1.31 MB** | **≈ 527 KB** |
+| `index.js`（业务代码，含内置插件源码与文档导出） | 411 KB | 121 KB |
+| `vendor-react` | 166 KB | 55 KB |
+| `vendor-radix` | 112 KB | 35 KB |
+| `vendor-sqljs` | 40 KB | 15 KB |
+| `index.css`（含打印成 PDF 的排版样式） | 45 KB | 9 KB |
+| 两个入口小分块 | 4 KB | 1 KB |
+| `sql-wasm.wasm`（按需加载） | 658 KB | 323 KB |
+| **合计（含按需加载的 wasm）** | **≈ 1.44 MB** | **≈ 559 KB** |
 
-> 只算首屏必需的 JS + CSS 是 **≈ 0.68 MB / ≈ 211 KB（gzip）**；
+> 只算首屏必需的 JS + CSS 是 **≈ 0.78 MB / ≈ 236 KB（gzip）**；
 > SQLite 的 wasm 在初始化数据库时才拉取。表里的数字用 `gzip` 实测，
 > 与打包器打印的 kB（十进制）略有差异。
+>
+> 文档导出（Markdown / 纯文本 / HTML / Word 的排版与 OOXML + ZIP 写入）全部是自研的，
+> 没有引入 jsPDF / docx / exceljs 之类的库 —— 换来的是 `index.js` 比上一版大约 60 KB，
+> 以及 PDF 交给系统打印引擎（中文字体与分页才靠得住）。
 
 刻意**没有**引入的重量级依赖：TipTap/ProseMirror（自研 Markdown 编辑器）、ECharts/Recharts
 （地图、时间轴、思维导图、资源图全部手绘 SVG/DOM）、MUI/AntD、idb/dexie（自写 IndexedDB 封装）、
@@ -108,15 +114,16 @@ marked/markdown-it（自研解析器，顺便把 `[[双链]]` 与关键词自动
 
 ```
 src/
-├── types/          领域类型：卡片字段字典、地图、时间轴、文稿、插件 API
+├── types/          领域类型：卡片字段字典、地图、时间轴、文稿、插件 API、导出契约
 │   └── timeline.ts / card-types.ts / plugin-api.ts …
 ├── lib/
 │   ├── db/         schema（分两部分）· sqlite 引擎 · init 初始化与迁移 · IndexedDB 封装
 │   │               表描述驱动的通用仓储 · 级联删除 · 保存状态
 │   ├── markdown/   自研 Markdown 解析（块级 / 行内 / 双链 / 自动关联 / 统计）
 │   ├── plugin/     插件注册表、宿主 API、事件总线、内置示例插件
+│   ├── export/     文档导出：区域采集、Markdown / 纯文本 / 打印 HTML、Word（OOXML + ZIP）
 │   ├── seed/       示例世界观数据（cards 设定层 / world 场景层）
-│   └── …           diff、快照、快照差异、查询、大纲文本转换、素材、备份、ID、工具
+│   └── …           diff、快照、快照差异、查询、大纲文本转换、素材、备份、写盘与打印、ID、工具
 ├── store/          zustand：ui / data / world / card / tag / map / timeline / doc /
 │                   outline / version / plugin 十二个 slice
 ├── components/
@@ -129,8 +136,8 @@ src/
 docs/               需求规格说明书、架构设计、数据模型、插件开发指南、使用说明、
                     测试世界观手册（猫猫的冒险 · 纯文本，可直接照抄录入）
 samples/            由手册生成的测试数据备份（可用「设置 → 数据 → 导入设定」直接导入）
-plugins/            以独立 .js 文件发布的插件源码（内置「图库灯箱」就在这里，可单独分享）
-scripts/            图标生成 + 11 个自测套件（运行器、解析钩子、假 IndexedDB、selector / 表描述 / 插件静态检查器，均零依赖）
+plugins/            以独立 .js 文件发布的插件源码（内置「图库灯箱」「文档导出」就在这里，可单独分享）
+scripts/            图标生成 + 15 个自测套件（运行器、解析钩子、假 IndexedDB、selector / 表描述 / 插件 / 导出静态检查器，均零依赖）
 src-tauri/          Tauri 2 壳（Cargo 配置、权限清单、入口）
 public/             PWA manifest、Service Worker、图标
 ```
@@ -146,6 +153,9 @@ public/             PWA manifest、Service Worker、图标
 - 页面隐藏 / 关闭前强制落盘（`visibilitychange` + `pagehide` + `beforeunload`），状态栏实时显示保存状态。
 - 可在「设置 → 数据」申请**持久化存储**授权，避免浏览器在空间紧张时清理数据。
 - 导出：设定 JSON / 含图片的完整备份 / 原始 `.sqlite` 文件；导入会覆盖当前世界观内容（图片按 id 合并）。
+- 另有一条**通用格式**出口：内置插件「文档导出」把卡片 Wiki / 写作正文 / 笔记 / 大纲导成
+  Markdown / 纯文本 / Word / PDF（一个区域一份文件、保存位置自选），交给别的软件看或打印；
+  PDF 走系统打印，中文字体与分页都由系统排版引擎负责。
 
 ---
 
@@ -153,24 +163,28 @@ public/             PWA manifest、Service Worker、图标
 
 ```bash
 npm run typecheck   # TypeScript 严格模式，0 错误
-npm test            # 294 项自测（11 个套件，全部跑在 Node 里，不需要浏览器）
+npm test            # 339 项自测（15 个套件，全部跑在 Node 里，不需要浏览器）
 ```
 
 | 套件 | 项数 | 覆盖内容 |
 | --- | --- | --- |
 | `scripts/selftest.mjs` | 12 | Markdown 解析、HTML 转义防注入、外链协议白名单、`[[双链]]`、关键词自动关联（含不污染代码块）、行级 diff、超长文本退化路径、快照结构 diff |
 | `scripts/selftest-model.mjs` | 14 | 分支可见性、标签 AND 筛选、标题索引与长标题优先、关联双向反查、大纲文本 ⇄ 树、时间轴刻度与年龄推算、示例数据自洽性 |
-| `scripts/selftest-source.mjs` | 26 | **zustand selector 静态检查**（禁止在 selector 里 `.filter()` 等产生新引用的写法）+ **源码行数检查**（每文件 ≤ 200 行）+ **Radix 面板检查**（`TabsContent` 上禁止 display 类，否则 `hidden` 失效、未激活面板仍占高度）；每项检查都以可证伪样本验证过有效性 |
+| `scripts/selftest-source.mjs` | 28 | **zustand selector 静态检查**（禁止在 selector 里 `.filter()` 等产生新引用的写法）+ **源码行数检查**（每文件 ≤ 200 行）+ **Radix 面板检查**（`TabsContent` 上禁止 display 类，否则 `hidden` 失效、未激活面板仍占高度）+ **禁止原生 `confirm/alert/prompt`**；每项检查都以可证伪样本验证过有效性 |
 | `scripts/selftest-specs.mjs` | 12 | **表描述 ↔ 领域类型一致性**（通用仓储用列名当属性名，字段名写错会静默失效）+ **插件 API 文档与源码一致**（指南里那行 `worldforge:plugin-api` 清单与 `PluginAPI` 强制比对） |
-| `scripts/plugin-selftest.mjs` | 11 | **插件源码检查**（幽灵 API、`import`、全局监听未移除、声明了却没人读的设置项、缺 `activate`/清理函数）+ **宿主 DOM 契约防漂移**（插件依赖的每个 `data-wf-*` 必须在宿主源码里真实存在）+ **内置清单接线**（`?raw` 引用的文件、manifest id 一致）+ **`api.settings` 实时性**（行为测试：改完设置立刻读到新值） |
+| `scripts/plugin-selftest.mjs` | 12 | **插件源码检查**（幽灵 API、`import`、全局监听未移除、声明了却没人读的设置项、缺 `activate`/清理函数）+ **宿主 DOM 契约防漂移**（插件依赖的每个 `data-wf-*` 必须在宿主源码里真实存在）+ **内置清单接线**（`?raw` 引用的文件、manifest id 一致）+ **面板必须当组件渲染**（直接调用 `render()` 会让插件 hooks 串进宿主 → React #310）+ **`api.settings` 实时性**（行为测试：改完设置立刻读到新值） |
+| `scripts/confirm-selftest.mjs` | 9 | **确认对话框接线**：注册宿主后原样透传请求并返回用户选择；宿主未挂载时返回 false 且**绝不回退到 `window.confirm`**（那正是桌面版报错的来源）；重复注册以最后一次为准 |
+| `scripts/export-selftest.mjs` | 14 | **导出采集**（四个区域的条目/字段/标签/关联、类型排序、分支过滤默认关、大纲优先用节点树、空区域不生成文件）+ **Markdown 与纯文本**（正文原样保留、标记去除但不漏字、目录阈值、文件名清洗）—— 同时跑合成数据与真实示例世界观两份数据 |
+| `scripts/export-html-test.mjs` | 11 | **打印用 HTML（PDF 出口）**：抬头/条目、标题降级且不超 h6、转义防注入、图库图片换文字说明、按章节分页标记 + **文件清单**：一区一文件不合并、命名带世界观与时间戳、PDF 只给 HTML、拆分模式带子目录与序号 |
+| `scripts/export-zip-test.mjs` | 5 | **手写 ZIP 写入器**：CRC32 已知向量、自写解析器读回条目、deflate 往返、压缩无收益时退回存储、头部字段合法性（版本 / DOS 时间范围） |
+| `scripts/export-docx-test.mjs` | 11 | **Markdown → 文档块 → OOXML**：行内片段（粗体/斜体/代码/双链/转义/不成对标记）、段落与列表与表格、7 个部件齐全、XML 转义、样式与页面设置、真实样例可被外部解压校验 |
 | `scripts/sample-check.mjs` | 135 | **测试世界观数据自测**：手册里的字段名与 `card-types.ts` 的 FieldDef 逐个对照、下拉取值必须在 options 内、id 引用与坐标刻度约束、手册声明的数量必须等于实际数量、**把生成的备份喂给真实 `importBackup()` 走一遍事务写库再读回核对**、手册指纹比对（改了手册忘记重新生成会直接报错） |
 | `scripts/db-selftest.mjs` | 13 | 建表 DDL（19 张表）、首次播种、落盘到 IndexedDB、卡片/标签/关联/地图/区域 CRUD、图库封面引用清理与装载自愈、插件记录字段完整性与往返 |
 | `scripts/db-selftest-scene.mjs` | 10 | 时间轴条目（含瞬时事件判定、从卡片生成）、大纲树重建与回写、平行世界派生与清理 |
 | `scripts/db-selftest-persist.mjs` | 6 | 版本快照 → 改动 → 还原、关闭应用后重新开库读回数据、级联删除不留孤儿数据 |
 | `scripts/backup-selftest.mjs` | 47 | **导出 / 导入回归**：导出 → 新建空世界观 → 导入（数量必须一致）、**导入不得搬走来源世界的数据**（id 重映射）、同文件导两次不重复、导回原世界不变、预检挡住 5 类损坏备份、**故意让写库失败并验证整体回滚**、**图库图片往返（含旧备份缺 cardAssets 的兼容路径）**、错误提示必须是人话 |
-| `scripts/confirm-selftest.mjs` | 9 | **确认对话框接线**：注册宿主后原样透传请求并返回用户选择；宿主未挂载时返回 false 且**绝不回退到 `window.confirm`**（那正是桌面版报错的来源）；重复注册以最后一次为准 |
 
-前 5 个套件是纯逻辑与静态检查，后 4 个套件使用**真实 sql.js**（SQLite WASM）+ 内存版
+前 10 个套件是纯逻辑与静态检查（其中 4 个专测文档导出），后 5 个套件使用**真实 sql.js**（SQLite WASM）+ 内存版
 IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alias-hook.mjs`）
 把 `@/` 别名与 Vite 的 `?url` / `?raw` 资源导入补齐，
 因此无需浏览器即可端到端验证数据层、内置插件源码的装载路径，以及导入备份的完整流程。
@@ -202,8 +216,28 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 > 于是桌面版所有删除/清空操作全部失效。修复：14 处调用统一改为应用内对话框
 > （`lib/confirm.ts` + `components/layout/ConfirmHost.tsx`），
 > 并由 `scripts/selftest-source.mjs` 静态禁止源码里再出现原生 `confirm/alert/prompt`。
+>
+> 写「文档导出」时，新加的 4 个导出套件当场抓到两处自己写错的地方，都在提交前修掉：
+> 1. **分支过滤把参数忘了** —— `inBranch()` 忘了看 `opts.branchOnly`，
+>    于是不管用户勾没勾「只导出当前分支」，别的平行世界分支的内容都会被默默丢掉。
+>    这正是导出类功能最危险的失败方式：文件生成了、看着也对，只是内容少了一部分。
+>    修复后由 `export-selftest.mjs` 用「默认全都导」与「勾了才过滤」两条断言夹住。
+> 2. **标题降级只改了开标签** —— 把正文标题从 `h1` 降到 `h3` 时只替换了 `<h1>`，
+>    留下 `<h3>…</h5>` 这种错配。浏览器会自行纠正，PDF 与 Word 转换器未必。
+>    修复：开闭标签一起改，并补上 `shiftHeadings('<h1>a</h1>') === '<h3>a</h3>'` 的断言。
+>
+> 第三例是**宿主与插件之间的 hooks 契约**，靠真实浏览器冒烟验证才抓到：
+> `PluginPanelHost` 过去是直接调用 `active.render()`。函数式调用意味着插件的 `useState`
+> 会挂到宿主组件的 hook 链表上 —— 于是「面板从无到有」（插件在启动后才激活）或
+> 「切到 hooks 数量不同的面板」时 hooks 数量发生变化，React 抛 `error #310`，
+> 整个插件模块变成「渲染出错」页。修复：把面板**当组件**渲染
+> （`<ActivePanelHost render={...} />`，并按面板 id 给 `key`），
+> 同时由 `scripts/plugin-selftest.mjs` 静态禁止再写回直接调用 `render()`。
+> 这一例顺带说明两件事：单元测试看不见 hook 链表，**必须真的在浏览器里跑一遍**；
+> 而 PWA 的 Service Worker 会缓存旧产物 —— 第一次「改完仍报错」就是因为在验证旧 bundle，
+> 所以冒烟脚本先注销 SW 并清空 cache，再断言页面上加载的 chunk 哈希。
 
-代码规范自查：审计范围内共 **199 个源文件，没有任何文件超过 200 行**（`README`/文档除外），
+代码规范自查：审计范围内共 **219 个源文件，没有任何文件超过 200 行**（`README`/文档/样式表除外），
 该规则由 `scripts/selftest-source.mjs` 自动校验，不依赖人工统计。
 
 > ⚠️ 统计行数时不要用 PowerShell 的 `Get-Content` / `Measure-Object -Line`：
@@ -231,4 +265,4 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 | [`docs/需求规格说明书-v0.1.md`](docs/需求规格说明书-v0.1.md) | FR-01~FR-14 详述：用户故事、交互流程、数据落点、验收清单、范围边界、路线图、风险 |
 | [`docs/架构设计.md`](docs/架构设计.md) | 分层架构、目录职责、九大关键机制、性能与体积预算、代码规范 |
 | [`docs/数据模型.md`](docs/数据模型.md) | 19 张表字段级定义、ER 图、卡片字段字典、典型 SQL、事务可重入要点、迁移策略 |
-| [`docs/插件开发指南.md`](docs/插件开发指南.md) | PluginAPI 逐方法说明、事件与设置 schema、4 个示例（§3.4「图库灯箱」与实现逐字一致）、宿主 DOM 契约、发布与分享 |
+| [`docs/插件开发指南.md`](docs/插件开发指南.md) | PluginAPI 逐方法说明、事件与设置 schema、宿主 DOM 契约、发布与分享；§3.4「图库灯箱」与 §4.4「写盘 / 打印 / 文档导出」的代码就是仓库里的 `plugins/*.js`，与实现逐字一致 |

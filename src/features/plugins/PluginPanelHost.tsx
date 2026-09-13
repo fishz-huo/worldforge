@@ -4,6 +4,12 @@
  * 渲染插件通过 api.registerPanel 注册的面板。
  * 插件使用 api.ui.React.createElement 构建界面，
  * 样式沿用宿主的 Tailwind 类名（因为插件运行在同一页面上下文里）。
+ *
+ * ⚠️ 必须把面板**当作组件**渲染（`<ActivePanel />`），不能写成 `active.render()`：
+ * 后者是在宿主组件里直接调用插件函数，插件的 useState 等 hooks 会挂到宿主的 hook 链表上，
+ * 于是「面板从无到有」或「切换到 hooks 数量不同的面板」时 hooks 数量变化，
+ * React 直接抛 error #310，整个插件模块白屏（真实踩过：文档导出插件）。
+ * 用组件渲染 + key=面板 id，每个面板有自己的 fiber，切换时干净重挂。
  */
 import { Component, useState, type ReactNode } from 'react';
 import { Puzzle } from 'lucide-react';
@@ -66,12 +72,18 @@ export function PluginPanelHost({ className }: { className?: string }) {
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {active && (
-          <PanelBoundary name={active.title}>
-            {/* 插件面板由插件自己渲染 */}
-            {active.render()}
+          // key 放在边界上：换面板时连错误状态一起重置，某个面板崩了不会卡住别的面板
+          <PanelBoundary key={active.id} name={active.title}>
+            {/* 面板由插件自己渲染；render 就是组件本身 */}
+            <ActivePanelHost render={active.render} />
           </PanelBoundary>
         )}
       </div>
     </div>
   );
+}
+
+/** 把插件的 render 当成组件来渲染：hooks 归它自己，不串到宿主身上 */
+function ActivePanelHost({ render }: { render: () => ReactNode }) {
+  return <>{render()}</>;
 }

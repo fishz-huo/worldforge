@@ -85,3 +85,26 @@ export async function saveFile(
 export function safeFileName(name: string): string {
   return name.replace(/[\\/:*?"<>|]/g, '_').trim() || 'worldforge';
 }
+
+/**
+ * 让用户挑一个目录（桌面端）。
+ * 一次导出常常是「多个区域 × 多种格式」的一堆文件，逐个弹「另存为」太烦人，
+ * 所以先选一次目录，再让 Rust 批量写进去（见 lib/save-batch.ts）。
+ * 网页版没有目录权限，返回 null，调用方退化成浏览器下载。
+ */
+export async function pickDirectory(defaultPath?: string): Promise<string | null> {
+  if (!isDesktop()) return null;
+  try {
+    const { open } = await import('@tauri-apps/plugin-dialog');
+    const selected = await open({
+      title: '选择导出位置',
+      directory: true,
+      multiple: false,
+      ...(defaultPath ? { defaultPath } : {}),
+    });
+    return typeof selected === 'string' ? selected : null;
+  } catch (err) {
+    console.error('[worldforge] 选择导出目录失败', err);
+    return null;
+  }
+}

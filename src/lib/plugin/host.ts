@@ -8,7 +8,7 @@
  * 安全模型：v0.1 的插件运行在页面同一上下文里，属于「可信任插件」，
  * 请只载入你自己写的或信任来源的插件（详见 docs/插件开发指南.md）。
  */
-import type { PluginAPI, PluginModule, PluginRecord, PluginSettingDef } from '@/types';
+import type { PluginAPI, PluginDocExportAPI, PluginFileAPI, PluginModule, PluginRecord, PluginSettingDef } from '@/types';
 import * as React from 'react';
 import { onPluginEvent } from './events';
 import * as reg from './registry';
@@ -20,6 +20,9 @@ export const HOST_VERSION = '0.1.0';
 export interface HostBridge {
   query: PluginAPI['query'];
   toast: (message: string, kind?: 'info' | 'success' | 'warn' | 'error') => void;
+  /** 写盘 / 打印 / 文档导出：由 store 侧接到 lib 上（见 store/slices/plugin-bridge.ts） */
+  files: PluginFileAPI;
+  docExport: PluginDocExportAPI;
   readSettings: (pluginId: string) => Record<string, unknown>;
   saveSettings: (pluginId: string, settings: Record<string, unknown>) => void;
   /**
@@ -43,6 +46,8 @@ export function createPluginAPI(record: PluginRecord, bridge: HostBridge): Plugi
     version: HOST_VERSION,
     pluginId: pid,
     settings: {}, // 占位：下面立刻换成访问器
+    /** 面板里改设置也走同一条持久化路径，插件不必自己维护一份偏好 */
+    setSetting: (key, value) => bridge.saveSettings(pid, { ...bridge.readSettings(pid), [key]: value }),
 
     registerCardType: (def) => reg.registerCardType(def, pid, pname),
     registerCardField: (cardType, field) => reg.registerCardField(cardType, field, pid, pname),
@@ -54,6 +59,8 @@ export function createPluginAPI(record: PluginRecord, bridge: HostBridge): Plugi
     on: (event, handler) => onPluginEvent(event, handler),
     query: bridge.query,
     toast: (message, kind = 'info') => bridge.toast(`[${pname}] ${message}`, kind),
+    files: bridge.files,
+    docExport: bridge.docExport,
     ui: { React },
     storage: {
       get: <T,>(key: string, fallback: T): T => {

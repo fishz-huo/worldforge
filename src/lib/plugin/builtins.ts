@@ -7,11 +7,11 @@
  * 注意：插件以 Blob 模块载入，不能 `import 'react'`，
  * 需要 React 时使用 `const { React } = api.ui`。
  *
- * 第 4 个内置插件（图库灯箱）例外：它的源码是仓库里一个真实的独立文件
- * `plugins/gallery-lightbox.js`，这里用 Vite 的 `?raw` 当文本读进来。
- * 同一份文件既能作为内置示例，也能在插件页「从文件载入」，不会两处不同步。
+ * 第 4、5 个内置插件（图库灯箱、文档导出）的源码是仓库里真实的独立文件
+ * `plugins/*.js`，这里用 Vite 的 `?raw` 读进来，与插件页「从文件载入」共用同一份源码。
  */
 import GALLERY_LIGHTBOX from '../../../plugins/gallery-lightbox.js?raw';
+import EXPORT_DOCS from '../../../plugins/export-docs.js?raw';
 
 /** 插件 1：主题插件 —— 注册两套配色 */
 export const THEME_PLUGIN = /* js */ `
@@ -174,8 +174,8 @@ export function activate(api) {
 
 /**
  * 内置插件清单：id → 源码
- * defaultEnabled：装上就默认启用（内置示例里只有「配色」与「图库灯箱」是这种，
- * 前者只是多两套配色，后者只是在图库上加点开预览，都不会往界面里塞新面板）。
+ * defaultEnabled：装上就默认启用。默认启用的是「配色」「图库灯箱」与「文档导出」：
+ * 前两个不往界面塞新东西，文档导出是导出功能唯一的入口，藏在停用状态里没人找得到。
  */
 export const BUILTIN_PLUGINS: {
   id: string;
@@ -194,4 +194,7 @@ export const BUILTIN_PLUGINS: {
     code: GALLERY_LIGHTBOX,
     defaultEnabled: true,
   },
+  // 文档导出：把卡片 / 写作 / 大纲导出成通用格式（面板在插件页，另有一条快捷命令）
+  { id: 'builtin.exportdocs', name: '文档导出', code: EXPORT_DOCS, defaultEnabled: true,
+    description: '把卡片 Wiki / 写作 / 大纲导出为 Markdown、纯文本、Word、PDF，保存位置自选' },
 ];

@@ -146,6 +146,12 @@ await test('插件依赖的 DOM 契约在宿主源码里真实存在（否则插
   assert.equal(missing.length, 0, `契约不匹配：\n    ${missing.join('\n    ')}`);
 });
 
+await test('插件面板以组件形式渲染（直接调用 render() 会让插件的 hooks 串进宿主，React #310 白屏）', () => {
+  const host = readFileSync(join(ROOT, 'src/features/plugins/PluginPanelHost.tsx'), 'utf8');
+  assert.ok(!/\{active\.render\(\)\}/.test(host), '不得在宿主组件里直接调用 render()');
+  assert.ok(host.includes('<ActivePanelHost'), '应以组件形式渲染插件面板');
+});
+
 group('宿主接线');
 
 await test('内置清单里每个 ?raw 引用的插件文件都存在，且 id 与 manifest 一致', () => {
