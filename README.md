@@ -72,6 +72,18 @@ npm run tauri -- android build --apk --debug --target aarch64
 > 见 `src/lib/save-open.ts` 的 `isMobileShell()`，由 `scripts/mobile-selftest.mjs` 守着。
 > 鸿蒙按路线 C 走（ArkWeb / 浏览器承载 PWA）。
 
+**Android 构建卡住不动？（国内网络三大坑，都实际踩过）**
+
+| 症状 | 原因 | 处理 |
+|---|---|---|
+| 一直 `CONFIGURING`，`%USERPROFILE%\.gradle` 几乎不涨，`> IDLE` 刷屏 | Gradle 对「连上但不传数据」的 socket **没有读超时**，会永久挂着 | 在 `%USERPROFILE%\.gradle\gradle.properties` 写 `systemProp.org.gradle.internal.http.socketTimeout=60000`、`connectionTimeout=15000`；镜像换 `https://maven.aliyun.com/repository/public`（追加即可，别删 `google()` 兜底） |
+| 卡在 `Preparing "Install Android SDK Platform 36"`，临时 zip 字节数定住 | **SDK 管理器的下载器无超时、无续传**，断线即永久假死 | 跑 `scripts\fix-android-sdk.cmd`：用 curl 断点续传 + 速度看门狗（10 秒无数据自动重连），校验 SHA1 后直接解压进 `platforms\android-36` |
+| `Creation symbolic link is not allowed` | Tauri 在 Windows 上把 `.so` **软链接**进 `jniLibs/`，需要 `SeCreateSymbolicLinkPrivilege` | 开「设置 → 系统 → 开发者选项 → 开发人员模式」，或用**管理员** cmd 跑构建 |
+
+> 判断「真卡住」还是「只是慢」：盯 `%USERPROFILE%\.gradle` 的体积，
+> 或者看 java 进程的累计 CPU 有没有在涨。字节数和 CPU 都十几分钟不动就是死了。
+> 已经下好的缓存会被复用，中断后重跑通常快得多。
+
 首次启动会写入一个**示例世界观「灰烬纪元」**（含 8 张卡片、5 条泳道、12 个时间轴条目、
 1 张地图、2 个资源区域、正文与大纲各一篇），可以直接在它上面改，也可以一键重建或清空
 （设置 → 数据 → 危险操作）。
