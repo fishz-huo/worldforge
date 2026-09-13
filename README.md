@@ -41,48 +41,29 @@ npm run tauri:dev     # 桌面端开发
 npm run tauri:build   # Windows 安装包（NSIS + MSI）→ src-tauri/target/release/bundle/
 ```
 
-### 手机上怎么用（三条路，按上手速度排）
+### 手机上怎么用（两条路，按上手速度排）
 
 | 路线 | 怎么走 | 代价 / 限制 |
 | --- | --- | --- |
 | **A. 局域网直接开**（2 分钟） | 电脑上 `npm run build` 然后 `npm run preview -- --host`；手机连同一个 Wi-Fi，浏览器打开 `http://<电脑的局域网 IP>:4173/` | 电脑要一直开着、命令要保持运行；因为是 `http://` 而非 HTTPS，浏览器**不会注册 Service Worker** → 没有离线能力，也不会出现「安装应用」，只能「添加到主屏幕」 |
-| **B. 装成 APK**（真离线，像个正常 App） | 电脑上 `npm run tauri -- android build --apk --debug --target aarch64`，再把 `src-tauri/gen/android/app/build/outputs/` 下的 `.apk` 拷到手机安装（连 USB 调试则可 `adb install`） | 需要先配好 Android 工具链（见下方「Android 打包的前置条件」）；`--debug` 用调试签名，不必自备密钥；release 版要自己签 |
-| **C. 部署到 HTTPS 静态站** | 把 `dist/` 传到任意 HTTPS 静态托管（Cloudflare Pages / GitHub Pages / 自建），手机打开网址 → 出现真正的「安装应用」，装完可离线 | 需要一处静态托管；软件本体在公网（**数据不上传**，只存手机本地） |
+| **B. 部署到 HTTPS 静态站** | 把 `dist/` 传到任意 HTTPS 静态托管（Cloudflare Pages / GitHub Pages / 自建），手机打开网址 → 出现真正的「安装应用」，装完可离线 | 需要一处静态托管；软件本体在公网（**数据不上传**，只存手机本地） |
 
-**三条路共同的坑：数据各存各的。** 本软件是本地优先、无账号、无云同步 ——
+**两条路共同的坑：数据各存各的。** 本软件是本地优先、无账号、无云同步 ——
 「多端运行」指的是同一份前端代码能跑在多个平台，**不是数据自动同步**：
 手机上的世界观与电脑上的完全独立。搬运方法：电脑「设置 → 数据 → 导出完整备份（含图片）」
 → 传到手机（微信 / 网盘 / USB）→ 手机「设置 → 数据 → 导入」。
 
 > 手机上请养成导出备份的习惯：浏览器的站点数据可能被系统回收，
 > iOS 的 Safari 还会清掉长期不用的网站数据。
-
-**Android 打包的前置条件**：JDK 17+、Android SDK（`cmdline-tools` + NDK + `platform-tools`）、
-以及 4 个 Rust 目标。
-
-```bash
-rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
-npm run tauri android init      # 生成 src-tauri/gen/android（已被 .gitignore 忽略）
-npm run tauri -- android build --apk --debug --target aarch64
-```
-
-> Android 的 `sdkmanager` 要求 **JDK 17+**：机器上只有 Java 8 时它会直接拒绝运行，
-> NDK 也就装不上（表现为「NDK_HOME 指向的目录不存在」）。
-> 移动端与桌面端的能力差异（选目录、直接写盘、系统打印在手机上都不可用）
-> 见 `src/lib/save-open.ts` 的 `isMobileShell()`，由 `scripts/mobile-selftest.mjs` 守着。
-> 鸿蒙按路线 C 走（ArkWeb / 浏览器承载 PWA）。
-
-**Android 构建卡住不动？（国内网络三大坑，都实际踩过）**
-
-| 症状 | 原因 | 处理 |
-|---|---|---|
-| 一直 `CONFIGURING`，`%USERPROFILE%\.gradle` 几乎不涨，`> IDLE` 刷屏 | Gradle 对「连上但不传数据」的 socket **没有读超时**，会永久挂着 | 在 `%USERPROFILE%\.gradle\gradle.properties` 写 `systemProp.org.gradle.internal.http.socketTimeout=60000`、`connectionTimeout=15000`；镜像换 `https://maven.aliyun.com/repository/public`（追加即可，别删 `google()` 兜底） |
-| 卡在 `Preparing "Install Android SDK Platform 36"`，临时 zip 字节数定住 | **SDK 管理器的下载器无超时、无续传**，断线即永久假死 | 跑 `scripts\fix-android-sdk.cmd`：用 curl 断点续传 + 速度看门狗（10 秒无数据自动重连），校验 SHA1 后直接解压进 `platforms\android-36` |
-| `Creation symbolic link is not allowed` | Tauri 在 Windows 上把 `.so` **软链接**进 `jniLibs/`，需要 `SeCreateSymbolicLinkPrivilege` | 开「设置 → 系统 → 开发者选项 → 开发人员模式」，或用**管理员** cmd 跑构建 |
-
-> 判断「真卡住」还是「只是慢」：盯 `%USERPROFILE%\.gradle` 的体积，
-> 或者看 java 进程的累计 CPU 有没有在涨。字节数和 CPU 都十几分钟不动就是死了。
-> 已经下好的缓存会被复用，中断后重跑通常快得多。
+>
+> 移动端与桌面端的能力差异（选目录、直接写盘在手机上都不可用）见
+> `src/lib/save-open.ts` 的 `isMobileShell()`，由 `scripts/mobile-selftest.mjs` 守着：
+> 走不通的路一律**明确报错**，不会假装成功。
+> 鸿蒙用同一套浏览器承载（ArkWeb）。
+>
+> **没有提供 Android APK 打包**：Tauri 的 Android 工具链在国内网络下需要
+> Gradle 与 Android SDK 共约 6 GB 下载，且官方下载器无超时无续传、极易假死。
+> 实测走通成本过高，已放弃该路线；要离线用请走上面两条路（B 装完即是真离线）。
 
 首次启动会写入一个**示例世界观「灰烬纪元」**（含 8 张卡片、5 条泳道、12 个时间轴条目、
 1 张地图、2 个资源区域、正文与大纲各一篇），可以直接在它上面改，也可以一键重建或清空
@@ -287,8 +268,10 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 > `scripts/mobile-selftest.mjs` 静态守住这两处，避免再改回去。
 > 顺带把导出插件在手机上的行为改诚实了：写文件这条路在移动端走不通时**明确报错**，
 > 不再静默什么都不做。
+> （这段移动端适配代码保留着 —— 它让代码能编译、行为诚实，桌面端完全不受影响；
+> 只是**打包 APK 这条路已放弃**，见上面「手机上怎么用」。）
 
-代码规范自查：审计范围内共 **219 个源文件，没有任何文件超过 200 行**（`README`/文档/样式表除外），
+代码规范自查：审计范围内共 **220 个源文件，没有任何文件超过 200 行**（`README`/文档/样式表除外），
 该规则由 `scripts/selftest-source.mjs` 自动校验，不依赖人工统计。
 
 > ⚠️ 统计行数时不要用 PowerShell 的 `Get-Content` / `Measure-Object -Line`：
