@@ -291,43 +291,23 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 - 版本快照不含图片二进制，也不支持分支级 diff 的自动合并；
 - 时间轴使用数值刻度而非真实历法换算（用「刻度单位 + 年龄换算系数」近似表达）。
 
-## 关于这个项目：来历与现状
+## 关于这个项目
 
-**这是一个「自己用」的工具，顺便开源。使用前请先读完这一节。**
-
-- **它诞生于 vibe coding。** 作者提需求、试效果、定取舍，代码由 AI 模型（DeepSeek）
-  生成，前后反复打磨而成。作者本人不是职业程序员，没有逐行读过这些代码 ——
-  写出来是为了自己顺手，公开是因为可能有人也用得上。
-- **但也正因为作者看不懂代码，这个项目在工程上反而格外谨慎**：346 项自动化测试、
-  6 份文档、每个源文件不超过 200 行的硬性上限、连导出的 Word 与 ZIP 都自己校验结构。
-  这些都是为了弥补「看不懂代码」而刻意加的护栏，全部由 `npm test` 和静态检查自动守着。
-  换句话说：它不一定优雅，但它被反复验证过。
-- **它不是活跃维护的项目。** v0.1 之后可能长期没有更新，作者也不承诺响应时间 ——
-  这不是敷衍，而是作者确实没有能力回答「为什么这样写」「怎么改成我要的样子」这类问题。
-  哪天突发奇想，也许会再加点东西。
-- **没有任何担保。** 软件按「现状」提供，不担保它满足你的任何特定用途、不担保它没有缺陷、
-  **不担保你的数据不会丢失**。请**务必定期使用「设置 → 数据 → 导出完整备份」**，
-  并把备份文件放到别处。完整免责条款见 [`LICENSE`](LICENSE)（MIT 协议中的全大写段落）。
-
-> 想要一个有人在维护、能提问、能保证稳定的世界观工具，这个项目并不合适。
-> 想找一个本地优先、不联网、能自己动手改的小工具，欢迎拿走用。
+- **它诞生于 vibe coding。** 需求、试用、取舍由作者决定，代码由 AI 模型（DeepSeek）生成。
+- **346 项自动化测试、每文件不超过 200 行、Word 与 ZIP 结构自校验** —— 这些护栏是刻意加的，
+  由 `npm test` 守着。它不一定优雅，但被反复验证过。
+- **不是活跃维护的项目**，v0.1 之后可能长期不更新，也不承诺响应时间。哪天突发奇想才会再动。
+- **没有任何担保**：不担保满足特定用途、不担保没有缺陷、**不担保数据不会丢失**。
+  请定期用「设置 → 数据 → 导出完整备份」并把备份放到别处。免责条款见 [`LICENSE`](LICENSE)。
 
 ## 反馈与贡献
 
-作者欢迎别人来改它、修它、加功能 —— 方式是 **fork 之后改你自己的那一份**。
-
-- **这个仓库只有作者能写。** GitHub 上除作者外没有人有推送权限，所以不用担心改动会被
-  谁覆盖。想让改进回到本项目，走 **Pull Request**：fork 到你自己的账号 → 改完 → 提 PR。
-- **PR 请抱着「可能不会被合并」的预期。** 作者不是职业程序员，评审 PR 需要的时间和精力
-  都超出这个项目的定位，所以合并会很慢，也可能一直不合并 —— 这是本项目的常态，
-  并非不欢迎你。**更实际的做法是直接维护你自己的 fork**，MIT 协议允许你自由使用、修改、
-  分发，想改名字、想闭源、想商用都行（保留版权声明即可），完全不必等作者。
-- **写插件是最省事的贡献方式**，因为它**不需要动主程序**：把一个 `.js` 文件放进
-  `plugins/` 目录即可加载。方法见
-  [`docs/插件开发指南.md`](docs/插件开发指南.md)，仓库里的 `plugins/*.js`
-  （图库灯箱、文档导出）就是可直接照抄的完整范例。
-- **遇到 bug 又不会改？** 开一个 issue，写清「点了什么 → 期望什么 → 实际发生了什么」，
-  有截图更好。作者不保证能修，但会记下来。
+- **这个仓库只有作者能写**，别人改不了、也不会被谁覆盖。想让改进回到本项目就提 **Pull Request**。
+- **PR 请抱着「可能不会被合并」的预期**：作者不是职业开发者，评审精力有限，合并会很慢。
+  **更实际的做法是维护你自己的 fork** —— MIT 允许自由修改、改名、闭源、商用（保留版权声明即可）。
+- **写插件最省事**，不需要动主程序：一个 `.js` 放进 `plugins/` 即可。
+  见 [`docs/插件开发指南.md`](docs/插件开发指南.md)，`plugins/*.js` 就是可照抄的范例。
+- **遇到 bug 又不会改？** 开 issue 写清「点了什么 → 期望什么 → 实际发生了什么」，有截图更好。
 
 ## 文档
 
@@ -339,3 +319,31 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 | [`docs/架构设计.md`](docs/架构设计.md) | 分层架构、目录职责、九大关键机制、性能与体积预算、代码规范 |
 | [`docs/数据模型.md`](docs/数据模型.md) | 19 张表字段级定义、ER 图、卡片字段字典、典型 SQL、事务可重入要点、迁移策略 |
 | [`docs/插件开发指南.md`](docs/插件开发指南.md) | PluginAPI 逐方法说明、事件与设置 schema、宿主 DOM 契约、发布与分享；§3.4「图库灯箱」与 §4.4「写盘 / 打印 / 文档导出」的代码就是仓库里的 `plugins/*.js`，与实现逐字一致 |
+
+---
+
+## English
+
+**WorldForge** is a local-first worldbuilding and writing tool: wiki-style cards for
+characters / places / events / lore, maps, a timeline, an outline, and a distraction-free
+editor — all in one screen, no account, no network, no cloud.
+
+React + Vite + TypeScript + Tailwind + sql.js (SQLite WASM) in the browser,
+packaged as a Windows desktop app with Tauri 2. Data lives in your own machine
+(IndexedDB); the app never uploads anything.
+
+> **The UI and all documentation are Chinese only.** There is no English interface —
+> please keep that in mind before trying it.
+
+- **English documentation: none.** The six documents in `docs/` are Chinese.
+- **Built with AI (vibe coding).** Features and trade-offs were decided by the author;
+  the code was generated in collaboration with an AI model (DeepSeek).
+- **Not actively maintained.** It was written as a personal tool and open-sourced in case
+  others find it useful. Issues and pull requests may go unanswered for a long time.
+  Forking and maintaining your own copy is the expected way to build on it.
+- **No warranty of any kind.** The software is provided "as is"; in particular, your data
+  is not guaranteed to be safe. Please use *Settings → Data → Export full backup* regularly.
+  See [`LICENSE`](LICENSE).
+
+Build: `npm install` → `npm run tauri:build` (desktop) or `npm run build` (web → `dist/`).
+Tests: `npm test` (346 checks).
