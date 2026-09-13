@@ -306,7 +306,9 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
   等不及的话，直接 fork 一份自己维护更省事：MIT 允许自由修改、改名、闭源、商用（保留版权声明即可）。
 - **写插件是最轻的参与方式**，不需要动主程序：一个 `.js` 放进 `plugins/` 即可。
   见 [`docs/插件开发指南.md`](docs/插件开发指南.md)，`plugins/*.js` 就是可照抄的范例。
-- **遇到 bug 又不会改？** 开 issue 写清「点了什么 → 期望什么 → 实际发生了什么」，有截图更好。
+- **issue 区留给使用者的公共记录。** 踩到坑欢迎写一笔（「点了什么 → 期望什么 → 实际发生了什么」，
+  有截图更好），但**作者大概率不会修、也不保证回复** —— 写在这里主要是让后面遇到同样问题的人
+  能搜到、能少走弯路。如果你是来修它的，直接提 PR 更快。
 
 ## 文档
 
@@ -335,11 +337,14 @@ packaged as a Windows desktop app with Tauri 2. Data lives in your own machine
 > please keep that in mind before trying it.
 
 - **English documentation: none.** The six documents in `docs/` are Chinese.
-- **Built with AI (vibe coding).** Features and trade-offs were decided by the author;
-  the code was generated in collaboration with an AI model (DeepSeek).
+- **Built with AI (vibe coding).** Requirements and trade-offs came from the author;
+  the code was generated with an AI model (DeepSeek).
 - **Not actively maintained.** It was written as a personal tool and open-sourced in case
-  others find it useful. Issues and pull requests may go unanswered for a long time.
-  Forking and maintaining your own copy is the expected way to build on it.
+  others find it useful. Expect issues and pull requests to go unanswered for a long time —
+  forking and maintaining your own copy is the practical way to build on it.
+- **The issue tracker is a shared record, not a support channel.** Bug reports are welcome,
+  but they will most likely not be fixed by the author; they are useful mainly so that the
+  next person hitting the same problem finds it. Pull requests are the faster route.
 - **No warranty of any kind.** The software is provided "as is"; in particular, your data
   is not guaranteed to be safe. Please use *Settings → Data → Export full backup* regularly.
   See [`LICENSE`](LICENSE).
