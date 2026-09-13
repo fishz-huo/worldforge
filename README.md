@@ -1,5 +1,8 @@
 # WorldForge 世界观工坊
 
+[![Release](https://img.shields.io/github/v/release/fishz-huo/worldforge?include_prereleases&label=release)](https://github.com/fishz-huo/worldforge/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 > **版本：v0.1（需求规划版）**
 > 轻量 Wiki + 零切换写作 —— 本地优先（Local-First）的世界观创作管理软件
 
@@ -12,7 +15,21 @@ WorldForge 用来专门构筑作品的世界观与角色故事。它比 World An
 
 ---
 
-## 快速开始
+## 下载安装（不想折腾编译就走这条）
+
+去 **[Releases 页面](https://github.com/fishz-huo/worldforge/releases/latest)** 下载 Windows 安装包：
+
+| 文件 | 说明 |
+| --- | --- |
+| `WorldForge_0.1.0_x64-setup.exe` | **推荐**，单文件，下载后双击即装 |
+| `WorldForge_0.1.0_x64_en-US.msi` | MSI 安装包（企业部署 / 静默安装用） |
+
+> 安装包未做代码签名，Windows 会提示「未知发布者」—— 点「更多信息」→「仍要运行」即可，
+> 这是所有未签名软件的正常提示，不是报错。
+
+想从源码构建、或想改代码，看下面的「从源码运行」。
+
+## 从源码运行
 
 > 包管理器：**npm**（仓库只带 `package-lock.json`）。请勿混用 pnpm / yarn，
 > 否则 `node_modules` 的链接结构会被推平重装。
@@ -336,6 +353,12 @@ packaged as a Windows desktop app with Tauri 2. Data lives in your own machine
 > **The UI and all documentation are Chinese only.** There is no English interface —
 > please keep that in mind before trying it.
 
+**Download:** a prebuilt Windows installer is on the
+[Releases page](https://github.com/fishz-huo/worldforge/releases/latest)
+(`WorldForge_0.1.0_x64-setup.exe`). It is not code-signed, so Windows SmartScreen will warn
+about an unknown publisher — choose "More info" → "Run anyway". To build from source:
+`npm install` → `npm run tauri:build`.
+
 - **English documentation: none.** The six documents in `docs/` are Chinese.
 - **Built with AI (vibe coding).** Requirements and trade-offs came from the author;
   the code was generated with an AI model (DeepSeek).
@@ -349,5 +372,4 @@ packaged as a Windows desktop app with Tauri 2. Data lives in your own machine
   is not guaranteed to be safe. Please use *Settings → Data → Export full backup* regularly.
   See [`LICENSE`](LICENSE).
 
-Build: `npm install` → `npm run tauri:build` (desktop) or `npm run build` (web → `dist/`).
 Tests: `npm test` (346 checks).
