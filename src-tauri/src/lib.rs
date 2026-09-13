@@ -107,6 +107,10 @@ fn save_files(dir: String, files: Vec<OutFile>) -> Result<Vec<String>, String> {
 
 /// 打印当前窗口：PDF 导出走这条路（用户在打印对话框里「另存为 PDF」并挑保存位置）。
 /// Windows 下 wry 的实现就是执行 window.print()，macOS / Linux 走各自的原生打印。
+///
+/// 必须按平台分开写：Tauri 的 `WebviewWindow::print()` 在 `#[cfg(desktop)]` 的 impl 块里，
+/// 移动端**没有**这个方法 —— 直接在 Android 上编译会报 E0599。
+#[cfg(desktop)]
 #[tauri::command]
 fn print_window(app: tauri::AppHandle) -> Result<(), String> {
     use tauri::Manager;
@@ -114,6 +118,15 @@ fn print_window(app: tauri::AppHandle) -> Result<(), String> {
         .get_webview_window("main")
         .ok_or_else(|| "找不到主窗口".to_string())?;
     window.print().map_err(|e| format!("打印失败：{e}"))
+}
+
+/// 移动端的同名命令：Tauri 文档说明 `window.print()` 在所有平台可用，
+/// 所以前端在移动端会直接调页面的 window.print()，正常不会走到这里；
+/// 万一走到了就如实报错，别让调用方以为打印成功了。
+#[cfg(mobile)]
+#[tauri::command]
+fn print_window(_app: tauri::AppHandle) -> Result<(), String> {
+    Err("移动端请使用系统打印（window.print），此接口仅桌面端可用".into())
 }
 
 /// 应用入口

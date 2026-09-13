@@ -10,7 +10,7 @@
  * 出错策略：写盘失败不静默 —— 返回 errors 让界面列出来，用户自己去那个目录核对，
  * 而不是弹一句「导出完成」把问题盖过去。
  */
-import { isDesktop } from './save-open';
+import { isDesktop, isMobileShell } from './save-open';
 
 /** 一个待写盘的文件 */
 export interface BatchFile {
@@ -71,6 +71,17 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  */
 export async function writeFiles(files: BatchFile[], dir: string | null): Promise<BatchOutcome> {
   if (files.length === 0) return { mode: 'download', dir, written: [], errors: [] };
+  // 移动端两条路都不通：既没有可选的目录（Android 的 scoped storage 不给任意路径写权限），
+  // WebView 里的 <a download> 也不会真的落盘。与其假装成功（用户以为导出了、其实什么都没有），
+  // 不如明确报错 —— 「导出完成但没文件」正是这个项目吃过亏的那类 bug。
+  if (isMobileShell()) {
+    return {
+      mode: 'download',
+      dir: null,
+      written: [],
+      errors: ['移动端暂不支持直接写出文件：请在电脑上导出，或用「设置 → 数据 → 导出完整备份」'],
+    };
+  }
   if (isDesktop() && dir) {
     try {
       return { mode: 'desktop', dir, written: await writeViaDesktop(files, dir), errors: [] };

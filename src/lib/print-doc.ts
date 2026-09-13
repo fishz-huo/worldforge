@@ -6,14 +6,15 @@
  * 挂到 `#wf-print-root`（样式见 index.css 的打印区），再调打印：
  *   - 桌面版：Rust 命令 print_window → Tauri 的 webview.print()（Windows 下即 window.print()，
  *     macOS / Linux 走各自的原生打印流程）；
- *   - 网页版：直接 window.print()。
+ *   - 网页版与移动端：直接 window.print()（Tauri 文档写明它在所有平台可用；
+ *     移动端之所以不走 Rust 命令，是因为 WebviewWindow::print() 只有桌面端才有）。
  * 用户在打印对话框里选「另存为 PDF」并挑保存位置，需求里的「自由选择导出路径」就是这么满足的。
  *
  * 一个细节：#wf-print-root 在屏幕上永远 display:none，只有打印媒体里才出现；
  * 打印对话框可能还开着，所以不能一调完就把内容删掉（删早了会打印出空白页），
  * 这里用 afterprint 事件 + 兜底定时器来回收。
  */
-import { isDesktop } from './save-open';
+import { isDesktop, isMobileShell } from './save-open';
 
 const ROOT_ID = 'wf-print-root';
 /** 兜底回收时间：afterprint 没触发（某些平台不触发）也不会把节点永久留在页面上 */
@@ -70,7 +71,8 @@ export async function printDocument(html: string, title: string): Promise<{ ok: 
 
   await nextFrame();
   try {
-    if (isDesktop()) {
+    // 移动端不进这个分支：WebviewWindow::print() 是桌面端独有的 API
+    if (isDesktop() && !isMobileShell()) {
       const { invoke } = await import('@tauri-apps/api/core');
       await invoke('print_window');
       // 桌面端打印是异步的：对话框关掉后触发 afterprint，兜底定时器再保一层
@@ -78,7 +80,7 @@ export async function printDocument(html: string, title: string): Promise<{ ok: 
       window.addEventListener('afterprint', () => cleanup(myToken), { once: true });
       timer = setTimeout(() => cleanup(myToken), KEEP_MS);
     } else {
-      window.print(); // 网页版会阻塞到对话框关闭
+      window.print(); // 网页版与移动端：会阻塞到对话框关闭（Android 的系统打印自带「另存为 PDF」）
       cleanup(myToken);
     }
     return { ok: true };

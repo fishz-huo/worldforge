@@ -29,6 +29,17 @@ export function isDesktop(): boolean {
 }
 
 /**
+ * 是否跑在 Tauri 的**移动端**壳里（Android / iOS）。
+ * 用途只有一个：别把「桌面端才有的能力」在手机上假装成可用 ——
+ * 选目录、直接写盘、系统打印都是这种。用 UA 判断就够了（这不是安全边界，只是分支），
+ * 而且 Tauri 没有改掉 WebView 的 UA，Android / iPhone 都在里面。
+ */
+export function isMobileShell(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return isDesktop() && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+/**
  * 让用户选择保存位置并写盘（仅在桌面端有效）。
  * 未选路径 / 用户取消 → canceled；写盘失败 → ok:false + error。
  */

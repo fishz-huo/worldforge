@@ -1,4 +1,4 @@
-﻿# WorldForge 世界观工坊
+# WorldForge 世界观工坊
 
 > **版本：v0.1（需求规划版）**
 > 轻量 Wiki + 零切换写作 —— 本地优先（Local-First）的世界观创作管理软件
@@ -26,10 +26,11 @@ npm install           # 安装依赖
 npm run dev           # 开发服务器（默认 http://localhost:5173）
 npm run build         # 类型检查 + 生产构建 → dist/
 npm run preview       # 预览生产构建
-npm test              # 运行 339 项自测（15 个套件，Node 环境，无需浏览器）
+npm test              # 运行 346 项自测（16 个套件，Node 环境，无需浏览器）
 npm run test:sample   # 由测试世界观手册重新生成 samples/ 里的可导入备份并校验
 npm run test:backup   # 导出 / 导入回归自测（含损坏备份的回滚验证）
 npm run test:export   # 文档导出（Markdown / 文本 / Word / PDF）的采集、排版与文件清单自测
+npm run test:mobile   # 移动端能力边界（桌面 / 移动壳的判定与「不许假装成功」）
 npm run icons         # 重新生成 PWA / Tauri 图标（零依赖脚本）
 ```
 
@@ -40,9 +41,36 @@ npm run tauri:dev     # 桌面端开发
 npm run tauri:build   # Windows 安装包（NSIS + MSI）→ src-tauri/target/release/bundle/
 ```
 
-安装到手机 / 平板：构建后用浏览器（或 Tauri 移动端）打开 `dist/`，
-在「添加到主屏幕 / 安装应用」后即可作为 PWA 离线使用。
-移动端打包：`npm run tauri android init` / `npm run tauri ios init`，鸿蒙通过 ArkWeb / 浏览器承载 PWA。
+### 手机上怎么用（三条路，按上手速度排）
+
+| 路线 | 怎么走 | 代价 / 限制 |
+| --- | --- | --- |
+| **A. 局域网直接开**（2 分钟） | 电脑上 `npm run build` 然后 `npm run preview -- --host`；手机连同一个 Wi-Fi，浏览器打开 `http://<电脑的局域网 IP>:4173/` | 电脑要一直开着、命令要保持运行；因为是 `http://` 而非 HTTPS，浏览器**不会注册 Service Worker** → 没有离线能力，也不会出现「安装应用」，只能「添加到主屏幕」 |
+| **B. 装成 APK**（真离线，像个正常 App） | 电脑上 `npm run tauri -- android build --apk --debug --target aarch64`，再把 `src-tauri/gen/android/app/build/outputs/` 下的 `.apk` 拷到手机安装（连 USB 调试则可 `adb install`） | 需要先配好 Android 工具链（见下方「Android 打包的前置条件」）；`--debug` 用调试签名，不必自备密钥；release 版要自己签 |
+| **C. 部署到 HTTPS 静态站** | 把 `dist/` 传到任意 HTTPS 静态托管（Cloudflare Pages / GitHub Pages / 自建），手机打开网址 → 出现真正的「安装应用」，装完可离线 | 需要一处静态托管；软件本体在公网（**数据不上传**，只存手机本地） |
+
+**三条路共同的坑：数据各存各的。** 本软件是本地优先、无账号、无云同步 ——
+「多端运行」指的是同一份前端代码能跑在多个平台，**不是数据自动同步**：
+手机上的世界观与电脑上的完全独立。搬运方法：电脑「设置 → 数据 → 导出完整备份（含图片）」
+→ 传到手机（微信 / 网盘 / USB）→ 手机「设置 → 数据 → 导入」。
+
+> 手机上请养成导出备份的习惯：浏览器的站点数据可能被系统回收，
+> iOS 的 Safari 还会清掉长期不用的网站数据。
+
+**Android 打包的前置条件**：JDK 17+、Android SDK（`cmdline-tools` + NDK + `platform-tools`）、
+以及 4 个 Rust 目标。
+
+```bash
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+npm run tauri android init      # 生成 src-tauri/gen/android（已被 .gitignore 忽略）
+npm run tauri -- android build --apk --debug --target aarch64
+```
+
+> Android 的 `sdkmanager` 要求 **JDK 17+**：机器上只有 Java 8 时它会直接拒绝运行，
+> NDK 也就装不上（表现为「NDK_HOME 指向的目录不存在」）。
+> 移动端与桌面端的能力差异（选目录、直接写盘、系统打印在手机上都不可用）
+> 见 `src/lib/save-open.ts` 的 `isMobileShell()`，由 `scripts/mobile-selftest.mjs` 守着。
+> 鸿蒙按路线 C 走（ArkWeb / 浏览器承载 PWA）。
 
 首次启动会写入一个**示例世界观「灰烬纪元」**（含 8 张卡片、5 条泳道、12 个时间轴条目、
 1 张地图、2 个资源区域、正文与大纲各一篇），可以直接在它上面改，也可以一键重建或清空
@@ -163,7 +191,7 @@ public/             PWA manifest、Service Worker、图标
 
 ```bash
 npm run typecheck   # TypeScript 严格模式，0 错误
-npm test            # 339 项自测（15 个套件，全部跑在 Node 里，不需要浏览器）
+npm test            # 346 项自测（16 个套件，全部跑在 Node 里，不需要浏览器）
 ```
 
 | 套件 | 项数 | 覆盖内容 |
@@ -178,13 +206,14 @@ npm test            # 339 项自测（15 个套件，全部跑在 Node 里，不
 | `scripts/export-html-test.mjs` | 11 | **打印用 HTML（PDF 出口）**：抬头/条目、标题降级且不超 h6、转义防注入、图库图片换文字说明、按章节分页标记 + **文件清单**：一区一文件不合并、命名带世界观与时间戳、PDF 只给 HTML、拆分模式带子目录与序号 |
 | `scripts/export-zip-test.mjs` | 5 | **手写 ZIP 写入器**：CRC32 已知向量、自写解析器读回条目、deflate 往返、压缩无收益时退回存储、头部字段合法性（版本 / DOS 时间范围） |
 | `scripts/export-docx-test.mjs` | 11 | **Markdown → 文档块 → OOXML**：行内片段（粗体/斜体/代码/双链/转义/不成对标记）、段落与列表与表格、7 个部件齐全、XML 转义、样式与页面设置、真实样例可被外部解压校验 |
+| `scripts/mobile-selftest.mjs` | 7 | **移动端能力边界**：桌面壳 / Android 壳 / iOS 壳 / 手机浏览器四种环境的判定；**移动端写文件必须明确报错而不是假装成功**；静态守住 Rust 的 `print_window` 有桌面与移动两份实现（桌面版才允许 `.print()`）、前端打印分支排除移动端 |
 | `scripts/sample-check.mjs` | 135 | **测试世界观数据自测**：手册里的字段名与 `card-types.ts` 的 FieldDef 逐个对照、下拉取值必须在 options 内、id 引用与坐标刻度约束、手册声明的数量必须等于实际数量、**把生成的备份喂给真实 `importBackup()` 走一遍事务写库再读回核对**、手册指纹比对（改了手册忘记重新生成会直接报错） |
 | `scripts/db-selftest.mjs` | 13 | 建表 DDL（19 张表）、首次播种、落盘到 IndexedDB、卡片/标签/关联/地图/区域 CRUD、图库封面引用清理与装载自愈、插件记录字段完整性与往返 |
 | `scripts/db-selftest-scene.mjs` | 10 | 时间轴条目（含瞬时事件判定、从卡片生成）、大纲树重建与回写、平行世界派生与清理 |
 | `scripts/db-selftest-persist.mjs` | 6 | 版本快照 → 改动 → 还原、关闭应用后重新开库读回数据、级联删除不留孤儿数据 |
 | `scripts/backup-selftest.mjs` | 47 | **导出 / 导入回归**：导出 → 新建空世界观 → 导入（数量必须一致）、**导入不得搬走来源世界的数据**（id 重映射）、同文件导两次不重复、导回原世界不变、预检挡住 5 类损坏备份、**故意让写库失败并验证整体回滚**、**图库图片往返（含旧备份缺 cardAssets 的兼容路径）**、错误提示必须是人话 |
 
-前 10 个套件是纯逻辑与静态检查（其中 4 个专测文档导出），后 5 个套件使用**真实 sql.js**（SQLite WASM）+ 内存版
+前 11 个套件是纯逻辑与静态检查（其中 4 个专测文档导出、1 个专测移动端边界），后 5 个套件使用**真实 sql.js**（SQLite WASM）+ 内存版
 IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alias-hook.mjs`）
 把 `@/` 别名与 Vite 的 `?url` / `?raw` 资源导入补齐，
 因此无需浏览器即可端到端验证数据层、内置插件源码的装载路径，以及导入备份的完整流程。
@@ -236,6 +265,16 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 > 这一例顺带说明两件事：单元测试看不见 hook 链表，**必须真的在浏览器里跑一遍**；
 > 而 PWA 的 Service Worker 会缓存旧产物 —— 第一次「改完仍报错」就是因为在验证旧 bundle，
 > 所以冒烟脚本先注销 SW 并清空 cache，再断言页面上加载的 chunk 哈希。
+>
+> 第四例**只在 Android 上才暴露**：`WebviewWindow::print()` 挂在 Tauri 的 `#[cfg(desktop)]`
+> impl 块里，桌面端 `cargo check` 一路绿灯，`tauri android build` 却直接以
+> `error[E0599]: no method named print` 编译失败 —— 桌面上的 typecheck / build / npm test
+> 一个都看不见它。修复：Rust 侧按平台写两份 `print_window`（桌面用 `webview.print()`，
+> 移动端如实报错），前端改成「桌面壳且**不是**移动壳」才走 Rust 命令，否则用页面里的
+> `window.print()`（Tauri 文档写明它在所有平台可用）；并由新增的
+> `scripts/mobile-selftest.mjs` 静态守住这两处，避免再改回去。
+> 顺带把导出插件在手机上的行为改诚实了：写文件这条路在移动端走不通时**明确报错**，
+> 不再静默什么都不做。
 
 代码规范自查：审计范围内共 **219 个源文件，没有任何文件超过 200 行**（`README`/文档/样式表除外），
 该规则由 `scripts/selftest-source.mjs` 自动校验，不依赖人工统计。
