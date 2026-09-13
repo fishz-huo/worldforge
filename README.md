@@ -13,6 +13,29 @@ WorldForge 用来专门构筑作品的世界观与角色故事。它比 World An
 
 所有数据保存在你自己的机器上：**不联网、不上传、不需要账号**。
 
+<!--
+  截图位：图片放在 docs/images/，命名与内容见 docs/images/README.md。
+  5 个文件就位后，把下面这段的注释标记去掉即可显示；未就位前保持注释，避免裂图。
+
+  <p align="center">
+    <img src="docs/images/01-overview.png" alt="WorldForge 主界面：卡片列表 + 正文 + 预览同屏" width="900">
+  </p>
+
+  ### 卡片即设定
+  <p align="center">
+    <img src="docs/images/02-card.png" alt="卡片详情与关键词悬停预览" width="820">
+  </p>
+
+  ### 地图 / 时间轴 / 大纲
+  <p align="center">
+    <img src="docs/images/03-map.png" alt="地图：标记点与多边形区域" width="440">
+    <img src="docs/images/04-timeline.png" alt="时间轴：泳道、条目与纪元" width="440">
+  </p>
+  <p align="center">
+    <img src="docs/images/05-outline.png" alt="大纲树与正文" width="820">
+  </p>
+-->
+
 ---
 
 ## 下载安装（不想折腾编译就走这条）
