@@ -1,0 +1,52 @@
+# 换行符统一策略
+# ---------------------------------------------------------------
+# 背景：仓库在 Windows 上开发（core.autocrlf=true），git 会在提交时把
+# CRLF 归一化成 LF 存进 index，检出时再换回 CRLF。每次提交那句
+# 「LF will be replaced by CRLF」就是这个过程在提示。
+# 这里把它显式写成规则，行为不再依赖每个人本机的 git 配置：
+#   - 文本文件一律以 LF 存入仓库（跨平台一致，diff 不会因换行符炸开）
+#   - 二进制文件禁止做任何换行转换（否则图片/字体会被改坏）
+#
+# 注意：如果以后重新加入 .cmd / .bat 脚本，请为它们单独指定
+#   *.cmd text eol=crlf
+#   *.bat text eol=crlf
+# 因为 cmd.exe 解析 LF 换行的批处理会出错（括号块与 goto 标签尤其危险）。
+
+* text=auto
+
+# 显式声明为文本（让归一化规则一定生效，含无扩展名的常见文件）
+*.md      text
+*.ts      text
+*.tsx     text
+*.js      text
+*.mjs     text
+*.json    text
+*.css     text
+*.html    text
+*.txt     text
+*.toml    text
+*.yml     text
+*.yaml    text
+*.rs      text
+*.svg     text
+
+# 二进制：禁止换行转换，也禁止 git 在 diff 里按文本处理
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.webp    binary
+*.gif     binary
+*.ico     binary
+*.woff    binary
+*.woff2   binary
+*.ttf     binary
+*.otf     binary
+*.wasm    binary
+*.sqlite  binary
+*.db      binary
+*.zip     binary
+*.exe     binary
+*.dll     binary
+*.pdf     binary
+*.docx    binary
+*.xlsx    binary
