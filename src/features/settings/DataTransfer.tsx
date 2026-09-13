@@ -20,6 +20,7 @@ import { exportBytes, flush } from '@/lib/db';
 import { formatBytes, formatTime, readFileText } from '@/lib/utils';
 import { isDesktop, safeFileName, saveFile } from '@/lib/save-open';
 import { useStore } from '@/store';
+import { askConfirm } from '@/lib/confirm';
 
 export function DataTransfer() {
   const worldId = useStore((s) => s.currentWorldId);
@@ -95,12 +96,17 @@ export function DataTransfer() {
       return;
     }
     const now = { cards: useStore.getState().cards.length, maps: useStore.getState().maps.length };
-    const ok = confirm(
-      `即将导入：${describeBackup(inspection)}\n\n` +
-      `导入会覆盖当前世界观「${world?.name ?? '未命名'}」的全部内容` +
-      `（现有 ${now.cards} 张卡片、${now.maps} 张地图会被替换，此操作不可撤销）。\n\n` +
-      '确定继续？',
-    );
+    const warnText = inspection.warnings.length ? `\n\n注意：${inspection.warnings.join('\n')}` : '';
+    const ok = await askConfirm({
+      message:
+        `即将导入：${describeBackup(inspection)}\n\n` +
+        `导入会覆盖当前世界观「${world?.name ?? '未命名'}」的全部内容` +
+        `（现有 ${now.cards} 张卡片、${now.maps} 张地图会被替换，此操作不可撤销）。` +
+        warnText +
+        '\n\n确定继续？',
+      confirmText: '导入并覆盖',
+      danger: true,
+    });
     if (!ok) return;
     setBusy(true);
     try {

@@ -16,11 +16,13 @@ import { one } from './db/sqlite';
  * 导入后按这张表统计行数：写完必须一张不少，否则整笔回滚。
  * 两者并不总是同名（快照里叫 entries，表名是 timeline_entries），
  * 所以不能拿字段名当表名拼 SQL。
+ * 注意 card_assets 没有 world_id 列（靠 card_id 归属），要单独统计。
  */
-export const WORLD_TABLES: { key: keyof SnapshotPayload & string; table: string }[] = [
+export const WORLD_TABLES: { key: keyof SnapshotPayload & string; table: string; viaCards?: boolean }[] = [
   { key: 'branches', table: 'branches' },
   { key: 'cards', table: 'cards' },
   { key: 'tags', table: 'tags' },
+  { key: 'cardAssets', table: 'card_assets', viaCards: true },
   { key: 'relations', table: 'relations' },
   { key: 'maps', table: 'maps' },
   { key: 'tracks', table: 'tracks' },
@@ -74,11 +76,12 @@ export function readWorldMeta(payload: SnapshotPayload): { name: string; descrip
 
 /** 统计某个世界观现在有多少行（导入后查一次，用来判断到底写进去没有） */
 export function countWorldRows(worldId: string): number {
-  return WORLD_TABLES.reduce(
-    (sum, { table }) => sum
-      + (one<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table} WHERE world_id = ?`, [worldId])?.n ?? 0),
-    0,
-  );
+  return WORLD_TABLES.reduce((sum, { table, viaCards }) => {
+    const where = viaCards
+      ? 'card_id IN (SELECT id FROM cards WHERE world_id = ?)'
+      : 'world_id = ?';
+    return sum + (one<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}`, [worldId])?.n ?? 0);
+  }, 0);
 }
 
 /** 备份里这些表的行数总和 */

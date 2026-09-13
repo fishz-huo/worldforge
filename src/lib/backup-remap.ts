@@ -17,7 +17,7 @@
  *   - card_assets：没有 id 列（card_id + asset_id 复合主键），所以两边都要重映射。
  */
 import type { SnapshotPayload } from '@/types';
-import { newBranchId, newCardId, newDocId, newEntryId, newEraId, newMapId, newOutlineId, newPinId, newRegionId, newTagId, newTrackId } from './id';
+import { newBranchId, newCardId, newDocId, newEntryId, newEraId, newId, newMapId, newOutlineId, newPinId, newRegionId, newTagId, newTrackId } from './id';
 
 /** 一行记录（导入数据来自磁盘，字段形状不可信，因此按普通对象处理） */
 type Row = Record<string, unknown>;
@@ -64,6 +64,9 @@ export function remapSnapshotIds(payload: SnapshotPayload): SnapshotPayload {
   const eras = idMap(snap.eras, newEraId);
   const docs = idMap(snap.docs, newDocId);
   const nodes = idMap(snap.outlineNodes, newOutlineId);
+  // 图库关联没有独立的业务引用，但同样换新 id：这样「同一份备份导入两次」
+  // 不会互相覆盖，也方便按 id 精确删除某一条挂载。
+  const cardAssets = idMap(snap.cardAssets, () => newId('l'));
 
   const applyId = (list: unknown[], map: Map<string, string>) => {
     list.forEach((row) => {
@@ -83,12 +86,15 @@ export function remapSnapshotIds(payload: SnapshotPayload): SnapshotPayload {
   applyId(snap.eras, eras);
   applyId(snap.docs, docs);
   applyId(snap.outlineNodes, nodes);
+  applyId(snap.cardAssets, cardAssets);
 
   // 卡片：所属分支
   remapColumn(snap.cards, 'branch_id', branches);
   // 标签挂载：卡片与标签
   remapColumn(snap.cardTags, 'card_id', cards);
   remapColumn(snap.cardTags, 'tag_id', tags);
+  // 图库挂载：卡片要指向克隆出来的那张卡；asset_id 故意不动（图片二进制复用同一份）
+  remapColumn(snap.cardAssets, 'card_id', cards);
   // 关联：两端与分支
   remapColumn(snap.relations, 'from_id', cards);
   remapColumn(snap.relations, 'to_id', cards);

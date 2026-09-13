@@ -13,6 +13,7 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assert, finish, group, test } from './test-runner.mjs';
 import { lintSelectorSource } from './selector-lint.mjs';
+import { DIALOG_FIXTURES, lintNativeDialogs, scanNativeDialogs } from './dialog-lint.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -160,6 +161,27 @@ await test('TabsContent 上不得出现 flex / grid 等 display 类', () => {
     }
   }
   assert.equal(hits.length, 0, `下列 TabsContent 会盖掉 hidden，需把布局类移到内层 div：\n    ${hits.join('\n    ')}`);
+});
+
+/**
+ * window.confirm / alert / prompt 检查（检查器在 scripts/dialog-lint.mjs）
+ * ------------------------------------------------------------------
+ * 桌面版会把这些 API 转发给 dialog 插件，未放开权限时直接报错，
+ * 导致所有删除/清空操作失效。详见 dialog-lint.mjs 的说明。
+ */
+await test('检查器有效：能认出裸 confirm / window.confirm，不误伤 askConfirm', () => {
+  const F = DIALOG_FIXTURES;
+  assert.equal(lintNativeDialogs(F.bad).length, 1, '裸 confirm 应被识别');
+  assert.equal(lintNativeDialogs(F.alsoBad).length, 1, 'window.confirm 应被识别');
+  assert.equal(lintNativeDialogs(F.alertBad).length, 1, 'alert 应被识别');
+  assert.equal(lintNativeDialogs(F.ok).length, 0, 'askConfirm 不该被误判');
+  assert.equal(lintNativeDialogs(F.alsoOk).length, 0, 'onConfirm 属性名不该被误判');
+});
+
+await test('源码里不得直接使用 window.confirm / alert / prompt', () => {
+  const hits = scanNativeDialogs(allFiles.filter((f) => /\.(ts|tsx)$/.test(f)), ROOT);
+  assert.equal(hits.length, 0,
+    `桌面版会因为这些调用报「dialog.x not allowed」，请改用 lib/confirm.ts 的 askConfirm：\n    ${hits.join('\n    ')}`);
 });
 
 await test('行数统计本身可信（能算出已知长度文件的行数）', () => {

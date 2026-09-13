@@ -16,6 +16,7 @@ import { buildSnapshot, parseSnapshot } from '@/lib/snapshot';
 import { downloadText, formatBytes, formatTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
+import { askConfirm } from '@/lib/confirm';
 
 export function VersionsModule() {
   const versions = useStore((s) => s.versions);
@@ -85,8 +86,8 @@ export function VersionsModule() {
                     variant="outline"
                     size="sm"
                     className="h-6 flex-1 gap-1 text-[10px]"
-                    onClick={() => {
-                      if (confirm(`用「${v.name}」覆盖当前设定？当前未保存的改动会丢失。`)) restoreVersion(v.id);
+                    onClick={async () => {
+                      if (await askConfirm(`用「${v.name}」覆盖当前设定？当前未保存的改动会丢失。`)) restoreVersion(v.id);
                     }}
                   >
                     <RotateCcw className="size-3" /> 还原
@@ -95,7 +96,7 @@ export function VersionsModule() {
                     variant="outline"
                     size="sm"
                     className="h-6 gap-1 text-[10px]"
-                    onClick={() => {
+                    onClick={async () => {
                       const json = versionToJson(v.id);
                       if (json) downloadText(`${v.name}.snapshot.json`, json);
                     }}
@@ -106,8 +107,8 @@ export function VersionsModule() {
                     variant="ghost"
                     size="sm"
                     className="h-6 text-destructive"
-                    onClick={() => {
-                      if (confirm(`删除版本「${v.name}」？`)) deleteVersion(v.id);
+                    onClick={async () => {
+                      if (await askConfirm(`删除版本「${v.name}」？`)) deleteVersion(v.id);
                     }}
                   >
                     <Trash2 className="size-3" />

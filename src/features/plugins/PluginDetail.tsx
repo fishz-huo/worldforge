@@ -10,6 +10,7 @@ import type { PluginRecord } from '@/types';
 import { cn, formatTime } from '@/lib/utils';
 import { useStore } from '@/store';
 import { PluginSettingsForm } from './PluginSettingsForm';
+import { askConfirm } from '@/lib/confirm';
 
 export function PluginDetail({ plugin }: { plugin: PluginRecord }) {
   const setPluginEnabled = useStore((s) => s.setPluginEnabled);
@@ -28,8 +29,8 @@ export function PluginDetail({ plugin }: { plugin: PluginRecord }) {
           size="icon-sm"
           className="text-destructive"
           title="卸载插件"
-          onClick={() => {
-            if (confirm(`卸载插件「${plugin.name}」？`)) removePlugin(plugin.id);
+          onClick={async () => {
+            if (await askConfirm(`卸载插件「${plugin.name}」？`)) removePlugin(plugin.id);
           }}
         >
           <Trash2 />

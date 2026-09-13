@@ -10,6 +10,7 @@ import { SidePanel } from '@/components/layout/Panel';
 import { OUTLINE_STATUS } from '@/types';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
+import { askConfirm } from '@/lib/confirm';
 
 export function OutlineSidebar({ progress }: { progress: { done: number; total: number; percent: number } }) {
   const docs = useStore((s) => s.docs);
@@ -47,8 +48,8 @@ export function OutlineSidebar({ progress }: { progress: { done: number; total: 
                 <span className="min-w-0 flex-1 truncate">{doc.title}</span>
               </button>
               <button
-                onClick={() => {
-                  if (confirm(`删除大纲「${doc.title}」？`)) deleteDoc(doc.id);
+                onClick={async () => {
+                  if (await askConfirm(`删除大纲「${doc.title}」？`)) deleteDoc(doc.id);
                 }}
                 className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
               >

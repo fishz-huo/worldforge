@@ -21,6 +21,7 @@ import { countWords } from '@/lib/markdown';
 import { cn, formatTime } from '@/lib/utils';
 import { useStore } from '@/store';
 import { CardAside } from './CardAside';
+import { askConfirm } from '@/lib/confirm';
 
 export function CardDetailView({ cardId }: { cardId: string }) {
   const card = useStore((s) => s.cards.find((c) => c.id === cardId));
@@ -68,7 +69,7 @@ export function CardDetailView({ cardId }: { cardId: string }) {
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => {
+              onClick={async () => {
                 const id = duplicateCard(card.id);
                 if (id) selectCard(id);
               }}
@@ -81,8 +82,8 @@ export function CardDetailView({ cardId }: { cardId: string }) {
               variant="ghost"
               size="icon-sm"
               className="text-destructive"
-              onClick={() => {
-                if (confirm(`删除卡片「${card.title}」？相关关联也会一并移除。`)) {
+              onClick={async () => {
+                if (await askConfirm(`删除卡片「${card.title}」？相关关联也会一并移除。`)) {
                   deleteCard(card.id);
                   selectCard(null);
                 }

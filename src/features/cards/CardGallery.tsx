@@ -11,6 +11,7 @@ import { useAssetUrl } from '@/hooks/useAssetUrl';
 import { removeAsset } from '@/lib/assets';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
+import { askConfirm } from '@/lib/confirm';
 
 /** 单张图片 */
 function GalleryItem({
@@ -66,9 +67,9 @@ function GalleryItem({
           </button>
           <button
             title="从卡片移除"
-            onClick={() => {
+            onClick={async () => {
               removeCardAsset(linkId);
-              if (confirm('同时从资源库删除这张图片？')) void removeAsset(assetId);
+              if (await askConfirm('同时从资源库删除这张图片？')) void removeAsset(assetId);
             }}
             className="rounded p-0.5 text-white/80 hover:text-destructive"
           >

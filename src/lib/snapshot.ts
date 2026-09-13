@@ -7,7 +7,7 @@
  */
 import type { SnapshotPayload } from '@/types';
 import {
-  branchesRepo, cardsRepo, docsRepo, entriesRepo, erasRepo, mapsRepo, outlineRepo,
+  branchesRepo, cardAssetsRepo, cardsRepo, docsRepo, entriesRepo, erasRepo, mapsRepo, outlineRepo,
   pinsRepo, regionsRepo, relationsRepo, tagsRepo, tracksRepo, worldsRepo, listAllCardTags, run, tx,
 } from './db';
 
@@ -23,6 +23,12 @@ export function buildSnapshot(worldId: string): SnapshotPayload {
     cards: cardsRepo.list('world_id = ?', [worldId]),
     tags: tagsRepo.list('world_id = ?', [worldId]),
     cardTags: listAllCardTags(worldId),
+    /**
+     * 卡片图库关联（card_assets）必须进快照：它决定「哪张图挂在哪张卡片上」。
+     * 0.1.0 早期版本漏了这一段，后果是导出/导入（以及版本还原）之后
+     * 图片元数据和二进制都还在、图库里却是空的 —— 只能看到「图片已丢失」。
+     */
+    cardAssets: cardAssetsRepo.list('card_id IN (SELECT id FROM cards WHERE world_id = ?)', [worldId]),
     relations: relationsRepo.list('world_id = ?', [worldId]),
     maps: mapsRepo.list('world_id = ?', [worldId]),
     pins: pinsRepo.list('map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]),
@@ -71,6 +77,8 @@ export function restoreSnapshot(worldId: string, payload: SnapshotPayload): void
     (payload.cardTags as { card_id: string; tag_id: string }[]).forEach((ct) => {
       run('INSERT OR IGNORE INTO card_tags (card_id, tag_id) VALUES (?, ?)', [ct.card_id, ct.tag_id]);
     });
+    // 图库关联同样是「卡片 ↔ 图片」的挂载关系，漏掉它图片就不再出现在卡片上
+    cardAssetsRepo.saveMany(payload.cardAssets as never[]);
     relationsRepo.saveMany(payload.relations as never[]);
     mapsRepo.saveMany(payload.maps as never[]);
     pinsRepo.saveMany(payload.pins as never[]);
@@ -83,20 +91,28 @@ export function restoreSnapshot(worldId: string, payload: SnapshotPayload): void
   });
 }
 
+/**
+ * 补齐缺失的数据段，兼容旧版本快照。
+ * cardAssets 是后加的：0.1.0 早期的导出文件里没有这一段，
+ * 直接按 undefined 处理会在重映射时报错，所以统一在这里补成空数组。
+ */
+export function normalizeSnapshot(payload: SnapshotPayload): SnapshotPayload {
+  const arrays: (keyof SnapshotPayload)[] = [
+    'branches', 'cards', 'tags', 'cardTags', 'cardAssets', 'relations', 'maps', 'pins',
+    'regions', 'tracks', 'entries', 'eras', 'docs', 'outlineNodes',
+  ];
+  arrays.forEach((key) => {
+    if (!Array.isArray(payload[key])) (payload as unknown as Record<string, unknown>)[key] = [];
+  });
+  return payload;
+}
+
 /** 安全解析快照文本 */
 export function parseSnapshot(text: string): SnapshotPayload | null {
   try {
     const payload = JSON.parse(text) as SnapshotPayload;
     if (!payload || typeof payload !== 'object') return null;
-    // 补齐缺失数组，兼容旧版本快照
-    const arrays: (keyof SnapshotPayload)[] = [
-      'branches', 'cards', 'tags', 'cardTags', 'relations', 'maps', 'pins',
-      'regions', 'tracks', 'entries', 'eras', 'docs', 'outlineNodes',
-    ];
-    arrays.forEach((key) => {
-      if (!Array.isArray(payload[key])) (payload as unknown as Record<string, unknown>)[key] = [];
-    });
-    return payload;
+    return normalizeSnapshot(payload);
   } catch {
     return null;
   }

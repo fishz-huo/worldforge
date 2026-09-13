@@ -16,6 +16,8 @@ export interface BackupInspection {
   ok: boolean;
   /** 能看懂的问题描述（空数组表示没问题） */
   problems: string[];
+  /** 不拦截导入但目前提：例如旧版本备份缺少图库挂载信息 */
+  warnings: string[];
   /** 备份里的数据规模，用于确认对话框 */
   stats: {
     worldName: string;
@@ -28,17 +30,22 @@ export interface BackupInspection {
     outlineNodes: number;
     branches: number;
     assets: number;
+    /** 图库挂载数（card_assets） */
+    galleryLinks: number;
   };
 }
 
 /** 文件体积上限：超过这个大小基本都是内嵌图片，解析会占用大量内存 */
 export const MAX_BACKUP_BYTES = 128 * 1024 * 1024;
 
-/** 需要校验「是数组」的实体列 */
+/** 需要校验「是数组」的实体列（不含后加的 cardAssets：旧备份没有它，导入时会自动补空） */
 const ARRAY_KEYS: (keyof SnapshotPayload)[] = [
   'branches', 'cards', 'tags', 'cardTags', 'relations', 'maps', 'pins',
   'regions', 'tracks', 'entries', 'eras', 'docs', 'outlineNodes',
 ];
+
+/** 兼容旧备份：缺这一段的文件仍然可用，只是图库挂载会为空 */
+const OPTIONAL_ARRAY_KEYS: (keyof SnapshotPayload)[] = ['cardAssets'];
 
 /**
  * 这份文件能不能用（给 UI 用的一站式判断）。
@@ -63,7 +70,10 @@ export function checkBackupText(
   const backup = parse(text);
   if (!backup) return { ok: false, error: '文件格式不正确：需要 WorldForge 导出的 JSON 备份' };
   const inspection = inspectSnapshot(backup.snapshot, backup.assets?.length ?? 0);
-  if (!inspection.ok) return { ok: false, error: `这份备份不可用：${inspection.problems.join('；')}` };
+  // 失败时也把 inspection 带出去：调用方可能需要展示细节（例如"旧版本备份"的提醒）
+  if (!inspection.ok) {
+    return { ok: false, inspection, error: `这份备份不可用：${inspection.problems.join('；')}` };
+  }
   return { ok: true, inspection };
 }
 
@@ -84,6 +94,12 @@ export function inspectSnapshot(payload: SnapshotPayload, assetCount = 0): Backu
   ARRAY_KEYS.forEach((key) => {
     if (!Array.isArray(payload[key])) problems.push(`缺少或损坏的数据段：${String(key)}`);
   });
+  // 后加的字段只提醒不拦截：旧版本导出的文件没有 cardAssets，
+  // 导入时会自动补空数组（图片二进制照常恢复，只是挂载关系缺失）
+  const legacy = OPTIONAL_ARRAY_KEYS.filter((key) => !Array.isArray(payload[key]));
+  const legacyHint = legacy.length > 0 && assetCount > 0
+    ? '这是一份旧版本导出的备份：图片还在，但「图片挂在哪张卡片上」的信息没有备份进去，导入后图片不会出现在图库里'
+    : '';
   if (!payload.world || typeof payload.world !== 'object') {
     problems.push('文件里没有世界观信息（world 段），无法确定这套设定属于谁');
   }
@@ -94,8 +110,8 @@ export function inspectSnapshot(payload: SnapshotPayload, assetCount = 0): Backu
   return {
     ok: problems.length === 0,
     problems,
-    stats: {
-      worldName: str(world?.name, '（未命名世界观）'),
+    warnings: legacyHint ? [legacyHint] : [],
+    stats: {      worldName: str(world?.name, '（未命名世界观）'),
       cards: payload.cards?.length ?? 0,
       tags: payload.tags?.length ?? 0,
       relations: payload.relations?.length ?? 0,
@@ -105,6 +121,8 @@ export function inspectSnapshot(payload: SnapshotPayload, assetCount = 0): Backu
       outlineNodes: payload.outlineNodes?.length ?? 0,
       branches: payload.branches?.length ?? 0,
       assets: assetCount,
+      /** 图库挂载数：文件里内嵌了图片、但一条挂载都没有时值得提醒 */
+      galleryLinks: payload.cardAssets?.length ?? 0,
     },
   };
 }
@@ -124,9 +142,10 @@ export function describeBackup(inspection: BackupInspection): string {
     `${s.docs} 篇文稿`,
   ];
   if (s.assets > 0) parts.push(`${s.assets} 张图片`);
+  // 有图片却没有挂载 = 图库里看不到图（旧备份的典型症状），明确说出来
+  if (s.assets > 0 && s.galleryLinks === 0) parts.push('但没有任何图片挂在卡片上');
   return `世界观「${s.worldName}」：${parts.join('、')}`;
 }
-
 /**
  * 把导入过程中的异常翻译成用户能看懂的提示。
  * 数据库错误（SQLite constraint / NOT NULL 等）直接抛给用户没有意义，

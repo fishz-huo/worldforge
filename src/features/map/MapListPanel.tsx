@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
+import { askConfirm } from '@/lib/confirm';
 
 export function MapListPanel() {
   const maps = useStore((s) => s.maps);
@@ -47,8 +48,8 @@ export function MapListPanel() {
             <button
               title="删除地图"
               className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
-              onClick={() => {
-                if (confirm(`删除地图「${m.name}」？其标记与区域会一并移除。`)) deleteMap(m.id);
+              onClick={async () => {
+                if (await askConfirm(`删除地图「${m.name}」？其标记与区域会一并移除。`)) deleteMap(m.id);
               }}
             >
               <Trash2 className="size-3" />

@@ -18,6 +18,7 @@ import { DEFAULT_TIME_CONFIG, TRACK_KINDS, type TimeConfig, type TrackKind } fro
 import { useStore } from '@/store';
 import { CardPicker } from '@/features/cards/CardPicker';
 import { EraList } from './EraList';
+import { askConfirm } from '@/lib/confirm';
 
 export function TimelineSidebar({ onFit }: { onFit: () => void }) {
   const tracks = useStore((s) => s.tracks);
@@ -80,9 +81,9 @@ export function TimelineSidebar({ onFit }: { onFit: () => void }) {
                 {entries.filter((e) => e.track_id === t.id).length}
               </span>
               <button
-                onClick={() => {
+                onClick={async () => {
                   const count = entries.filter((e) => e.track_id === t.id).length;
-                  if (confirm(`删除泳道「${t.name}」及其 ${count} 个条目？`)) deleteTrack(t.id);
+                  if (await askConfirm(`删除泳道「${t.name}」及其 ${count} 个条目？`)) deleteTrack(t.id);
                 }}
                 title="删除泳道"
                 className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
@@ -121,7 +122,7 @@ export function TimelineSidebar({ onFit }: { onFit: () => void }) {
           <Button
             size="icon-sm"
             disabled={!trackName.trim()}
-            onClick={() => {
+            onClick={async () => {
               createTrack(trackName.trim(), kind);
               setTrackName('');
             }}

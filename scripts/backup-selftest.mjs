@@ -15,10 +15,17 @@
  * 用法：node scripts/backup-selftest.mjs
  */
 import { db, state, snapshotBytes } from './db-harness.mjs';
+import { installFileReader } from './browser-stubs.mjs';
+import { runImageRoundTrip } from './backup-image-test.mjs';
+
+// blobToDataUrl 内部用 FileReader（浏览器 API），Node 里补一个最小实现。
+// 图片往返（导出内嵌 base64 → 导入还原 Blob）必须能在这里被验证。
+installFileReader();
 
 const { exportBackupText, parseBackup, importBackup } = await import('@/lib/backup.ts');
 const { checkBackupText, describeBackup, explainImportError } = await import('@/lib/backup-inspect.ts');
-const { cardsRepo } = await import('@/lib/db/index.ts');
+const { cardsRepo, cardAssetsRepo, assetsRepo } = await import('@/lib/db/index.ts');
+const { putAssetBlob, getAssetBlob } = await import('@/lib/db/idb.ts');
 
 let pass = 0;
 const fails = [];
@@ -144,7 +151,15 @@ check('损坏数据导入后原数据完好（已回滚）',
   `库里 ${cardsRepo.list('world_id = ?', [target]).length}，期望 ${before}`);
 check('错误提示被翻译成人话', explainImportError(new Error(threw)).includes('你的数据没有被改动'));
 
-/* -------------------- 6. 落盘 -------------------- */
+/* -------------------- 6. 图片（图库）必须跟着备份走 -------------------- */
+// 具体检查在 backup-image-test.mjs：给卡片加图 → 导出完整备份 → 导入到新世界观 → 读回字节
+const imageResults = await runImageRoundTrip({
+  state, exportBackupText, parseBackup, importBackup, checkBackupText, describeBackup,
+  putAssetBlob, getAssetBlob, assetsRepo, cardAssetsRepo, cardsRepo,
+});
+imageResults.forEach((r) => check(r.name, r.ok, r.detail));
+
+/* -------------------- 7. 落盘 -------------------- */
 await db.flush();
 check('导入后 IndexedDB 里有快照字节', (snapshotBytes()?.length ?? 0) > 0);
 

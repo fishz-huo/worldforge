@@ -26,7 +26,7 @@ npm install           # 安装依赖
 npm run dev           # 开发服务器（默认 http://localhost:5173）
 npm run build         # 类型检查 + 生产构建 → dist/
 npm run preview       # 预览生产构建
-npm test              # 运行 272 项自测（10 个套件，Node 环境，无需浏览器）
+npm test              # 运行 294 项自测（11 个套件，Node 环境，无需浏览器）
 npm run test:sample   # 由测试世界观手册重新生成 samples/ 里的可导入备份并校验
 npm run test:backup   # 导出 / 导入回归自测（含损坏备份的回滚验证）
 npm run icons         # 重新生成 PWA / Tauri 图标（零依赖脚本）
@@ -130,7 +130,7 @@ docs/               需求规格说明书、架构设计、数据模型、插件
                     测试世界观手册（猫猫的冒险 · 纯文本，可直接照抄录入）
 samples/            由手册生成的测试数据备份（可用「设置 → 数据 → 导入设定」直接导入）
 plugins/            以独立 .js 文件发布的插件源码（内置「图库灯箱」就在这里，可单独分享）
-scripts/            图标生成 + 10 个自测套件（运行器、解析钩子、假 IndexedDB、selector / 表描述 / 插件静态检查器，均零依赖）
+scripts/            图标生成 + 11 个自测套件（运行器、解析钩子、假 IndexedDB、selector / 表描述 / 插件静态检查器，均零依赖）
 src-tauri/          Tauri 2 壳（Cargo 配置、权限清单、入口）
 public/             PWA manifest、Service Worker、图标
 ```
@@ -153,7 +153,7 @@ public/             PWA manifest、Service Worker、图标
 
 ```bash
 npm run typecheck   # TypeScript 严格模式，0 错误
-npm test            # 272 项自测（10 个套件，全部跑在 Node 里，不需要浏览器）
+npm test            # 294 项自测（11 个套件，全部跑在 Node 里，不需要浏览器）
 ```
 
 | 套件 | 项数 | 覆盖内容 |
@@ -167,7 +167,8 @@ npm test            # 272 项自测（10 个套件，全部跑在 Node 里，不
 | `scripts/db-selftest.mjs` | 13 | 建表 DDL（19 张表）、首次播种、落盘到 IndexedDB、卡片/标签/关联/地图/区域 CRUD、图库封面引用清理与装载自愈、插件记录字段完整性与往返 |
 | `scripts/db-selftest-scene.mjs` | 10 | 时间轴条目（含瞬时事件判定、从卡片生成）、大纲树重建与回写、平行世界派生与清理 |
 | `scripts/db-selftest-persist.mjs` | 6 | 版本快照 → 改动 → 还原、关闭应用后重新开库读回数据、级联删除不留孤儿数据 |
-| `scripts/backup-selftest.mjs` | 33 | **导出 / 导入回归**：导出 → 新建空世界观 → 导入（数量必须一致）、**导入不得搬走来源世界的数据**（id 重映射）、同文件导两次不重复、导回原世界不变、预检挡住 5 类损坏备份、**故意让写库失败并验证整体回滚**、错误提示必须是人话 |
+| `scripts/backup-selftest.mjs` | 47 | **导出 / 导入回归**：导出 → 新建空世界观 → 导入（数量必须一致）、**导入不得搬走来源世界的数据**（id 重映射）、同文件导两次不重复、导回原世界不变、预检挡住 5 类损坏备份、**故意让写库失败并验证整体回滚**、**图库图片往返（含旧备份缺 cardAssets 的兼容路径）**、错误提示必须是人话 |
+| `scripts/confirm-selftest.mjs` | 9 | **确认对话框接线**：注册宿主后原样透传请求并返回用户选择；宿主未挂载时返回 false 且**绝不回退到 `window.confirm`**（那正是桌面版报错的来源）；重复注册以最后一次为准 |
 
 前 5 个套件是纯逻辑与静态检查，后 4 个套件使用**真实 sql.js**（SQLite WASM）+ 内存版
 IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alias-hook.mjs`）
@@ -178,7 +179,8 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 > 触发 SQLite `cannot start a transaction within a transaction`，
 > 导致「清空了但没写回」（修复方式：可重入事务，见 `docs/数据模型.md` §6.1）。
 >
-> 另两例出在**导入备份**上，都是用户实测发现的，现在由 `scripts/backup-selftest.mjs` 守住：
+> 另三例出在**数据进出**上，都是用户实测发现的，现在由
+> `scripts/backup-selftest.mjs` 与 `scripts/confirm-selftest.mjs` 守住：
 > 1. **没有改写 `world_id`** —— 导出文件里带着来源世界的 id，导入到另一个世界观时
 >    所有行仍属于来源世界，界面上一片空白，而确认框已经把当前世界观清空了。
 >    修复：写库前统一改写归属，并在事务里按世界观统计行数自校验。
@@ -186,11 +188,22 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 >    直接改成新世界观的归属，表现为「导入之后原世界观被搬空了」。
 >    修复：导入前为所有实体生成新 id 并同步改写跨表引用（`backup-remap.ts`），
 >    导入是**复制**而不是搬移。
+> 3. **快照漏掉了卡片图库关联** —— `buildSnapshot()` 从一开始就没把 `card_assets`
+>    放进快照，于是「导出完整备份再导入」以及「版本还原」之后，图片元数据与二进制都在、
+>    图库里却是空的（界面显示「图片已丢失」），而同一份备份里的文本数据完好 ——
+>    这正是用户描述的现象。修复：快照与还原都带上 `cardAssets`，
+>    并对旧备份做兼容（缺这一段时补空数组，导入前在确认框里提醒）。
 >
-> 这两个缺陷共同说明一件事：数据相关的操作必须有「失败要吵、成功要验」的测试，
+> 这三个缺陷共同说明一件事：数据相关的操作必须有「失败要吵、成功要验」的测试，
 > 所以现在的导入是「预检 → 事务 → 行数自校验 → 出错整体回滚」。
+>
+> 还有一例是**桌面端专属**的：Tauri 会把 `window.confirm` 转发给 dialog 插件，
+> 未放开权限时抛「dialog.confirm not allowed. Command not found」，
+> 于是桌面版所有删除/清空操作全部失效。修复：14 处调用统一改为应用内对话框
+> （`lib/confirm.ts` + `components/layout/ConfirmHost.tsx`），
+> 并由 `scripts/selftest-source.mjs` 静态禁止源码里再出现原生 `confirm/alert/prompt`。
 
-代码规范自查：审计范围内共 **187 个源文件，没有任何文件超过 200 行**（`README`/文档除外），
+代码规范自查：审计范围内共 **199 个源文件，没有任何文件超过 200 行**（`README`/文档除外），
 该规则由 `scripts/selftest-source.mjs` 自动校验，不依赖人工统计。
 
 > ⚠️ 统计行数时不要用 PowerShell 的 `Get-Content` / `Measure-Object -Line`：

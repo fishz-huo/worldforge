@@ -10,7 +10,7 @@ import type { Asset, SnapshotPayload } from '@/types';
 import { assetsRepo, worldsRepo } from './db/tables';
 import { getAssetBlob, putAssetBlob } from './db/idb';
 import { blobToDataUrl, dataUrlToBlob, importImageBlob } from './assets';
-import { buildSnapshot, restoreSnapshot } from './snapshot';
+import { buildSnapshot, normalizeSnapshot, restoreSnapshot } from './snapshot';
 import { remapSnapshotIds } from './backup-remap';
 import { countBackupRows, countWorldRows, readWorldMeta, rebindWorld } from './backup-world';
 import { getSetting, setSetting, tx } from './db/sqlite';
@@ -105,7 +105,9 @@ export async function importBackup(worldId: string, backup: BackupFile): Promise
     }
   }
 
-  const payload = rebindWorld(remapSnapshotIds(backup.snapshot), worldId);
+  // 旧版本导出的文件可能缺少后加的数据段（如 cardAssets），先补齐再重映射，
+  // 否则 idMap 会在 undefined 上遍历报错。
+  const payload = rebindWorld(remapSnapshotIds(normalizeSnapshot(backup.snapshot)), worldId);
   const expected = countBackupRows(payload);
 
   tx(() => {

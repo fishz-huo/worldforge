@@ -42,6 +42,8 @@ export interface SnapshotPayload {
   cards: unknown[];
   tags: unknown[];
   cardTags: unknown[];
+  /** 卡片图库关联（card_assets）—— 漏掉它会让图片「还在资源库里、却不在卡片上」 */
+  cardAssets: unknown[];
   relations: unknown[];
   maps: unknown[];
   pins: unknown[];

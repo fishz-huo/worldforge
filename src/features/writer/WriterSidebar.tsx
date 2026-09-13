@@ -14,6 +14,7 @@ import type { DocKind } from '@/types';
 import { DOC_KINDS } from '@/types';
 import { cn, relativeTime } from '@/lib/utils';
 import { useStore } from '@/store';
+import { askConfirm } from '@/lib/confirm';
 
 export function WriterSidebar() {
   const docs = useStore((s) => s.docs);
@@ -46,7 +47,7 @@ export function WriterSidebar() {
           {DOC_KINDS.map((k) => (
             <button
               key={k.kind}
-              onClick={() => {
+              onClick={async () => {
                 if (k.kind === 'outline') {
                   setModule('outline');
                   return;
@@ -89,9 +90,9 @@ export function WriterSidebar() {
                 <span
                   role="button"
                   tabIndex={-1}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    if (confirm(`删除文稿「${doc.title}」？`)) deleteDoc(doc.id);
+                    if (await askConfirm(`删除文稿「${doc.title}」？`)) deleteDoc(doc.id);
                   }}
                   className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
                 >

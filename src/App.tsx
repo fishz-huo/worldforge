@@ -6,6 +6,7 @@
 import { useEffect, useMemo } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AppShell } from '@/components/layout/AppShell';
+import { ConfirmHost } from '@/components/layout/ConfirmHost';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
@@ -86,6 +87,8 @@ export default function App() {
       {/* 最外层兜底：万一骨架自身出错，也要给出可读提示而不是白屏 */}
       <ErrorBoundary label="应用界面">
         <AppShell />
+        {/* 全局确认对话框：所有删除/清空操作都走它（替代桌面版会报错的 window.confirm） */}
+        <ConfirmHost />
       </ErrorBoundary>
     </TooltipProvider>
   );

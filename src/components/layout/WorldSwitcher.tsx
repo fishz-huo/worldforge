@@ -15,6 +15,7 @@ import { Dot } from '@/components/ui/primitives';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import { BranchDialog, NewWorldDialog } from './WorldDialogs';
+import { askConfirm } from '@/lib/confirm';
 
 export function WorldSwitcher({ compact = false }: { compact?: boolean }) {
   const worlds = useStore((s) => s.worlds);
@@ -75,8 +76,8 @@ export function WorldSwitcher({ compact = false }: { compact?: boolean }) {
           {worlds.length > 1 && worldId && (
             <DropdownMenuItem
               className="text-destructive"
-              onSelect={() => {
-                if (confirm(`确定删除世界观「${world?.name}」？其全部卡片、地图与文稿都会被移除。`)) {
+              onSelect={async () => {
+                if (await askConfirm(`确定删除世界观「${world?.name}」？其全部卡片、地图与文稿都会被移除。`)) {
                   deleteWorld(worldId);
                 }
               }}
@@ -103,9 +104,9 @@ export function WorldSwitcher({ compact = false }: { compact?: boolean }) {
                 {b.id === branchId && <Check className="size-3.5 text-primary" />}
                 <button
                   className="rounded p-0.5 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    if (confirm(`删除分支「${b.name}」？该分支独有的卡片会被移除。`)) deleteBranch(b.id);
+                    if (await askConfirm(`删除分支「${b.name}」？该分支独有的卡片会被移除。`)) deleteBranch(b.id);
                   }}
                 >
                   <Trash2 className="size-3" />

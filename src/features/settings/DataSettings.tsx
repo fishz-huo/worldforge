@@ -17,6 +17,7 @@ import {
 } from '@/lib/storage-persist';
 import { useStore } from '@/store';
 import { DataTransfer } from './DataTransfer';
+import { askConfirm } from '@/lib/confirm';
 
 export function DataSettings() {
   const toast = useStore((s) => s.toast);
@@ -112,8 +113,8 @@ export function DataSettings() {
             variant="outline"
             size="sm"
             className="w-full justify-start gap-1.5"
-            onClick={() => {
-              if (confirm('重建示例数据会先删除当前世界观，确定继续？')) reseedDemo();
+            onClick={async () => {
+              if (await askConfirm('重建示例数据会先删除当前世界观，确定继续？')) reseedDemo();
             }}
           >
             <RefreshCw className="size-3.5" /> 重建示例世界观
@@ -122,8 +123,8 @@ export function DataSettings() {
             variant="outline"
             size="sm"
             className="w-full justify-start gap-1.5 text-destructive"
-            onClick={() => {
-              if (!confirm('这会清空本机上全部世界观数据（插件与设置保留），且无法撤销。\n建议先「导出完整备份」。确定继续？')) return;
+            onClick={async () => {
+              if (!await askConfirm('这会清空本机上全部世界观数据（插件与设置保留），且无法撤销。\n建议先「导出完整备份」。确定继续？')) return;
               purgeEverything();
               toast('已清空全部数据，正在重新初始化…', 'warn');
               setTimeout(() => window.location.reload(), 600);

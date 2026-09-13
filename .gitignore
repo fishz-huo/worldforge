@@ -34,3 +34,7 @@ src-tauri/gen/
 
 # 本地数据备份
 *.wfbak.json
+# 应用「导出」功能默认写到工作目录时的产物（属于个人数据，不进仓库）
+samples/*.full.json
+samples/*.settings.json
+samples/*.sqlite
