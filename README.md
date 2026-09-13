@@ -13,28 +13,33 @@ WorldForge 用来专门构筑作品的世界观与角色故事。它比 World An
 
 所有数据保存在你自己的机器上：**不联网、不上传、不需要账号**。
 
-<!--
-  截图位：图片放在 docs/images/，命名与内容见 docs/images/README.md。
-  5 个文件就位后，把下面这段的注释标记去掉即可显示；未就位前保持注释，避免裂图。
+<p align="center">
+  <img src="docs/images/01-overview.png" alt="WorldForge 主界面：左侧卡片库、中间正文、右侧卡片预览与关联关系同屏" width="900">
+</p>
 
-  <p align="center">
-    <img src="docs/images/01-overview.png" alt="WorldForge 主界面：卡片列表 + 正文 + 预览同屏" width="900">
-  </p>
+### 卡片即设定：写到哪，设定就跟到哪
 
-  ### 卡片即设定
-  <p align="center">
-    <img src="docs/images/02-card.png" alt="卡片详情与关键词悬停预览" width="820">
-  </p>
+正文里出现的卡片标题会自动高亮，鼠标悬停即可预览完整设定，不用来回切窗口。
 
-  ### 地图 / 时间轴 / 大纲
-  <p align="center">
-    <img src="docs/images/03-map.png" alt="地图：标记点与多边形区域" width="440">
-    <img src="docs/images/04-timeline.png" alt="时间轴：泳道、条目与纪元" width="440">
-  </p>
-  <p align="center">
-    <img src="docs/images/05-outline.png" alt="大纲树与正文" width="820">
-  </p>
--->
+<p align="center">
+  <img src="docs/images/02-card.png" alt="正文中的关键词高亮，悬停弹出卡片预览：类别、作用范围、来源、核心规则与标签" width="520">
+</p>
+
+### 地图与时间轴
+
+地图用归一化标记与粗略多边形表达方位和资源分布；时间轴用泳道串起事件、角色年龄与文明演进，
+并支持「灵息浓度」这类随年代变化的数值。
+
+<p align="center">
+  <img src="docs/images/03-map.png" alt="地图：北境联盟与灰烬王国两块多边形区域、标记点与右侧区域排行榜" width="420">
+  <img src="docs/images/04-timeline.png" alt="时间轴：5 条泳道、3 个纪元区间与数值刻度带" width="420">
+</p>
+
+### 大纲与长文写作
+
+<p align="center">
+  <img src="docs/images/05-outline.png" alt="大纲树与正文同屏，节点可折叠、可关联卡片" width="560">
+</p>
 
 ---
 
