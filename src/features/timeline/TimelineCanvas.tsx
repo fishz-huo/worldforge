@@ -102,8 +102,8 @@ export function TimelineCanvas({
         横向滚动只发生在右列，左列因此天然"钉住"。
       */}
       <div className="flex min-h-0 flex-1 overflow-y-auto">
-        {/* 左列：泳道名称（不随横向滚动移动） */}
-        <div className="sticky left-0 z-30 w-36 shrink-0 self-start border-r border-border">
+        {/* 左列：泳道名称（不随横向滚动移动）。手机上收窄到 w-20，见 TimelineAxis 的说明 */}
+        <div className="w-36 shrink-0 self-start border-r border-border max-md:w-20">
           <div className="sticky top-0 z-10 h-12 border-b border-border bg-card/60" />
           {visibleTracks.map((track) => (
             <TimelineLaneLabel

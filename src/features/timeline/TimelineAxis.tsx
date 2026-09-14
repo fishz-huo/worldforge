@@ -91,11 +91,12 @@ export function TimelineAxis({
 
   return (
     <div className="relative h-12 border-b border-border bg-card/30">
-      {/* 左侧留白：与泳道名称列同宽，保证刻度与条目在同一竖线上 */}
-      <div className="absolute inset-y-0 left-0 w-36 border-r border-border bg-card/60" />
+      {/* 左侧留白：与泳道名称列同宽，保证刻度与条目在同一竖线上。
+          手机上收窄到 w-20 —— 144px 会吃掉 360px 屏幕的 40%，时间轴本体就没地方了。 */}
+      <div className="absolute inset-y-0 left-0 w-36 border-r border-border bg-card/60 max-md:w-20" />
 
       <div
-        className="absolute inset-y-0 left-36 right-0 cursor-crosshair"
+        className="absolute inset-y-0 left-36 right-0 cursor-crosshair max-md:left-20"
         onPointerDown={(e) => {
           (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
           onCursorChange(timeAt(e.clientX, e.currentTarget));

@@ -71,6 +71,50 @@
     --wf-sidebar-w: 16rem;
     --wf-inspector-w: 20rem;
     --wf-ui-scale: 1;
+    /**
+     * 底部标签栏占用的高度（含 iOS 安全区）。桌面端为 0。
+     * 移动端的抽屉与浮层都要避开它：铺满整高的抽屉会被它压住最后一行，
+     * 而那一行往往是"删除"之类的关键操作，表现为"按钮永远点不到"。
+     */
+    --wf-bottom-nav: 0px;
+  }
+  @media (max-width: 767px) {
+    :root {
+      --wf-bottom-nav: calc(3.25rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  /**
+   * 触屏兜底之一：把「只有悬停才出现」的内容改为常显。
+   *
+   * 全应用有十余处 `opacity-0 group-hover:opacity-100` 的操作按钮 ——
+   * 桌面上的设计是"鼠标移上去才冒出来，保持界面安静"。但触屏没有悬停：
+   * 按下去不会先触发 hover，这些按钮在手机上等于不存在，
+   * 而且没有任何提示告诉用户"这里其实有按钮"。
+   *
+   * 用 `@media (hover: none)` 而不是按宽度判断：能悬停的设备即使窗口很窄
+   * （桌面端拉窄窗口）也该保留原行为；平板触屏即使很宽也需要常显。
+   * 一条规则覆盖全部十余处，不必逐个组件改。
+   */
+  @media (hover: none) {
+    .opacity-0.group-hover\:opacity-100,
+    .opacity-0.hover\:opacity-100 {
+      opacity: 1;
+    }
+  }
+
+  /**
+   * 触屏兜底之二：可点元素的命中区不小于 24px。
+   * 图标本身可以小（视觉上不拥挤），但手指点不准的是**命中区**。
+   * 用 min-height / min-width 而不是 padding，是为了不改动现有布局尺寸。
+   */
+  @media (pointer: coarse) {
+    button,
+    [role='button'],
+    a[href] {
+      min-height: 24px;
+      min-width: 24px;
+    }
   }
 
   body {
