@@ -44,7 +44,15 @@ export function AppShell() {
   const View = VIEWS[module] ?? BoardModule;
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-background">
+    /*
+      底部留出移动端标签栏的高度：标签栏是 fixed 的，如果不留，
+      状态栏与内容区最后一行会被它盖住（手机上表现为"最下面那行点不到"）。
+      桌面端 --wf-bottom-nav 为 0，所以这一条对桌面完全无影响。
+    */
+    <div
+      className="flex h-full w-full flex-col overflow-hidden bg-background"
+      style={{ paddingBottom: 'var(--wf-bottom-nav)' }}
+    >
       <TopBar />
       <div className="flex min-h-0 flex-1">
         <SideRail />

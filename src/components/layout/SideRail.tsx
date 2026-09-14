@@ -2,13 +2,15 @@
  * 左侧图标导航栏
  * ------------------------------------------------------------------
  * 需求 6：界面简约、可隐藏、随时调出。
- * 桌面端是竖直图标栏；移动端自动变成底部标签栏（符合触屏习惯）。
+ * 桌面端是竖直图标栏（9 个模块 + 世界切换）；移动端换成底部标签栏
+ * （见 MobileNav：只留 4 个高频模块 + 「更多」，9 个塞进 360px 会重叠）。
  */
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Icon } from '@/components/Icon';
 import { Hint } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
+import { MobileNav } from './MobileNav';
 import { MODULES } from './modules';
 import { WorldSwitcher } from './WorldSwitcher';
 
@@ -19,26 +21,8 @@ export function SideRail() {
   const setRailOpen = useStore((s) => s.setRailOpen);
   const focusMode = useStore((s) => s.focusMode);
 
-  /** 移动端底部导航（始终渲染，由 CSS 控制显隐） */
-  const mobileNav = (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-      {MODULES.map((m) => (
-        <button
-          key={m.key}
-          onClick={() => setModule(m.key)}
-          className={cn(
-            'flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] transition-colors',
-            module === m.key ? 'text-primary' : 'text-muted-foreground',
-          )}
-        >
-          <Icon name={m.icon} className="size-4" />
-          {m.label}
-        </button>
-      ))}
-    </nav>
-  );
-
-  if (focusMode) return mobileNav;
+  // 专注模式：桌面只留底部导航（手机上仍可切模块），保持"沉浸"的语义
+  if (focusMode) return <MobileNav />;
 
   if (!railOpen) {
     return (
@@ -53,7 +37,7 @@ export function SideRail() {
             </button>
           </Hint>
         </div>
-        {mobileNav}
+        <MobileNav />
       </>
     );
   }
@@ -94,7 +78,7 @@ export function SideRail() {
           <WorldSwitcher compact />
         </div>
       </aside>
-      {mobileNav}
+      <MobileNav />
     </>
   );
 }

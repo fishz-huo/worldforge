@@ -17,14 +17,22 @@ import {
 } from './scale';
 
 /**
- * 泳道名称列的宽度。
+ * 泳道名称列的宽度（宽屏）。
  * 必须与三处保持一致，否则刻度尺与条目会错开一格：
- *   - useTimelineView 的 LABEL_COL（本常量，用于居中定位的换算）
- *   - TimelineAxis 里刻度尺左侧留白的 `w-36`
- *   - TimelineCanvas 里名称列的 `w-36`
- * 单独提出来是为了让"改宽度时要改哪几处"这件事在代码里看得见。
+ *   - 本常量（居中定位的换算要扣掉它）
+ *   - TimelineAxis 里刻度尺左侧留白的 `w-36` / `max-md:w-20`
+ *   - TimelineCanvas 里名称列的 `w-36` / `max-md:w-20`
+ * 手机上收到 80px：144px 的名称列会吃掉 360px 屏幕的 40%，
+ * 时间轴本体就没地方了。宽度跟着断点走，所以这里是两档值。
  */
 export const LABEL_COL = 144;
+/** 窄屏下的名称列宽度（对应 Tailwind 的 w-20） */
+export const LABEL_COL_NARROW = 80;
+
+/** 当前是否窄屏（与 Tailwind 的 md 断点一致） */
+export function isNarrow(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+}
 
 export function useTimelineView(fullRange: TimeRange) {
   /** 内容范围（含留白）：范围变了要重新适配，所以用 memo 固定引用 */
@@ -100,7 +108,8 @@ export function useTimelineView(fullRange: TimeRange) {
     (t: number) => {
       const el = scrollRef.current;
       if (!el) return;
-      // 名称列在滚动容器之外，所以容器宽度就是时间轴本体的宽度，不用扣偏移
+      // 名称列是滚动容器的**兄弟节点**（在容器外面），所以容器宽度
+      // 就是时间轴本体的宽度，取中点时不用扣偏移
       const left = scrollLeftToCenter(t, el.clientWidth, range, pxPerUnit);
       el.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
     },
