@@ -72,6 +72,9 @@ npm run dev
 终端会打印 `Local:` 与 `Network:` 两行地址，浏览器打开 `Local:` 那行（默认
 `http://localhost:5173/`）。手机用同一局域网的 `Network:` 那行，见下面「手机上怎么用」。
 
+> 从零开始的完整步骤（含装 Node.js / Rust、打成安装包、排错）在
+> [`docs/安装与启动.md`](docs/安装与启动.md)。
+
 > 开发服务器**固定** 5173 端口（Tauri 的 `devUrl` 写死了它），被占用时会直接报
 > `Port 5173 is already in use`，不会自动换端口。用 `netstat -ano | findstr :5173`
 > 找到占用进程再 `taskkill /PID <PID> /F`。
@@ -114,7 +117,7 @@ npm run tauri:build   # Windows 安装包（NSIS + MSI）→ src-tauri/target/re
 | **A. 局域网直接开**（2 分钟） | 电脑上 `npm run dev`（或 `npm run build` 后 `npm run preview`）；终端会打印 `Network: http://192.168.x.x:5173/` —— 手机连同一个 Wi-Fi，浏览器打开这个地址即可 | 电脑要一直开着、命令窗口要保持运行；因为是 `http://` 而非 HTTPS，浏览器**不会注册 Service Worker** → 没有离线能力，也不会出现「安装应用」，只能「添加到主屏幕」 |
 | **B. 部署到 HTTPS 静态站** | 把 `dist/` 传到任意 HTTPS 静态托管（Cloudflare Pages / GitHub Pages / 自建），手机打开网址 → 出现真正的「安装应用」，装完可离线 | 需要一处静态托管；软件本体在公网（**数据不上传**，只存手机本地） |
 
-**A 路线打不开时按这个顺序查**（详见 [`docs/使用说明.md` §0.3](docs/使用说明.md)）：
+**A 路线打不开时按这个顺序查**（详见 [`docs/安装与启动.md` §3.1](docs/安装与启动.md)）：
 
 1. 第一次运行 `npm run dev` 时 Windows 防火墙的询问要勾**专用网络**并允许；
 2. IP 别抄成「默认网关」，用终端打印的 `Network:` 那一行最保险；
