@@ -10,9 +10,9 @@
 
 /** 固定时间戳：让生成结果可复现，不随运行时间变化 */
 export const NOW = 1_700_000_000_000;
-export const WORLD_ID = 'world-maomao';
-/** 三条分支的固定 id；第三条是从第二条派生出来的 */
-export const BRANCH_IDS = ['branch-stay', 'branch-no-tieclaw', 'branch-duntail-first'];
+export const WORLD_ID = 'world-chaoxian';
+/** 两条分支的固定 id；第二条是从主世界派生出来的 */
+export const BRANCH_IDS = ['branch-stay', 'branch-xiaoman-first'];
 
 /** 把标题转成可读的 id 片段，中文原样保留 */
 export function slug(title) {
@@ -61,7 +61,8 @@ export function buildSnapshot(data) {
     color: b.color,
     divergence: b.divergence,
     divergence_t: b.divergence_t,
-    forked_from: i === 2 ? BRANCH_IDS[1] : null,
+    // 第二条分支是从第一条派生的：保留派生链，用来测「分支可以看 forked_from 溯源」
+    forked_from: i === 1 ? BRANCH_IDS[0] : null,
     created_at: NOW + i,
     updated_at: NOW + i,
   }));

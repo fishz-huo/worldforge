@@ -58,6 +58,12 @@ export interface MapDef extends Stamps {
 export interface MapPin {
   id: Id;
   map_id: Id;
+  /**
+   * 归属的图层（可空）。
+   * 坐标仍然是相对**画布**的归一化值 —— 图层只是分组与显示控制，
+   * 不参与坐标变换，所以老数据（layer_id 为 NULL）行为完全不变。
+   */
+  layer_id: Id | null;
   /** 绑定的卡片 id；可为空表示临时标记 */
   card_id: Id | null;
   /** 归一化坐标 0~1 */
@@ -74,6 +80,8 @@ export interface MapPin {
 export interface MapRegion {
   id: Id;
   map_id: Id;
+  /** 归属的图层（可空），语义同 MapPin.layer_id */
+  layer_id: Id | null;
   name: string;
   color: string;
   /** 归一化多边形顶点 [[x,y], ...] */

@@ -56,7 +56,13 @@ export function TagPicker({ cardId }: { cardId: string }) {
         >
           <Dot color={t.color} className="size-1.5" />
           {t.name}
-          <button className="text-muted-foreground hover:text-destructive" onClick={() => toggle(t.id)}>
+          <button
+            // 这是一个只有图标的小按钮：aria-label 让读屏软件能念出来，
+            // 触屏上的命中区由 index.css 的 pointer: coarse 规则兜到 24px
+            aria-label={`移除标签 ${t.name}`}
+            className="text-muted-foreground hover:text-destructive"
+            onClick={() => toggle(t.id)}
+          >
             <X className="size-2.5" />
           </button>
         </span>

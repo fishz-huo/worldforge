@@ -118,6 +118,20 @@ export function getCardType(type: string): CardTypeDef {
   );
 }
 
+/**
+ * 卡片类型定义（带作者自定义的类型名）。
+ * 「其他类型」（type === 'custom'）允许作者用 `fields.typeLabel` 给它起名字，
+ * 例如「礼仪」「菜谱」。凡是**要显示给人看**的地方都应该走这个函数，
+ * 只在按类型分组 / 排序这种内部逻辑里用 getCardType。
+ */
+export function cardTypeOf(card: { type: string; fields?: Record<string, unknown> }): CardTypeDef {
+  const def = getCardType(card.type);
+  const custom = card.fields?.typeLabel;
+  if (typeof custom !== 'string') return def;
+  const label = custom.trim();
+  return label ? { ...def, label } : def;
+}
+
 /** 某类型的完整字段列表 = 内置字段 + 插件追加字段 */
 export function getFieldsFor(type: string): FieldDef[] {
   const base = getCardType(type).fields;

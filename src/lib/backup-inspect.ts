@@ -44,8 +44,13 @@ const ARRAY_KEYS: (keyof SnapshotPayload)[] = [
   'regions', 'tracks', 'entries', 'eras', 'docs', 'outlineNodes',
 ];
 
-/** 兼容旧备份：缺这一段的文件仍然可用，只是图库挂载会为空 */
-const OPTIONAL_ARRAY_KEYS: (keyof SnapshotPayload)[] = ['cardAssets'];
+/**
+ * 兼容旧备份：缺这两段的文件仍然可用。
+ *   - cardAssets：0.1.0 早期版本没有，缺了只是图库挂载为空；
+ *   - layers：v0.2 才加的地图图层，缺了地图就没有底图（标记与区域还在），
+ *     所以是可选而不是必需 —— 老备份必须还能导入。
+ */
+const OPTIONAL_ARRAY_KEYS: (keyof SnapshotPayload)[] = ['cardAssets', 'layers'];
 
 /**
  * 这份文件能不能用（给 UI 用的一站式判断）。
@@ -129,7 +134,7 @@ export function inspectSnapshot(payload: SnapshotPayload, assetCount = 0): Backu
 
 /**
  * 把预检结果压成一句人能读的话，用于确认对话框与错误提示。
- * 例：世界观「猫猫的冒险」：48 张卡片、7 个标签、16 条关联、2 张地图。
+ * 例：世界观「潮线之外」：28 张卡片、7 个标签、16 条关联、1 张地图。
  */
 export function describeBackup(inspection: BackupInspection): string {
   const s = inspection.stats;

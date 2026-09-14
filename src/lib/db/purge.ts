@@ -66,9 +66,10 @@ export function purgeCard(cardId: string): void {
   });
 }
 
-/** 删除一张地图并清理标记与区域 */
+/** 删除一张地图并清理图层、标记与区域 */
 export function purgeMap(mapId: string): void {
   tx(() => {
+    run('DELETE FROM map_layers WHERE map_id = ?', [mapId]);
     run('DELETE FROM map_pins WHERE map_id = ?', [mapId]);
     run('DELETE FROM map_regions WHERE map_id = ?', [mapId]);
     run('UPDATE timeline_entries SET map_id = NULL WHERE map_id = ?', [mapId]);
@@ -83,6 +84,7 @@ export function purgeBranch(branchId: string): void {
     run('DELETE FROM card_assets WHERE card_id IN (SELECT id FROM cards WHERE branch_id = ?)', [branchId]);
     run('DELETE FROM relations WHERE branch_id = ?', [branchId]);
     run('DELETE FROM cards WHERE branch_id = ?', [branchId]);
+    run('DELETE FROM map_layers WHERE map_id IN (SELECT id FROM maps WHERE branch_id = ?)', [branchId]);
     run('DELETE FROM map_pins WHERE map_id IN (SELECT id FROM maps WHERE branch_id = ?)', [branchId]);
     run('DELETE FROM map_regions WHERE map_id IN (SELECT id FROM maps WHERE branch_id = ?)', [branchId]);
     run('DELETE FROM maps WHERE branch_id = ?', [branchId]);

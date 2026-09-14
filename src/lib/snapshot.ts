@@ -7,7 +7,7 @@
  */
 import type { SnapshotPayload } from '@/types';
 import {
-  branchesRepo, cardAssetsRepo, cardsRepo, docsRepo, entriesRepo, erasRepo, mapsRepo, outlineRepo,
+  branchesRepo, cardAssetsRepo, cardsRepo, docsRepo, entriesRepo, erasRepo, layersRepo, mapsRepo, outlineRepo,
   pinsRepo, regionsRepo, relationsRepo, tagsRepo, tracksRepo, worldsRepo, listAllCardTags, run, tx,
 } from './db';
 
@@ -31,6 +31,12 @@ export function buildSnapshot(worldId: string): SnapshotPayload {
     cardAssets: cardAssetsRepo.list('card_id IN (SELECT id FROM cards WHERE world_id = ?)', [worldId]),
     relations: relationsRepo.list('world_id = ?', [worldId]),
     maps: mapsRepo.list('world_id = ?', [worldId]),
+    /**
+     * 地图图层必须进快照：漏了它，导出/导入与版本还原之后
+     * 「多层底图」会只剩标记与区域，用户只会看到底图消失。
+     * （同一个坑在 cardAssets 上踩过一次，见下面那段注释。）
+     */
+    layers: layersRepo.list('map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]),
     pins: pinsRepo.list('map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]),
     regions: regionsRepo.list('map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]),
     tracks: tracksRepo.list('world_id = ?', [worldId]),
@@ -53,6 +59,7 @@ export function clearWorldContent(worldId: string): void {
     run('DELETE FROM relations WHERE world_id = ?', [worldId]);
     run('DELETE FROM cards WHERE world_id = ?', [worldId]);
     run('DELETE FROM tags WHERE world_id = ?', [worldId]);
+    run('DELETE FROM map_layers WHERE map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]);
     run('DELETE FROM map_pins WHERE map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]);
     run('DELETE FROM map_regions WHERE map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]);
     run('DELETE FROM maps WHERE world_id = ?', [worldId]);
@@ -81,6 +88,7 @@ export function restoreSnapshot(worldId: string, payload: SnapshotPayload): void
     cardAssetsRepo.saveMany(payload.cardAssets as never[]);
     relationsRepo.saveMany(payload.relations as never[]);
     mapsRepo.saveMany(payload.maps as never[]);
+    layersRepo.saveMany(payload.layers as never[]);
     pinsRepo.saveMany(payload.pins as never[]);
     regionsRepo.saveMany(payload.regions as never[]);
     tracksRepo.saveMany(payload.tracks as never[]);
@@ -98,7 +106,7 @@ export function restoreSnapshot(worldId: string, payload: SnapshotPayload): void
  */
 export function normalizeSnapshot(payload: SnapshotPayload): SnapshotPayload {
   const arrays: (keyof SnapshotPayload)[] = [
-    'branches', 'cards', 'tags', 'cardTags', 'cardAssets', 'relations', 'maps', 'pins',
+    'branches', 'cards', 'tags', 'cardTags', 'cardAssets', 'relations', 'maps', 'layers', 'pins',
     'regions', 'tracks', 'entries', 'eras', 'docs', 'outlineNodes',
   ];
   arrays.forEach((key) => {

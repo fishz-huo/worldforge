@@ -14,7 +14,7 @@ import { onPluginEvent } from './events';
 import * as reg from './registry';
 
 /** 宿主（软件）版本号，插件可据此做兼容判断 */
-export const HOST_VERSION = '0.1.0';
+export const HOST_VERSION = '0.2.0';
 
 /** 宿主与 store 之间的桥接：避免 lib → store 的反向依赖 */
 export interface HostBridge {

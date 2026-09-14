@@ -11,7 +11,7 @@ import { buildDocx } from './docx';
 import { collectAreas } from './collect';
 import { parseSpans, toDocBlocks } from './md-blocks';
 import { formatTime, mergedFileName, replaceImages, splitDirName, splitFileName } from './format';
-import { areaToMarkdown, itemFileToMarkdown } from './render-md';
+import { areaToMarkdown, itemFileToMarkdown, propsResolver } from './render-md';
 import { areaToPlainText, itemFileToPlainText } from './render-txt';
 import { areaToPrintHtml, itemFileToPrintHtml } from './render-html';
 import {
@@ -65,7 +65,7 @@ async function renderAreaFile(
   area: ExportArea, source: ExportSource, format: ExportFormat,
 ): Promise<ExportFile> {
   const base = { format, name: mergedFileName(source, area, format), mime: FORMAT_MIME[format] };
-  if (format === 'md') return { ...base, text: areaToMarkdown(area, source) };
+  if (format === 'md') return { ...base, text: areaToMarkdown(area, source, propsResolver(source)) };
   if (format === 'txt') return { ...base, text: areaToPlainText(area, source) };
   if (format === 'docx') return { ...base, bytes: await buildDocx(docxInputFor(area, source)) };
   return { ...base, html: areaToPrintHtml(area, source) };
@@ -81,7 +81,7 @@ async function renderItemFile(
     subDir: splitDirName(source, area),
     mime: FORMAT_MIME[format],
   };
-  if (format === 'md') return { ...base, text: itemFileToMarkdown(area, item, source) };
+  if (format === 'md') return { ...base, text: itemFileToMarkdown(area, item, source, propsResolver(source)) };
   if (format === 'txt') return { ...base, text: itemFileToPlainText(area, item, source) };
   if (format === 'docx') {
     const input: DocxInput = {

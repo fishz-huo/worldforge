@@ -12,8 +12,12 @@ import { DDL_EXTRA } from './schema-extra';
 
 export { DDL_CORE, DDL_EXTRA };
 
-/** 当前 schema 版本，写入 settings.schemaVersion */
-export const SCHEMA_VERSION = 1;
+/**
+ * 当前 schema 版本，写入 settings.schemaVersion。
+ * 2：v0.2 地图多图层 —— 新增 map_layers 表，map_pins / map_regions 加 layer_id 列。
+ *    加列由 migrate-columns.ts 负责（幂等），版本号只是标记"这个库已被迁移过"。
+ */
+export const SCHEMA_VERSION = 2;
 
 /** 数据库在 IndexedDB 里的键名 */
 export const DB_KV_KEY = 'worldforge.sqlite';
@@ -24,6 +28,6 @@ export const DDL = `${DDL_CORE}\n${DDL_EXTRA}`;
 /** 表名清单（自检与调试用） */
 export const TABLE_NAMES = [
   'worlds', 'branches', 'cards', 'card_assets', 'tags', 'card_tags', 'relations',
-  'maps', 'map_pins', 'map_regions', 'tracks', 'timeline_entries', 'eras',
+  'maps', 'map_layers', 'map_pins', 'map_regions', 'tracks', 'timeline_entries', 'eras',
   'docs', 'outline_nodes', 'versions', 'assets', 'settings', 'plugins',
 ] as const;

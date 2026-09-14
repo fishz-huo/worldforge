@@ -10,6 +10,7 @@ import initSqlJs, { type SqlJsStatic } from 'sql.js';
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 import { DB_KV_KEY, DDL, SCHEMA_VERSION } from './schema';
 import { idbGet, STORE_KV } from './idb';
+import { runColumnMigrations } from './migrate-columns';
 import { all, attachDb, flush, getDb, getSetting, markDirty, forceDirty, setSetting } from './sqlite';
 
 let sqlStatic: SqlJsStatic | null = null;
@@ -56,11 +57,15 @@ function getDbSafe(): boolean {
   }
 }
 
-/** 版本迁移：v0.1 只有版本 1，这里保证 DDL 幂等执行即可 */
+/** 版本迁移：建表是幂等的，另外补跑列迁移（老库缺的列在这里补齐） */
 function migrate(): void {
   const database = getDb();
   // 幂等补建：老版本快照缺表时能自动补齐
   database.exec(DDL);
+  // 列迁移：CREATE TABLE IF NOT EXISTS 只对"新库"生效，
+  // 老库里已经存在的表不会因此多出新列，见 migrate-columns.ts
+  const applied = runColumnMigrations();
+  if (applied.length) console.info('[worldforge] 已补齐缺失的列：', applied.join('、'));
   const current = getSetting<number>('schemaVersion', 0);
   if (current !== SCHEMA_VERSION) {
     setSetting('schemaVersion', SCHEMA_VERSION);
