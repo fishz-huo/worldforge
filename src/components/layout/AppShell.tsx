@@ -10,6 +10,7 @@ import type { ComponentType } from 'react';
 import { useStore } from '@/store';
 import type { ModuleKey } from '@/store/types';
 import { SideRail } from './SideRail';
+import { useAutoCollapseDrawers } from './panel-tools';
 import { TopBar } from './TopBar';
 import { StatusBar } from './StatusBar';
 import { ToastHost } from './ToastHost';
@@ -42,6 +43,8 @@ const VIEWS: Record<ModuleKey, ComponentType> = {
 export function AppShell() {
   const module = useStore((s) => s.module);
   const View = VIEWS[module] ?? BoardModule;
+  // 窗口跨过 1024px 断点时把左右两栏收起来，避免两个浮层同时盖住内容
+  useAutoCollapseDrawers();
 
   return (
     /*

@@ -22,21 +22,10 @@ CREATE TABLE IF NOT EXISTS maps (
 );
 CREATE INDEX IF NOT EXISTS idx_maps_world ON maps(world_id);
 
--- 地图图层（一张地图可叠多层底图；标记与区域仍归属地图，不随图层变换）
-CREATE TABLE IF NOT EXISTS map_layers (
-  id TEXT PRIMARY KEY,
-  map_id TEXT NOT NULL,
-  name TEXT NOT NULL DEFAULT '',
-  asset_id TEXT,
-  opacity REAL NOT NULL DEFAULT 1,
-  visible INTEGER NOT NULL DEFAULT 1,
-  order_index INTEGER NOT NULL DEFAULT 0,
-  blend TEXT NOT NULL DEFAULT 'normal',
-  created_at INTEGER NOT NULL DEFAULT 0
-);
-CREATE INDEX IF NOT EXISTS idx_layers_map ON map_layers(map_id);
-
 -- 地图标记点（坐标为 0~1 归一化值）
+-- layer_id 是 v0.2 加过、v0.2.1 又停用的列：多图层功能因为"看着像分层其实
+-- 只是叠底图"被撤掉了，但列留着 —— SQLite 删列要重建整张表，而这一列对
+-- 读写完全无害（老备份里也带着它）。新库不再写这一列的值。
 CREATE TABLE IF NOT EXISTS map_pins (
   id TEXT PRIMARY KEY,
   map_id TEXT NOT NULL,

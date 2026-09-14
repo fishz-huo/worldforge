@@ -34,9 +34,22 @@ export function isNarrow(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
 }
 
+/**
+ * 名称列当前占的宽度。
+ * 它与内容在**同一个滚动容器**里（sticky 钉住），所以"能画图的宽度"
+ * 永远是「容器宽度 − 名称列宽度」—— 适配与居中都必须扣掉它，
+ * 否则内容会比可视区宽出一列，横向又冒出一条本不该有的滚动条。
+ */
+export function gutter(): number {
+  return isNarrow() ? LABEL_COL_NARROW : LABEL_COL;
+}
+
 export function useTimelineView(fullRange: TimeRange) {
-  /** 内容范围（含留白）：范围变了要重新适配，所以用 memo 固定引用 */
-  const range = useMemo(() => padRange(fullRange), [fullRange.min, fullRange.max]);
+  /**
+   * 内容范围（含留白）：范围变了要重新适配，所以用 memo 固定引用。
+   * 右边多留一点给最右边的刻度值，否则刻度文字会把内容撑出视口。
+   */
+  const range = useMemo(() => padRange(fullRange, 0.06, 0.12), [fullRange.min, fullRange.max]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [pxPerUnit, setPxPerUnit] = useState(1);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -53,7 +66,7 @@ export function useTimelineView(fullRange: TimeRange) {
       setViewportPx(width);
       if (!fitted.current && width > 120) {
         fitted.current = true;
-        setPxPerUnit(fitPxPerUnit(range, width));
+        setPxPerUnit(fitPxPerUnit(range, width - gutter()));
       }
     };
     sync();
@@ -96,7 +109,7 @@ export function useTimelineView(fullRange: TimeRange) {
   /** 适配全部条目：整段刚好铺满 */
   const fit = useCallback(() => {
     const el = scrollRef.current;
-    const next = fitPxPerUnit(range, el?.clientWidth ?? viewportPx);
+    const next = fitPxPerUnit(range, (el?.clientWidth ?? viewportPx) - gutter());
     setPxPerUnit(next);
     requestAnimationFrame(() => {
       if (el) el.scrollLeft = 0;
@@ -108,9 +121,9 @@ export function useTimelineView(fullRange: TimeRange) {
     (t: number) => {
       const el = scrollRef.current;
       if (!el) return;
-      // 名称列是滚动容器的**兄弟节点**（在容器外面），所以容器宽度
-      // 就是时间轴本体的宽度，取中点时不用扣偏移
-      const left = scrollLeftToCenter(t, el.clientWidth, range, pxPerUnit);
+      // 名称列在同一个滚动容器里（sticky 钉住），所以可用宽度要扣掉它，
+      // 否则条目会被名称列压住一半 —— 点了却"看不到"。
+      const left = scrollLeftToCenter(t, el.clientWidth, range, pxPerUnit, gutter());
       el.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
     },
     [range, pxPerUnit],

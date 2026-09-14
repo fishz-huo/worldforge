@@ -10,7 +10,7 @@ import initSqlJs, { type SqlJsStatic } from 'sql.js';
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 import { DB_KV_KEY, DDL, SCHEMA_VERSION } from './schema';
 import { idbGet, STORE_KV } from './idb';
-import { runColumnMigrations } from './migrate-columns';
+import { runColumnMigrations, runTableMigrations } from './migrate-columns';
 import { all, attachDb, flush, getDb, getSetting, markDirty, forceDirty, setSetting } from './sqlite';
 
 let sqlStatic: SqlJsStatic | null = null;
@@ -57,7 +57,7 @@ function getDbSafe(): boolean {
   }
 }
 
-/** 版本迁移：建表是幂等的，另外补跑列迁移（老库缺的列在这里补齐） */
+/** 版本迁移：建表是幂等的，另外补跑列迁移与删表迁移 */
 function migrate(): void {
   const database = getDb();
   // 幂等补建：老版本快照缺表时能自动补齐
@@ -66,6 +66,9 @@ function migrate(): void {
   // 老库里已经存在的表不会因此多出新列，见 migrate-columns.ts
   const applied = runColumnMigrations();
   if (applied.length) console.info('[worldforge] 已补齐缺失的列：', applied.join('、'));
+  // 删表迁移：撤掉不再使用的表（v0.2 的 map_layers）
+  const dropped = runTableMigrations();
+  if (dropped.length) console.info('[worldforge] 已清理废弃的表：', dropped.join('、'));
   const current = getSetting<number>('schemaVersion', 0);
   if (current !== SCHEMA_VERSION) {
     setSetting('schemaVersion', SCHEMA_VERSION);

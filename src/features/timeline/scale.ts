@@ -10,11 +10,10 @@
  * 横向没有任何可滚动的像素，所以"拖滚动条看被裁掉的部分"根本不可能。
  *
  * 新模型（与 AE / PR 一致）：时间轴的总长度是固定的，缩放改的是
- * 「一个刻度单位占多少像素」。于是浏览器原生的横向滚动条自然就有了，
- * 缩放只是换一个比例尺。
+ * 「一个刻度单位占多少像素」。于是浏览器原生的横向滚动条自然就有了。
  *
  * 这里刻意只放数学，不碰 React 也不碰 DOM：坐标算错是"看着不对但说不出哪不对"
- * 的那类 bug，只有纯函数才能在 Node 里反复验。
+ * 的那类 bug，只有纯函数才能在 Node 里反复验（见 timeline-align-selftest.mjs）。
  */
 import { niceStep } from '@/types';
 
@@ -34,17 +33,19 @@ export interface TimeRange {
   max: number;
 }
 
-/** 把范围按比例外扩（留白），返回带 padding 的新范围 */
-export function padRange(range: TimeRange, ratio = 0.06): TimeRange {
+/**
+ * 把范围按比例外扩（留白），返回带 padding 的新范围。
+ *
+ * 为什么右边要比左边多留：刻度值是**从刻度线往右写**的（`0 年`、`350 年`）。
+ * 两边留白一样时，最后一个刻度的文字会伸出内容框，"适配全部"之后横向
+ * 仍然能滚 —— 看上去就像没对齐。右边多留 `labelPad` 一份正好放得下它。
+ */
+export function padRange(range: TimeRange, ratio = 0.06, labelPad = ratio): TimeRange {
   const span = Math.max(MIN_FULL_SPAN, range.max - range.min);
-  const pad = span * ratio;
-  return { min: range.min - pad, max: range.max + pad };
+  return { min: range.min - span * ratio, max: range.max + span * labelPad };
 }
 
-/**
- * 把整个时间轴的跨度换算成像素宽度。
- * 宽度为 0 说明数据还没准备好，调用方应跳过绘制（不要用 0 去除）。
- */
+/** 把整个时间轴的跨度换算成像素宽度（内容还没准备好时至少给 1，避免除以 0） */
 export function contentWidth(range: TimeRange, pxPerUnit: number): number {
   return Math.max(1, (range.max - range.min) * pxPerUnit);
 }
@@ -66,25 +67,17 @@ export function pxToSpan(px: number, pxPerUnit: number): number {
 
 /**
  * 缩放后要让某个时间点**停在屏幕上的同一位置**（滚轮缩放的手感全靠它）。
- *
- * @param anchorTime  鼠标（或游标）指向的刻度
- * @param anchorPx    该刻度在**视口内**的像素位置（相对容器左边缘）
- * @param newPxPerUnit 缩放后的比例尺
- * @returns 应该设置的 scrollLeft
+ * @param anchorPx 该刻度在**视口内**的像素位置（相对容器左边缘）
  */
 export function scrollLeftToKeep(anchorTime: number, anchorPx: number, range: TimeRange, newPxPerUnit: number): number {
   return timeToX(anchorTime, range, newPxPerUnit) - anchorPx;
 }
 
 /**
- * 让某个时间点居中：返回应该设置的 scrollLeft。
- * 「定位到某条目」用得到。
+ * 让某个时间点居中：返回应该设置的 scrollLeft（「定位到该条目」用得到）。
  *
- * @param fixedLeftPx 滚动容器**内部**左侧被固定的宽度。
- *   时间轴的泳道名称列放在滚动容器外面（它是另一个 flex 子项），
- *   所以这里传 0；只有当名称列也在容器里并用 sticky 固定时才需要传它的宽度。
- *   留这个参数是因为"按整个宽度取中点"是最容易犯的居中错误：
- *   固定列压住左边时，中点会跑到固定列底下。
+ * @param fixedLeftPx 滚动容器**内部**左侧被固定住的宽度（例如 sticky 的名称列）。
+ *   固定列压住左边时，中点会跑到固定列底下 —— 这是最容易犯的居中错误。
  */
 export function scrollLeftToCenter(
   t: number, viewportPx: number, range: TimeRange, pxPerUnit: number, fixedLeftPx = 0,
@@ -93,8 +86,8 @@ export function scrollLeftToCenter(
 }
 
 /**
- * 根据可用宽度算一个「刚好装下全部条目」的比例尺。
- * 这就是原来的「适配全部条目」，只是现在它返回比例尺而不是区间。
+ * 根据可用宽度算一个「刚好装下全部条目」的比例尺（原来的「适配全部条目」）。
+ * range 必须是**已经 padRange 过**的那个，viewportPx 必须是扣掉名称列之后的宽度。
  */
 export function fitPxPerUnit(range: TimeRange, viewportPx: number): number {
   const span = Math.max(MIN_FULL_SPAN, range.max - range.min);
@@ -115,11 +108,8 @@ export function clampPxPerUnit(value: number): number {
 }
 
 /**
- * 缩放一步：factor > 1 放大。三种情况别混在一起：
- *   - 倍数算坏（NaN / 无穷）→ 中性值 1，用户看到的是"缩放没反应"，
- *     而不是界面突然缩到最小；
- *   - 倍数 <= 0（滚轮连续缩小）→ 缩到最小，这是最自然的行为；
- *   - 正常倍数 → 乘完夹到区间内。
+ * 缩放一步：factor > 1 放大。倍数算坏给中性值 1（"没反应"好过"突然缩到最小"），
+ * 倍数 <= 0 缩到最小，正常倍数乘完夹到区间内。
  */
 export function zoomBy(pxPerUnit: number, factor: number): number {
   if (Number.isNaN(factor) || !Number.isFinite(factor)) return 1;
@@ -130,13 +120,16 @@ export function zoomBy(pxPerUnit: number, factor: number): number {
 /**
  * 刻度步长与「好看的 1/2/5 × 10ⁿ」规则沿用 types/timeline.ts 的 niceStep，
  * 不再实现第二份 —— 两处各写一套迟早会出现"刻度尺和吸附用的步长不一样"。
- * 区别只在判断依据：旧代码按「可见区间」算，新代码按「屏幕上一格多少像素」算，
- * 于是缩放时刻度会自动变密或变疏。
  */
 export { niceStep } from '@/types';
 
 /**
  * 按屏幕像素密度决定刻度步长与要画的刻度序列。
+ *
+ * `viewportPx` 必须是**真正能画图的那一段宽度**（滚动容器宽度 − 名称列宽度）：
+ * 多算一列会把可视右边界推到内容之外，最右边就多画一个刻度，它的文字
+ * 伸出内容框 —— 用户看到的是"最后那个刻度被切了一半"。
+ *
  * @param minLabelPx 两个刻度之间至少留多少像素（避免标签叠在一起）
  */
 export function visibleTicks(
@@ -172,10 +165,7 @@ export function snapTime(t: number, range: TimeRange, pxPerUnit: number, viewpor
   return Math.round(t / step) * step;
 }
 
-/**
- * 计算所有内容的时间范围（条目 + 纪元 + 额外的锚点）。
- * 全部为空时给一个以 0 为中心的默认跨度，否则时间轴会出现零宽度内容。
- */
+/** 计算所有内容的时间范围（条目 + 纪元）。全空时给一个以 0 为中心的默认跨度 */
 export function fullRangeOf(entries: { start_t: number; end_t: number | null }[], eras: { start_t: number; end_t: number }[] = []): TimeRange {
   const values: number[] = [0];
   entries.forEach((e) => {

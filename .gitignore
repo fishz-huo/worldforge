@@ -32,6 +32,9 @@ npm-debug.log*
 src-tauri/target/
 src-tauri/gen/
 
+# 界面探针（scripts/ui-probe.mjs）量出来的截图，属于本地调试产物
+.probe/
+
 # 本地数据备份
 *.wfbak.json
 # 应用「导出」功能默认写到工作目录时的产物（属于个人数据，不进仓库）

@@ -1,6 +1,6 @@
 [package]
 name = "worldforge"
-version = "0.2.0"
+version = "0.2.1"
 description = "WorldForge 世界观工坊 —— 本地优先的世界观构建软件"
 authors = ["WorldForge"]
 edition = "2021"

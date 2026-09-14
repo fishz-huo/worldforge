@@ -59,9 +59,9 @@ export interface MapPin {
   id: Id;
   map_id: Id;
   /**
-   * 归属的图层（可空）。
-   * 坐标仍然是相对**画布**的归一化值 —— 图层只是分组与显示控制，
-   * 不参与坐标变换，所以老数据（layer_id 为 NULL）行为完全不变。
+   * 历史遗留列，永远是 null（v0.2 的图层分组已撤）。
+   * 留着它是因为数据库里这一列还在、老备份里也带着它：
+   * 类型里去掉会让"读进来 → 原样写回"多一步清洗，得不偿失。
    */
   layer_id: Id | null;
   /** 绑定的卡片 id；可为空表示临时标记 */
@@ -80,7 +80,7 @@ export interface MapPin {
 export interface MapRegion {
   id: Id;
   map_id: Id;
-  /** 归属的图层（可空），语义同 MapPin.layer_id */
+  /** 历史遗留列，语义同 MapPin.layer_id（永远是 null） */
   layer_id: Id | null;
   name: string;
   color: string;

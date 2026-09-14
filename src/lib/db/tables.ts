@@ -12,7 +12,6 @@ import type {
   Doc,
   Era,
   MapDef,
-  MapLayer,
   MapPin,
   MapRegion,
   OutlineNode,
@@ -50,9 +49,6 @@ export const RELATION_SPEC = defineTable('relations',
 export const MAP_SPEC = defineTable('maps',
   ['world_id', 'branch_id', 'name', 'description', 'asset_id', 'period', 'period_t',
     'opacity', 'meta', 'created_at', 'updated_at'], { meta: {} });
-
-export const LAYER_SPEC = defineTable('map_layers',
-  ['map_id', 'name', 'asset_id', 'opacity', 'visible', 'order_index', 'blend', 'created_at']);
 
 export const PIN_SPEC = defineTable('map_pins',
   ['map_id', 'layer_id', 'card_id', 'x', 'y', 'label', 'icon', 'color', 'note']);
@@ -96,7 +92,6 @@ export const cardAssetsRepo = createRepo<CardAsset>(CARD_ASSET_SPEC);
 export const tagsRepo = createRepo<Tag>(TAG_SPEC);
 export const relationsRepo = createRepo<Relation>(RELATION_SPEC);
 export const mapsRepo = createRepo<MapDef>(MAP_SPEC);
-export const layersRepo = createRepo<MapLayer>(LAYER_SPEC);
 export const pinsRepo = createRepo<MapPin>(PIN_SPEC);
 export const regionsRepo = createRepo<MapRegion>(REGION_SPEC);
 export const tracksRepo = createRepo<Track>(TRACK_SPEC);

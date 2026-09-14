@@ -17,7 +17,7 @@
  *   - card_assets：没有 id 列（card_id + asset_id 复合主键），所以两边都要重映射。
  */
 import type { SnapshotPayload } from '@/types';
-import { newBranchId, newCardId, newDocId, newEntryId, newEraId, newId, newLayerId, newMapId, newOutlineId, newPinId, newRegionId, newTagId, newTrackId } from './id';
+import { newBranchId, newCardId, newDocId, newEntryId, newEraId, newId, newMapId, newOutlineId, newPinId, newRegionId, newTagId, newTrackId } from './id';
 
 /** 一行记录（导入数据来自磁盘，字段形状不可信，因此按普通对象处理） */
 type Row = Record<string, unknown>;
@@ -57,7 +57,6 @@ export function remapSnapshotIds(payload: SnapshotPayload): SnapshotPayload {
   const cards = idMap(snap.cards, newCardId);
   const tags = idMap(snap.tags, newTagId);
   const maps = idMap(snap.maps, newMapId);
-  const layers = idMap(snap.layers, newLayerId);
   const pins = idMap(snap.pins, newPinId);
   const regions = idMap(snap.regions, newRegionId);
   const tracks = idMap(snap.tracks, newTrackId);
@@ -80,7 +79,6 @@ export function remapSnapshotIds(payload: SnapshotPayload): SnapshotPayload {
   applyId(snap.cards, cards);
   applyId(snap.tags, tags);
   applyId(snap.maps, maps);
-  applyId(snap.layers, layers);
   applyId(snap.pins, pins);
   applyId(snap.regions, regions);
   applyId(snap.tracks, tracks);
@@ -101,14 +99,11 @@ export function remapSnapshotIds(payload: SnapshotPayload): SnapshotPayload {
   remapColumn(snap.relations, 'from_id', cards);
   remapColumn(snap.relations, 'to_id', cards);
   remapColumn(snap.relations, 'branch_id', branches);
-  // 地图与地图元素：地图归属、图层归属、标记点绑定的卡片
+  // 地图与地图元素：地图归属、标记点绑定的卡片
   remapColumn(snap.maps, 'branch_id', branches);
-  remapColumn(snap.layers, 'map_id', maps);
   remapColumn(snap.pins, 'map_id', maps);
-  remapColumn(snap.pins, 'layer_id', layers);
   remapColumn(snap.pins, 'card_id', cards);
   remapColumn(snap.regions, 'map_id', maps);
-  remapColumn(snap.regions, 'layer_id', layers);
   // 时间轴：泳道、条目（含绑定的卡片与地图）
   remapColumn(snap.tracks, 'branch_id', branches);
   remapColumn(snap.entries, 'track_id', tracks);

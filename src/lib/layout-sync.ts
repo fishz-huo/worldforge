@@ -54,11 +54,26 @@ export function applyUiScale(scale: number): void {
   root.style.width = `${100 / value}%`;
 }
 
-/** 写入左右两栏宽度 */
+/**
+ * 写入左右两栏宽度。
+ *
+ * 为什么要写两个变量（`-w` 与 `-w-drawer`）：
+ *   面板的宽度写在**内联 style** 里（`width: var(--wf-sidebar-w)`），而内联
+ *   style 的优先级高于任何 class —— 于是 Tailwind 的 `max-lg:w-[...]`
+ *   根本压不住它。窄屏抽屉因此永远是设定宽度（360px 的屏幕上它比屏幕还宽，
+ *   跑到屏幕外，看起来就是"排版坏了"）。
+ *   正确做法是把"窄屏要留出边缘"这件事放进变量本身：内联 style 不变，
+ *   窄屏时变量自动变成 min(设定宽度, 视口 − 4rem)。
+ *   留 4rem 是为了让用户还能看到并点到外面那层（点一下就关掉抽屉）。
+ */
 export function applyPanelWidths(sidebar: number, inspector: number): void {
   const root = document.documentElement;
-  root.style.setProperty('--wf-sidebar-w', `${clampWidth(sidebar, SIDEBAR_LIMITS)}rem`);
-  root.style.setProperty('--wf-inspector-w', `${clampWidth(inspector, INSPECTOR_LIMITS)}rem`);
+  const side = clampWidth(sidebar, SIDEBAR_LIMITS);
+  const insp = clampWidth(inspector, INSPECTOR_LIMITS);
+  root.style.setProperty('--wf-sidebar-w', `${side}rem`);
+  root.style.setProperty('--wf-inspector-w', `${insp}rem`);
+  root.style.setProperty('--wf-sidebar-w-drawer', `min(${side}rem, 100vw - 4rem)`);
+  root.style.setProperty('--wf-inspector-w-drawer', `min(${insp}rem, 100vw - 4rem)`);
 }
 
 /** 参数变了要落盘，但拖拽时一秒能触发几十次，去抖再写 localStorage */

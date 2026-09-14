@@ -45,12 +45,12 @@ const ARRAY_KEYS: (keyof SnapshotPayload)[] = [
 ];
 
 /**
- * 兼容旧备份：缺这两段的文件仍然可用。
- *   - cardAssets：0.1.0 早期版本没有，缺了只是图库挂载为空；
- *   - layers：v0.2 才加的地图图层，缺了地图就没有底图（标记与区域还在），
- *     所以是可选而不是必需 —— 老备份必须还能导入。
+ * 兼容旧备份：缺这一段仍然可用。
+ *   - cardAssets：0.1.0 早期版本没有，缺了只是图库挂载为空。
+ * 注意 v0.2 的 `layers`（地图图层）不在列表里：那个功能已撤，
+ * 旧备份里多出来的这一段会被直接忽略（不是"缺少"，是"不再认识"）。
  */
-const OPTIONAL_ARRAY_KEYS: (keyof SnapshotPayload)[] = ['cardAssets', 'layers'];
+const OPTIONAL_ARRAY_KEYS: (keyof SnapshotPayload)[] = ['cardAssets'];
 
 /**
  * 这份文件能不能用（给 UI 用的一站式判断）。

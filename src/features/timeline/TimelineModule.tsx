@@ -39,6 +39,7 @@ export function TimelineModule() {
   const selectedEntryId = useStore((s) => s.selectedEntryId);
   const selectEntry = useStore((s) => s.selectEntry);
   const updateEntry = useStore((s) => s.updateEntry);
+  const updateTrack = useStore((s) => s.updateTrack);
   const updateEra = useStore((s) => s.updateEra);
   const timeConfig = useStore((s) => s.worlds.find((w) => w.id === s.currentWorldId)?.meta?.time);
   const unit = timeConfig?.unit ?? DEFAULT_TIME_CONFIG.unit;
@@ -142,6 +143,7 @@ export function TimelineModule() {
             onCursorChange={handleCursor}
             onSelectEntry={(id) => selectEntry(id)}
             onSelectTrack={setSelectedTrackId}
+            onToggleTrackHidden={(track) => updateTrack(track.id, { hidden: track.hidden === 1 ? 0 : 1 })}
             onCommitEntry={(id, patch) => updateEntry(id, patch)}
             onEraChange={(id, patch) => updateEra(id, patch as Partial<Era>)}
             onZoomAt={view.zoomAt}

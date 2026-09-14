@@ -20,7 +20,7 @@ declare global {
     WorldForge?: { React: typeof React; version: string };
   }
 }
-window.WorldForge = { React, version: '0.2.0' };
+window.WorldForge = { React, version: '0.2.1' };
 
 /** 注册 Service Worker（仅生产构建；开发时避免缓存干扰热更新） */
 function registerServiceWorker() {

@@ -1,5 +1,5 @@
 /**
- * 列迁移（ALTER TABLE）
+ * 结构迁移（ALTER TABLE 加列 / DROP TABLE 删表）
  * ------------------------------------------------------------------
  * 与建表分开的原因：DDL 里的 `CREATE TABLE IF NOT EXISTS` 只能建**新表**，
  * 老用户数据库里已经存在的表不会因此多出新列。
@@ -41,6 +41,37 @@ export const COLUMN_MIGRATIONS: ColumnMigration[] = [
     why: 'v0.2 地图多图层：区域可以归属某一层；老数据为 NULL',
   },
 ];
+
+/**
+ * 表级迁移（DROP TABLE）
+ * ------------------------------------------------------------------
+ * 与列迁移分开写：列迁移是"补东西"，删表是"撤东西"，两者的幂等性
+ * 保证也不一样（DROP TABLE IF EXISTS 天然幂等，不需要先查 PRAGMA）。
+ *
+ * 目前只有一条：撤掉 v0.2 的 map_layers。
+ * 为什么不是"留着不用"：留着就会出现在数据模型文档、备份检查器与
+ * 表名自检里，而界面上再也建不出图层 —— 一张永远为空的表比没有更让人困惑。
+ */
+const DROP_TABLES: { table: string; why: string }[] = [
+  {
+    table: 'map_layers',
+    why: 'v0.2.1 撤掉地图多图层：图层只是叠底图，与"分层管理标记"的预期不符',
+  },
+];
+
+/**
+ * 执行全部表级迁移。
+ * @returns 实际删掉了哪些表（自测与启动日志用）
+ */
+export function runTableMigrations(): string[] {
+  const applied: string[] = [];
+  DROP_TABLES.forEach((m) => {
+    if (!tableExists(m.table)) return;
+    run(`DROP TABLE IF EXISTS ${m.table}`);
+    applied.push(m.table);
+  });
+  return applied;
+}
 
 /** 某张表现有的列名 */
 function columnsOf(table: string): Set<string> {

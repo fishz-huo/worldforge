@@ -8,6 +8,11 @@
  *
  * 坐标从"百分比"换成了"像素"：内容总宽由比例尺算出（见 scale.ts），
  * 所以这里的定位一律是绝对像素，横向滚动交给外面的滚动容器。
+ *
+ * **本组件的坐标系以自己左上角为原点**（`toX(0)` 贴着自己的左边缘）：
+ * 泳道被摆在名称列右边，若直接用"内容坐标"，绝对定位参照的是泳道自己，
+ * 于是每条泳道里的东西都会比刻度尺多偏一个名称列的宽度 ——
+ * 这正是"条目/游标和刻度对不上"的来源。调用方用 `toLaneX` 换算好再传进来。
  */
 import type { TimelineEntry, Track } from '@/types';
 import { entrySpan } from '@/types';
@@ -17,7 +22,7 @@ import type { DragPreview } from './useEntryDrag';
 interface Props {
   track: Track;
   entries: TimelineEntry[];
-  /** 刻度 → 内容像素 */
+  /** 刻度 → 本泳道内的像素（已经扣掉名称列与内容左端） */
   toX: (t: number) => number;
   /** 比例尺（把"最小可见宽度"换算成刻度） */
   pxPerUnit: number;
@@ -52,22 +57,31 @@ export function TimelineLane({
 
         if (isInstant) {
           return (
-            <button
+            // 包一层并 stopPropagation：容器上的 pointerdown 是"选时刻"，
+            // 点到条目时不能再顺手把游标也挪走
+            <span
               key={entry.id}
-              onPointerDown={(e) => onBeginDrag(e, entry, 'move')}
-              onClick={() => onSelectEntry(entry.id)}
-              title={`${entry.title}\n${entry.start_t}${entry.note ? `\n${entry.note}` : ''}\n（拖动可改刻度，按住 Shift 吸附）`}
-              className={cn(
-                'absolute top-1/2 z-10 size-3.5 cursor-grab -translate-y-1/2 active:cursor-grabbing',
-                active ? 'ring-2 ring-foreground/70' : 'hover:brightness-125',
-              )}
-              style={{ left, background: track.color, transform: 'translate(-50%, -50%) rotate(45deg)' }}
-            />
+              className="absolute top-1/2 z-10 -translate-y-1/2"
+              style={{ left }}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <button
+                onPointerDown={(e) => onBeginDrag(e, entry, 'move')}
+                onClick={() => onSelectEntry(entry.id)}
+                title={`${entry.title}\n${entry.start_t}${entry.note ? `\n${entry.note}` : ''}\n（拖动可改刻度，按住 Shift 吸附）`}
+                className={cn(
+                  'block size-3.5 cursor-grab active:cursor-grabbing',
+                  active ? 'ring-2 ring-foreground/70' : 'hover:brightness-125',
+                )}
+                style={{ background: track.color, transform: 'translate(-50%, -50%) rotate(45deg)' }}
+              />
+            </span>
           );
         }
         return (
           <div
             key={entry.id}
+            onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               'absolute top-1/2 z-10 flex h-5 -translate-y-1/2 items-center overflow-hidden rounded text-[10px]',
               active ? 'ring-2 ring-foreground/70' : '',

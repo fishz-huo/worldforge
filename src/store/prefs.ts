@@ -43,10 +43,14 @@ export interface Prefs {
   uiScale: UiScale;
 }
 
-/** 面板宽度的极限值：避免出现「拖到 40px 宽打不开」的死局 */
+/**
+ * 面板宽度的极限值：避免出现「拖到 40px 宽打不开」的死局。
+ * 两侧下限一致（都是 12rem = 192px）：检查器原来写 18rem，用户反馈
+ * "最小宽度还是有点宽" —— 在 1024 宽的窗口里它一个人吃掉三分之一。
+ */
 export const WIDTH_LIMITS = {
   sidebar: { min: 12, max: 30 },
-  inspector: { min: 18, max: 40 },
+  inspector: { min: 12, max: 40 },
 } as const;
 
 /**

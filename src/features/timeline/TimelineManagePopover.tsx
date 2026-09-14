@@ -9,7 +9,7 @@
  * 时间单位配置、以及「从卡片生成条目」。
  */
 import { useState } from 'react';
-import { Eye, EyeOff, Plus, Trash2, Wand2 } from 'lucide-react';
+import { Plus, Trash2, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,13 +81,6 @@ export function TimelineManagePopover({ open, onOpenChange, onFit }: Props) {
             <div className="space-y-0.5">
               {tracks.map((t) => (
                 <div key={t.id} className="group flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-accent/60">
-                  <button
-                    onClick={() => updateTrack(t.id, { hidden: t.hidden === 1 ? 0 : 1 })}
-                    title={t.hidden === 1 ? '显示该泳道' : '隐藏该泳道'}
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                  >
-                    {t.hidden === 1 ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-                  </button>
                   <input
                     type="color"
                     value={t.color}
@@ -116,6 +109,9 @@ export function TimelineManagePopover({ open, onOpenChange, onFit }: Props) {
                 </div>
               ))}
             </div>
+            <p className="px-1 text-[10px] leading-relaxed text-muted-foreground">
+              泳道的显示 / 隐藏在时间轴左侧、每条泳道名称的旁边，不用进这个弹窗。
+            </p>
 
             <div className="flex gap-1">
               <Input

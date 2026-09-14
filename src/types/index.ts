@@ -11,7 +11,6 @@ export * from './card-types';
 export * from './card-type-other';
 export * from './tag';
 export * from './map';
-export * from './map-layer';
 export * from './timeline';
 export * from './doc';
 export * from './misc';

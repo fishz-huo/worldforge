@@ -10,17 +10,15 @@
  * 因此底图换分辨率、窗口缩放都不会错位。
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { MapDef, MapLayer, MapPin, MapRegion, MapTool } from '@/types';
+import type { MapDef, MapPin, MapRegion, MapTool } from '@/types';
 import { cn } from '@/lib/utils';
-import { MapLayerStack } from './MapLayerStack';
+import { MapBackground } from './MapBackground';
 import { MapPinLayer } from './MapPinLayer';
 import { MapRegionLayer } from './MapRegionLayer';
 import { clampNorm } from './mapRender';
 
 interface Props {
   map: MapDef;
-  /** 该地图的全部图层（渲染顺序由 MapLayerStack 决定） */
-  layers: MapLayer[];
   pins: MapPin[];
   regions: MapRegion[];
   tool: MapTool;
@@ -39,12 +37,12 @@ interface Props {
 }
 
 export function MapCanvas({
-  map, layers, pins, regions, tool, selectedPinId, selectedRegionId, regionMode, resourceKey,
+  map, pins, regions, tool, selectedPinId, selectedRegionId, regionMode, resourceKey,
   showLabels, onCanvasClick, onPinMove, onPinSelect, onRegionSelect, onRegionPointMove, className,
 }: Props) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [draggingPin, setDraggingPin] = useState<string | null>(null);
-  const hasBackground = layers.some((l) => l.visible === 1 && l.asset_id) || Boolean(map.asset_id);
+  const hasBackground = Boolean(map.asset_id);
 
   /** 换算：鼠标事件 → 归一化坐标 */
   const toNorm = useCallback((clientX: number, clientY: number): [number, number] => {
@@ -89,8 +87,8 @@ export function MapCanvas({
         }
       }}
     >
-      {/* 底图：可叠多层，各自带不透明度与混合模式 */}
-      <MapLayerStack map={map} layers={layers} />
+      {/* 底图 */}
+      <MapBackground map={map} />
 
       {!hasBackground && (
         <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">

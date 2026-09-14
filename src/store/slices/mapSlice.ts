@@ -10,11 +10,10 @@ import { emptyMap } from '@/types';
 import { newMapId, newPinId, newRegionId } from '@/lib/id';
 import { mapsRepo, pinsRepo, regionsRepo } from '@/lib/db';
 import { purgeMap } from '@/lib/db/purge';
-import { createMapLayerActions, type MapLayerActions } from './mapLayerSlice';
 import { removeById, removeWhere, upsert } from '../helpers';
 import type { Slice } from '../types';
 
-export interface MapSlice extends MapLayerActions {
+export interface MapSlice {
   /** 新建地图，返回 mapId */
   createMap: (name: string) => string;
   updateMap: (id: string, patch: Partial<MapDef>) => void;
@@ -74,8 +73,12 @@ export const createMapSlice: Slice<MapSlice> = (...args) => {
       const pin: MapPin = {
         id: newPinId(),
         map_id: mapId,
-        // 默认不归属任何图层：老行为不变，用户想分类时再指派
-        layer_id: init.layer_id ?? null,
+        /**
+         * layer_id 是 v0.2 图层功能留下的列，功能已撤（见 migrate-columns.ts），
+         * 但列还在数据库里，所以这里继续写 null —— 老备份里的归属信息不会
+         * 因为这一列变成 undefined 而在保存时报错。
+         */
+        layer_id: null,
         card_id: init.card_id ?? null,
         x,
         y,
@@ -151,8 +154,5 @@ export const createMapSlice: Slice<MapSlice> = (...args) => {
       regionsRepo.remove(id);
       set({ regions: removeById(get().regions, id) });
     },
-
-    // 图层的那一组动作来自 mapLayerSlice.ts（展开合并，对外仍是一个 slice）
-    ...createMapLayerActions(...args),
   };
 };
