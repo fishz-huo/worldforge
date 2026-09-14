@@ -72,6 +72,13 @@ export interface ExportMeta {
 export interface ExportItem {
   id: string;
   title: string;
+  /**
+   * 条目种类。
+   * 只有卡片才有「属性区」（类型/字段/标签/关联的 Markdown 投影）——
+   * 文稿与大纲没有这些结构，硬加一段围栏只会让导出文件更难读。
+   * 可选是因为既有插件与自测直接构造 ExportItem，不给这个字段也要能跑。
+   */
+  kind?: 'card' | 'doc' | 'outline';
   /** 副标题，没有则为空串 */
   subtitle: string;
   meta: ExportMeta[];

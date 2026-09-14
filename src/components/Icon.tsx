@@ -8,7 +8,7 @@ import {
   Atom, BarChart3, BookOpen, Bot, Boxes, Brush, Bug, Calendar, Compass, Cpu,
   Dices, FileOutput, FileText, Flag, Gem, GitBranch, Globe2, HelpCircle, Image, Layers,
   LayoutDashboard, Library, Link2, ListTree, Map as MapIcon, MapPin, Mountain,
-  Network, Palette, PanelRight, Puzzle, Route, Scroll, Search, Settings, Sparkles,
+  Network, Palette, PanelRight, Puzzle, Route, Scroll, Search, Settings, Shapes, Sparkles,
   StickyNote, Swords, Tag, Timer, User, Users, Wand2, Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -18,7 +18,7 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   Atom, BarChart3, BookOpen, Bot, Boxes, Brush, Bug, Calendar, Compass, Cpu,
   Dices, FileOutput, FileText, Flag, Gem, GitBranch, Globe2, HelpCircle, Image, Layers,
   LayoutDashboard, Library, Link2, ListTree, Map: MapIcon, MapPin, Mountain,
-  Network, Palette, PanelRight, Puzzle, Route, Scroll, Search, Settings, Sparkles,
+  Network, Palette, PanelRight, Puzzle, Route, Scroll, Search, Settings, Shapes, Sparkles,
   StickyNote, Swords, Tag, Timer, User, Users, Wand2, Zap,
 };
 

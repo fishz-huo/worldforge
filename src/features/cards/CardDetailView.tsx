@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from 'react';
 import {
-  ArrowLeft, Copy, Eye, Pencil, Star, Trash2,
+  ArrowLeft, Braces, Copy, Eye, Pencil, Star, Trash2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,11 +16,12 @@ import { AutoInput, AutoTextarea } from '@/components/common/AutoField';
 import { MarkdownEditor } from '@/components/common/MarkdownEditor';
 import { MarkdownView } from '@/components/common/MarkdownView';
 import { Icon } from '@/components/Icon';
-import { getCardType } from '@/lib/plugin/registry';
+import { cardTypeOf } from '@/lib/plugin/registry';
 import { countWords } from '@/lib/markdown';
 import { cn, formatTime } from '@/lib/utils';
 import { useStore } from '@/store';
 import { CardAside } from './CardAside';
+import { CardPropsPanel } from './CardPropsPanel';
 import { askConfirm } from '@/lib/confirm';
 
 export function CardDetailView({ cardId }: { cardId: string }) {
@@ -31,9 +32,9 @@ export function CardDetailView({ cardId }: { cardId: string }) {
   const togglePin = useStore((s) => s.togglePin);
   const selectCard = useStore((s) => s.selectCard);
   const branches = useStore((s) => s.branches);
-  const [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const [mode, setMode] = useState<'edit' | 'preview' | 'props'>('edit');
 
-  const def = useMemo(() => (card ? getCardType(card.type) : null), [card]);
+  const def = useMemo(() => (card ? cardTypeOf(card) : null), [card]);
   if (!card || !def) {
     return (
       <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
@@ -136,6 +137,9 @@ export function CardDetailView({ cardId }: { cardId: string }) {
                 <TabsTrigger value="preview" className="gap-1">
                   <Eye className="size-3" /> 预览
                 </TabsTrigger>
+                <TabsTrigger value="props" className="gap-1">
+                  <Braces className="size-3" /> 属性区
+                </TabsTrigger>
               </TabsList>
               <span className="text-[10px] text-muted-foreground">
                 {countWords(card.body)} 字 · 更新于 {formatTime(card.updated_at)}
@@ -176,12 +180,17 @@ export function CardDetailView({ cardId }: { cardId: string }) {
                 </div>
               </div>
             </TabsContent>
+            <TabsContent value="props" className="mt-1 min-h-[340px] flex-1">
+              <div className="flex h-full min-h-0 flex-col">
+                <CardPropsPanel cardId={card.id} />
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
 
-        {/* 右列：结构编辑 */}
+        {/* 右列：结构编辑。切到「属性区」时收成只剩图库，避免两个入口改同一批数据 */}
         <div className="border-t border-border p-2 lg:border-l lg:border-t-0">
-          <CardAside cardId={card.id} />
+          <CardAside cardId={card.id} compact={mode === 'props'} />
         </div>
       </div>
     </div>

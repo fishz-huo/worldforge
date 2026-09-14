@@ -25,7 +25,8 @@ import { state } from './db-harness.mjs';
 const ROOT = process.cwd();
 const TXT = join(ROOT, 'docs', '潮线之外·世界观设定.txt');
 const JSON_FILE = join(ROOT, 'samples', '潮线之外.worldforge.json');
-const TEXT = readFileSync(TXT, 'utf8');
+// 归一化换行：手册在 Windows 检出后会变成 CRLF，而分区正则是按 \n 写的
+const TEXT = readFileSync(TXT, 'utf8').replace(/\r\n?/g, '\n');
 const texts = splitTopSections(TEXT);
 const { state: report, check, warn } = createReporter();
 

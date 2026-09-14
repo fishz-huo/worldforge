@@ -1,11 +1,19 @@
 /**
  * Markdown 渲染入口 + 文本统计工具
+ * ------------------------------------------------------------------
+ * 属性区（卡片 → Markdown 的字段/标签/关联投影）另见 props-render / props-parse，
+ * 这里只把它们转出去，调用方不必记住具体文件。
  */
 import { renderInline, extractWikiTargets } from './inline';
 import { renderMarkdown } from './block';
 
 export { renderMarkdown, renderInline, extractWikiTargets };
 export type { RenderOptions } from './block';
+export { FENCE, renderProps, renderPropsBlock } from './props-render';
+export type { PropsInput } from './props-render';
+export { parseProps, parseScalar, propsKeys } from './props-parse';
+export type { CardProps, RelationRef } from './props-parse';
+export { formatFieldValue, formatScalar, joinRelations, relationLine } from './props-format';
 
 /** 去掉 Markdown 标记，得到纯文本（用于摘要、搜索、字数统计） */
 export function stripMarkdown(md: string): string {
