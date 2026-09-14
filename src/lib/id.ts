@@ -38,6 +38,7 @@ export const ID_PREFIX = {
   tag: 't',
   relation: 'r',
   map: 'm',
+  layer: 'y',
   pin: 'p',
   region: 'g',
   track: 'k',
@@ -57,6 +58,7 @@ export const newCardId = () => newId(ID_PREFIX.card);
 export const newTagId = () => newId(ID_PREFIX.tag);
 export const newRelationId = () => newId(ID_PREFIX.relation);
 export const newMapId = () => newId(ID_PREFIX.map);
+export const newLayerId = () => newId(ID_PREFIX.layer);
 export const newPinId = () => newId(ID_PREFIX.pin);
 export const newRegionId = () => newId(ID_PREFIX.region);
 export const newTrackId = () => newId(ID_PREFIX.track);

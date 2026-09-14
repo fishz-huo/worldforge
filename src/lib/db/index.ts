@@ -8,6 +8,7 @@ export * from './schema';
 export * from './idb';
 export * from './sqlite';
 export * from './init';
+export * from './migrate-columns';
 export * from './saveStatus';
 export * from './table';
 export * from './tables';

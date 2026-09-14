@@ -46,6 +46,8 @@ export interface SnapshotPayload {
   cardAssets: unknown[];
   relations: unknown[];
   maps: unknown[];
+  /** 地图图层（map_layers）—— 漏掉它，导入后底图会整层消失，只剩标记与区域 */
+  layers: unknown[];
   pins: unknown[];
   regions: unknown[];
   tracks: unknown[];

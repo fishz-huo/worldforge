@@ -22,10 +22,25 @@ CREATE TABLE IF NOT EXISTS maps (
 );
 CREATE INDEX IF NOT EXISTS idx_maps_world ON maps(world_id);
 
+-- 地图图层（一张地图可叠多层底图；标记与区域仍归属地图，不随图层变换）
+CREATE TABLE IF NOT EXISTS map_layers (
+  id TEXT PRIMARY KEY,
+  map_id TEXT NOT NULL,
+  name TEXT NOT NULL DEFAULT '',
+  asset_id TEXT,
+  opacity REAL NOT NULL DEFAULT 1,
+  visible INTEGER NOT NULL DEFAULT 1,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  blend TEXT NOT NULL DEFAULT 'normal',
+  created_at INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_layers_map ON map_layers(map_id);
+
 -- 地图标记点（坐标为 0~1 归一化值）
 CREATE TABLE IF NOT EXISTS map_pins (
   id TEXT PRIMARY KEY,
   map_id TEXT NOT NULL,
+  layer_id TEXT,
   card_id TEXT,
   x REAL NOT NULL DEFAULT 0.5,
   y REAL NOT NULL DEFAULT 0.5,
@@ -40,6 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_pins_map ON map_pins(map_id);
 CREATE TABLE IF NOT EXISTS map_regions (
   id TEXT PRIMARY KEY,
   map_id TEXT NOT NULL,
+  layer_id TEXT,
   name TEXT NOT NULL DEFAULT '',
   color TEXT NOT NULL DEFAULT '#38bdf8',
   points TEXT NOT NULL DEFAULT '[]',
