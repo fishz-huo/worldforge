@@ -59,6 +59,23 @@ WorldForge 用来专门构筑作品的世界观与角色故事，为长篇虚构
 
 ## 从源码运行
 
+需要 **Node.js 20+**。想跑桌面外壳（Tauri）还需要 **Rust + MSVC 工具链**；
+只跑浏览器版不需要 Rust。
+
+```cmd
+git clone https://github.com/fishz-huo/worldforge.git
+cd worldforge
+npm install
+npm run dev
+```
+
+终端会打印 `Local:` 与 `Network:` 两行地址，浏览器打开 `Local:` 那行（默认
+`http://localhost:5173/`）。手机用同一局域网的 `Network:` 那行，见下面「手机上怎么用」。
+
+> 开发服务器**固定** 5173 端口（Tauri 的 `devUrl` 写死了它），被占用时会直接报
+> `Port 5173 is already in use`，不会自动换端口。用 `netstat -ano | findstr :5173`
+> 找到占用进程再 `taskkill /PID <PID> /F`。
+>
 > 包管理器：**npm**（仓库只带 `package-lock.json`）。请勿混用 pnpm / yarn，
 > 否则 `node_modules` 的链接结构会被推平重装。
 >
@@ -71,7 +88,7 @@ npm install           # 安装依赖
 npm run dev           # 开发服务器（默认 http://localhost:5173）
 npm run build         # 类型检查 + 生产构建 → dist/
 npm run preview       # 预览生产构建
-npm test              # 运行 362 项自测（21 个套件，Node 环境，无需浏览器）
+npm test              # 运行 370 项自测（22 个自检套件，Node 环境，无需浏览器）
 npm run test:sample   # 由测试世界观手册重新生成 samples/ 里的可导入备份并校验
 npm run test:backup   # 导出 / 导入回归自测（含损坏备份的回滚验证）
 npm run test:export   # 文档导出（Markdown / 文本 / Word / PDF）的采集、排版与文件清单自测
@@ -89,10 +106,19 @@ npm run tauri:build   # Windows 安装包（NSIS + MSI）→ src-tauri/target/re
 
 ### 手机上怎么用（两条路，按上手速度排）
 
+> 开发服务器已经监听所有网卡（`vite.config.ts` 里的 `host: true`），所以手机能直接用，
+> 不需要额外加 `--host` 参数。
+
 | 路线 | 怎么走 | 代价 / 限制 |
 | --- | --- | --- |
-| **A. 局域网直接开**（2 分钟） | 电脑上 `npm run build` 然后 `npm run preview -- --host`；手机连同一个 Wi-Fi，浏览器打开 `http://<电脑的局域网 IP>:4173/` | 电脑要一直开着、命令要保持运行；因为是 `http://` 而非 HTTPS，浏览器**不会注册 Service Worker** → 没有离线能力，也不会出现「安装应用」，只能「添加到主屏幕」 |
+| **A. 局域网直接开**（2 分钟） | 电脑上 `npm run dev`（或 `npm run build` 后 `npm run preview`）；终端会打印 `Network: http://192.168.x.x:5173/` —— 手机连同一个 Wi-Fi，浏览器打开这个地址即可 | 电脑要一直开着、命令窗口要保持运行；因为是 `http://` 而非 HTTPS，浏览器**不会注册 Service Worker** → 没有离线能力，也不会出现「安装应用」，只能「添加到主屏幕」 |
 | **B. 部署到 HTTPS 静态站** | 把 `dist/` 传到任意 HTTPS 静态托管（Cloudflare Pages / GitHub Pages / 自建），手机打开网址 → 出现真正的「安装应用」，装完可离线 | 需要一处静态托管；软件本体在公网（**数据不上传**，只存手机本地） |
+
+**A 路线打不开时按这个顺序查**（详见 [`docs/使用说明.md` §0.3](docs/使用说明.md)）：
+
+1. 第一次运行 `npm run dev` 时 Windows 防火墙的询问要勾**专用网络**并允许；
+2. IP 别抄成「默认网关」，用终端打印的 `Network:` 那一行最保险；
+3. 仍不行多半是路由器开了「AP 隔离」，可改用 Tailscale 这类组网工具。
 
 **两条路共同的坑：数据各存各的。** 本软件是本地优先、无账号、无云同步 ——
 「多端运行」指的是同一份前端代码能跑在多个平台，**不是数据自动同步**：
@@ -230,7 +256,7 @@ public/             PWA manifest、Service Worker、图标
 
 ```bash
 npm run typecheck   # TypeScript 严格模式，0 错误
-npm test            # 362 项自测（21 个套件，全部跑在 Node 里，不需要浏览器）
+npm test            # 370 项自测（22 个自检套件，全部跑在 Node 里，不需要浏览器）
 ```
 
 > 排版类的问题（刻度是否对齐、抽屉会不会互相盖住）Node 测不出来 ——
@@ -325,7 +351,7 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 
 > 第五例是 v0.2.1 修的一整类问题：**排版对不对，Node 测不出来**。
 > 用户报的是「泳道和刻度对不齐、游标不在刻度上、分隔条拖动时出现一条白条、
-> 窄屏两层排版叠在一起」—— 编译通过、构建成功、362 项测试全绿，一条都没拦住。
+> 窄屏两层排版叠在一起」—— 编译通过、构建成功、370 项测试全绿，一条都没拦住。
 > 于是补了 `scripts/cdp.mjs` + `scripts/ui-probe.mjs`：Node 24 自带
 > `fetch` / `WebSocket`，Chrome 自己就是 CDP 服务端，于是不必装 Playwright
 > 也能驱动无头 Chrome 量真实坐标并截图。它当场量出两个纯看代码看不出来的根因：
@@ -399,7 +425,7 @@ v0.2.1 紧接着又按"打开界面用一遍"的反馈返工了一次 —— 见
 ## 关于这个项目
 
 - **本项目由 AI 协作完成（vibe coding）**：需求与取舍来自作者，代码由 AI 模型（DeepSeek）生成。
-- **362 项自动化测试、每文件不超过 200 行、Word 与 ZIP 结构自校验** —— 这些护栏是刻意加的，
+- **370 项自动化测试、每个源码文件不超过 200 行、Word 与 ZIP 结构自校验** —— 这些护栏是刻意加的，
   由 `npm test` 守着。它不一定优雅，但被反复验证过。
 - **不是活跃维护的项目**，可能长期不更新，也不承诺响应时间。哪天突发奇想才会再动。
 - **没有任何担保**：不担保满足特定用途、不担保没有缺陷、**不担保数据不会丢失**。
@@ -461,4 +487,4 @@ about an unknown publisher — choose "More info" → "Run anyway". To build fro
   is not guaranteed to be safe. Please use *Settings → Data → Export full backup* regularly.
   See [`LICENSE`](LICENSE).
 
-Tests: `npm test` (362 checks).
+Tests: `npm test` (370 checks).
