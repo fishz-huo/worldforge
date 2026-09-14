@@ -10,6 +10,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { watchLayout } from './lib/layout-sync';
 import { startApp, useStore } from './store';
 import './index.css';
 
@@ -34,6 +35,8 @@ function registerServiceWorker() {
 
 /** 启动：先把界面渲染出来（loading 态），再异步初始化数据库 */
 async function main() {
+  // 布局变量必须在首次绘制之前写好，否则界面会先以 100% 缩放闪一下
+  watchLayout();
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <App />

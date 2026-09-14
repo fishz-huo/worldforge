@@ -62,6 +62,17 @@
     height: 100%;
   }
 
+  /**
+   * 布局变量（由 lib/layout-sync.ts 写入，这里给出默认值）
+   * 默认值与改造前的硬编码宽度完全一致：w-64 = 16rem、w-80 = 20rem，
+   * 所以老用户升级后看到的界面不会突然跳变。
+   */
+  :root {
+    --wf-sidebar-w: 16rem;
+    --wf-inspector-w: 20rem;
+    --wf-ui-scale: 1;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     /* 移动端（PWA / Tauri 安卓）安全区适配 */

@@ -80,6 +80,12 @@ export interface UiState {
   cardColumns: 2 | 3 | 4;
   editorSplit: boolean;
   editorFontSize: number;
+  /** 左侧次级侧栏宽度（rem，=16px 的倍数） */
+  sidebarWidth: number;
+  /** 右侧检查器宽度（rem） */
+  inspectorWidth: number;
+  /** 整界面缩放档位 */
+  uiScale: import('./prefs').UiScale;
 }
 
 /** 各 slice 的合并类型（具体签名见对应文件） */
