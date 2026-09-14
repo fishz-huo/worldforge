@@ -79,8 +79,8 @@ v0.2.0 发出来之后的返工：**把 v0.2.0 自己加的东西拆了，并修
 
 | 文件 | 大小 | SHA256 |
 | --- | --- | --- |
-| `WorldForge_0.2.1_x64-setup.exe` | 待构建 | — |
-| `WorldForge_0.2.1_x64_en-US.msi` | 待构建 | — |
+| `WorldForge_0.2.1_x64-setup.exe` | 1,617 KB | `8DE7408D2F38A14C33F22170AC1958709D174B7D4017758F32466A30738D5EF2` |
+| `WorldForge_0.2.1_x64_en-US.msi` | 2,104 KB | `96CD85CD881F3B10E1361C321E28C5B0F540B67968E0F7B0F3525A680AC294DE` |
 
 安装包未做代码签名，Windows 会提示「未知发布者」—— 点「更多信息」→「仍要运行」即可。
 
