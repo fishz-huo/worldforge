@@ -385,11 +385,12 @@ v0.2 是一次「按使用者反馈返工」的版本，五件事都出自实际
 
 | 文档 | 内容 |
 | --- | --- |
+| [`CHANGELOG.md`](CHANGELOG.md) | **更新日志**：每版改了什么、修了哪些坑、兼容性如何（Release 页适合写摘要，完整清单在这里） |
 | [`docs/使用说明.md`](docs/使用说明.md) | **用户手册**：逐功能的分步操作（点哪个按钮 → 出现什么界面 → 选什么选项），含界面总览、快捷键、每个模块的完整流程、常见问题与已知边界 |
-| [`docs/潮线之外·世界观设定.txt`](docs/潮线之外·世界观设定.txt) | **测试世界观手册**（纯文本）：一整套原创设定「潮线之外」，按 9 种卡片 / 标签 / 关联 / 地图 / 时间轴 / 文稿 / 大纲逐项列好，可照抄录入；由它生成的 `samples/潮线之外.worldforge.json` 可直接导入 |
-| [`docs/需求规格说明书-v0.1.md`](docs/需求规格说明书-v0.1.md) | FR-01~FR-14 详述：用户故事、交互流程、数据落点、验收清单、范围边界、路线图、风险 |
+| [`docs/潮线之外·世界观设定.txt`](docs/潮线之外·世界观设定.txt) | **测试世界观手册**（纯文本）：一整套原创设定「潮线之外」，按 10 种卡片 / 标签 / 关联 / 地图 / 时间轴 / 文稿 / 大纲逐项列好，可照抄录入；由它生成的 `samples/潮线之外.worldforge.json` 可直接导入 |
+| [`docs/需求规格说明书-v0.1.md`](docs/需求规格说明书-v0.1.md) | FR-01~FR-14 详述：用户故事、交互流程、数据落点、验收清单、范围边界、路线图、风险（v0.1 的基线文档，归档保留，不再回填） |
 | [`docs/架构设计.md`](docs/架构设计.md) | 分层架构、目录职责、九大关键机制、性能与体积预算、代码规范 |
-| [`docs/数据模型.md`](docs/数据模型.md) | 19 张表字段级定义、ER 图、卡片字段字典、典型 SQL、事务可重入要点、迁移策略 |
+| [`docs/数据模型.md`](docs/数据模型.md) | 20 张表字段级定义、ER 图、卡片字段字典、典型 SQL、事务可重入要点、迁移策略 |
 | [`docs/插件开发指南.md`](docs/插件开发指南.md) | PluginAPI 逐方法说明、事件与设置 schema、宿主 DOM 契约、发布与分享；§3.4「图库灯箱」与 §4.4「写盘 / 打印 / 文档导出」的代码就是仓库里的 `plugins/*.js`，与实现逐字一致 |
 
 ---
@@ -409,7 +410,7 @@ packaged as a Windows desktop app with Tauri 2. Data lives in your own machine
 
 **Download:** a prebuilt Windows installer is on the
 [Releases page](https://github.com/fishz-huo/worldforge/releases/latest)
-(`WorldForge_0.1.0_x64-setup.exe`). It is not code-signed, so Windows SmartScreen will warn
+(`WorldForge_0.2.0_x64-setup.exe`). It is not code-signed, so Windows SmartScreen will warn
 about an unknown publisher — choose "More info" → "Run anyway". To build from source:
 `npm install` → `npm run tauri:build`.
 
