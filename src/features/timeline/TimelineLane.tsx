@@ -33,6 +33,36 @@ interface Props {
   onBeginDrag: (e: React.PointerEvent, entry: TimelineEntry, mode: 'move' | 'start' | 'end') => void;
 }
 
+/** 数值 → 泳道内的 y（0 在下、100 在上，留出上下边距免得贴边） */
+function valueY(value: unknown, height: number): number {
+  const v = Math.max(0, Math.min(100, Number(value ?? 0)));
+  return height - 6 - (v / 100) * (height - 12);
+}
+
+/**
+ * 阶梯折线的顶点。
+ * 每个条目画「自己的时段」，所以把条目按开始刻度排序后逐段连：
+ * 先水平走到下一个条目的开始处，再竖直跳到新值。
+ */
+function stepPoints(
+  entries: TimelineEntry[],
+  toX: (t: number) => number,
+  height: number,
+): string {
+  const sorted = [...entries].sort((a, b) => a.start_t - b.start_t);
+  const out: string[] = [];
+  sorted.forEach((e, i) => {
+    const x = toX(e.start_t);
+    const y = valueY(e.value, height);
+    const next = sorted[i + 1];
+    // 竖直跳变：先补一个同 x 的旧值点，线才会是直角而不是斜的
+    if (i > 0) out.push(`${x},${valueY(sorted[i - 1].value, height)}`);
+    out.push(`${x},${y}`);
+    out.push(`${next ? toX(next.start_t) : toX(e.end_t ?? e.start_t)},${y}`);
+  });
+  return out.join(' ');
+}
+
 export function TimelineLane({
   track, entries, toX, pxPerUnit, cursor, selectedEntryId, preview,
   onSelectEntry, onBeginDrag,
@@ -114,19 +144,33 @@ export function TimelineLane({
         );
       })}
 
-      {/* 数值折线（科技水平等） */}
+      {/*
+        数值折线（灵息浓度、科技水平这类"某个量随时间的水平"）。
+        画法是**阶梯**：每个数值在自己的时段内保持水平，换段时竖直跳一格。
+        为什么不是把几个点直接连起来：那种画法在数据点之间插了并不存在的
+        过渡，而且当一个中间值特别高时，线会从中间那条的上方跨过去 ——
+        看起来就像"底下多了两条莫名其妙的斜线"（用户报的就是这个：
+        「加高两尺」底下那两条、以及「灵息浓度」那条从头斜到尾的长线）。
+        阶梯 + 每个测量点一个小圆点：一眼能看出"这是测出来的水平线"。
+      */}
       {track.valued === 1 && entries.length > 1 && (
         <svg className="pointer-events-none absolute inset-0 h-full w-full" preserveAspectRatio="none">
           <polyline
-            points={[...entries]
-              .sort((a, b) => a.start_t - b.start_t)
-              .map((e) => `${toX(e.start_t)},${100 - Math.max(0, Math.min(100, Number(e.value ?? 0)))}`)
-              .join(' ')}
+            points={stepPoints(entries, toX, height)}
             fill="none"
             stroke={track.color}
             strokeWidth={1.5}
             vectorEffect="non-scaling-stroke"
           />
+          {entries.map((e) => (
+            <circle
+              key={e.id}
+              cx={toX(e.start_t)}
+              cy={valueY(e.value, height)}
+              r={2.5}
+              fill={track.color}
+            />
+          ))}
         </svg>
       )}
 

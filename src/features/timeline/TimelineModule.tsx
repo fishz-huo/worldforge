@@ -58,6 +58,15 @@ export function TimelineModule() {
     setCursor(null);
   }, [fullRange.min, fullRange.max]);
 
+  /** Esc 取消条目选中：点空白也能取消（见 TimelineCanvas），这里补一条键盘路径 */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') selectEntry(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectEntry]);
+
   /** 拖游标：不进 store（它是视图状态），只改本地 state */
   const handleCursor = useCallback((t: number) => {
     if (!Number.isFinite(t)) return;
@@ -142,6 +151,7 @@ export function TimelineModule() {
             onScroll={view.onScroll}
             onCursorChange={handleCursor}
             onSelectEntry={(id) => selectEntry(id)}
+            onClearEntrySelection={() => selectEntry(null)}
             onSelectTrack={setSelectedTrackId}
             onToggleTrackHidden={(track) => updateTrack(track.id, { hidden: track.hidden === 1 ? 0 : 1 })}
             onCommitEntry={(id, patch) => updateEntry(id, patch)}

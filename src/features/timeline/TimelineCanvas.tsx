@@ -8,7 +8,6 @@
  *   │ (空)   │ 0 年   50 年   100 年   150 年 …          │ ← 刻度尺（随内容横向滚）
  *   ├────────┼──────────────────────────────────────────┤
  *   │ 事件 👁 │    ◆        ▓▓▓▓▓▓▓        ◆             │ ← 泳道
- *   │ 角色 👁 │      ▓▓▓▓▓▓▓▓▓▓▓▓                        │
  *   └────────┴──────────────────────────────────────────┘
  *    sticky    内容总宽 = 跨度 × 比例尺（浏览器原生横向滚动条）
  *
@@ -18,15 +17,14 @@
  *
  * 指针事件：拖条目会离开那个小元素，靠容器兜住 pointermove / pointerup；
  * 点泳道空白则是"选时刻"（useCursorScrub），两者互不干扰。
- */import type { Card, Era, TimelineEntry, Track } from '@/types';
+ */
+import type { Card, Era, TimelineEntry, Track } from '@/types';
 import { entrySpan } from '@/types';
-import { cn } from '@/lib/utils';
 import { useEntryDrag } from './useEntryDrag';
 import { useCursorScrub } from './useCursorScrub';
 import { useCtrlWheelZoom } from './useCtrlWheelZoom';
 import { TimelineAxis } from './TimelineAxis';
-import { TimelineLane } from './TimelineLane';
-import { TimelineLaneLabel } from './TimelineLaneLabel';
+import { TimelineLaneRow } from './TimelineLaneRow';
 import { niceStep, type TimeRange } from './scale';
 import { LABEL_COL, LABEL_COL_NARROW, isNarrow } from './useTimelineView';
 
@@ -48,6 +46,8 @@ interface Props {
   onScroll: () => void;
   onCursorChange: (t: number) => void;
   onSelectEntry: (id: string) => void;
+  /** 点时间轴空白处：清掉选中的条目（否则检查器一直停在编辑器上） */
+  onClearEntrySelection: () => void;
   onSelectTrack: (id: string) => void;
   onToggleTrackHidden: (track: Track) => void;
   onCommitEntry: (id: string, patch: { start_t: number; end_t: number | null }) => void;
@@ -59,7 +59,7 @@ interface Props {
 export function TimelineCanvas({
   tracks, entries, cards, eras, range, pxPerUnit, width, viewportPx, scrollLeft, unit,
   cursor, selectedTrackId, selectedEntryId, scrollRef, onScroll, onCursorChange,
-  onSelectEntry, onSelectTrack, onToggleTrackHidden, onCommitEntry, onEraChange, onZoomAt,
+  onSelectEntry, onClearEntrySelection, onSelectTrack, onToggleTrackHidden, onCommitEntry, onEraChange, onZoomAt,
 }: Props) {
   const toX = (t: number) => (t - range.min) * pxPerUnit;
   const getScroller = () => scrollRef.current;
@@ -82,6 +82,15 @@ export function TimelineCanvas({
 
   const drag = useEntryDrag({ range, pxPerUnit, viewportPx, getScroller, onCommit: onCommitEntry });
   const scrub = useCursorScrub({ range, pxPerUnit, getScroller, onMove: onCursorChange });
+
+  /**
+   * 点泳道空白：先取消条目选中，再把游标放到这一刻。只清游标是不够的 ——
+   * 检查器会一直停在条目编辑器上，用户就再也看不到「时刻快照」了。
+   */
+  const onLanePointerDown = (e: React.PointerEvent) => {
+    onClearEntrySelection();
+    scrub.scrub(e);
+  };
 
   /** Ctrl / Cmd + 滚轮缩放（以指针为锚点）；普通滚轮留给原生横向滚动。 */
   useCtrlWheelZoom(scrollRef, onZoomAt);
@@ -142,41 +151,26 @@ export function TimelineCanvas({
 
           {tracks.map((track) => {
             const mine = entries.filter((e) => e.track_id === track.id);
-            const hidden = track.hidden === 1;
             return (
-              <div key={track.id} className="flex items-stretch">
-                <TimelineLaneLabel
-                  track={track}
-                  entries={mine}
-                  cards={cards}
-                  cursor={cursor}
-                  active={selectedTrackId === track.id}
-                  width={gutter}
-                  onClick={() => focusTrack(track.id)}
-                  onToggleHidden={() => onToggleTrackHidden(track)}
-                />
-                <div
-                  // 宽度写死成「内容总宽 − 名称列」：泳道里的条目是绝对定位、
-                  // 只贡献 left/width，不给这个容器定宽它会塌成 0；
-                  // 而用 flex-1 则会跟着内容框走，比刻度尺短一截（见上面 gutter 的说明）
-                  style={{ width: plotPx }}
-                  className={cn('relative', hidden && 'opacity-25')}
-                  onPointerDown={scrub.scrub}
-                  title={hidden ? '这条泳道已隐藏' : '点击空白处把游标放到这一刻'}
-                >
-                  <TimelineLane
-                    track={track}
-                    entries={hidden ? [] : mine}
-                    toX={toLaneX}
-                    pxPerUnit={pxPerUnit}
-                    cursor={cursor}
-                    selectedEntryId={selectedEntryId}
-                    preview={drag.preview}
-                    onSelectEntry={onSelectEntry}
-                    onBeginDrag={drag.begin}
-                  />
-                </div>
-              </div>
+              <TimelineLaneRow
+                key={track.id}
+                track={track}
+                entries={mine}
+                cards={cards}
+                cursor={cursor}
+                selectedEntryId={selectedEntryId}
+                active={selectedTrackId === track.id}
+                preview={drag.preview}
+                gutter={gutter}
+                plotPx={plotPx}
+                toX={toLaneX}
+                pxPerUnit={pxPerUnit}
+                onFocusTrack={() => focusTrack(track.id)}
+                onToggleHidden={() => onToggleTrackHidden(track)}
+                onSelectEntry={onSelectEntry}
+                onBeginDrag={drag.begin}
+                onPointerDown={onLanePointerDown}
+              />
             );
           })}
 
