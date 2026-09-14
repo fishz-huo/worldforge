@@ -1,8 +1,8 @@
 /**
  * 生成测试世界观备份
  * ------------------------------------------------------------------
- * 输入：docs/猫猫的冒险·世界观设定.txt
- * 输出：samples/猫猫的冒险.worldforge.json（可用「设置 → 数据 → 导入设定」直接导入）
+ * 输入：docs/潮线之外·世界观设定.txt
+ * 输出：samples/潮线之外.worldforge.json（可用「设置 → 数据 → 导入设定」直接导入）
  *       samples/README.md（说明这份备份怎么来的，含手册指纹）
  *
  * 用法：node scripts/make-sample.mjs
@@ -21,9 +21,9 @@ import { buildSnapshot, countBy, NOW } from './sample-build.mjs';
 import { buildReadme } from './sample-readme.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const TXT = join(ROOT, 'docs', '猫猫的冒险·世界观设定.txt');
+const TXT = join(ROOT, 'docs', '潮线之外·世界观设定.txt');
 const OUT_DIR = join(ROOT, 'samples');
-const OUT_JSON = join(OUT_DIR, '猫猫的冒险.worldforge.json');
+const OUT_JSON = join(OUT_DIR, '潮线之外.worldforge.json');
 /** 必须存在的小节：少一个就说明手册被改坏了，早点报错比生成半成品好 */
 const REQUIRED = ['一、顶层设定', '三、卡片', '四、标签', '五、关联', '六、地图', '七、时间轴', '八、文稿', '九、大纲树'];
 

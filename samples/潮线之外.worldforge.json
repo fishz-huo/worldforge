@@ -1,0 +1,1732 @@
+{
+  "app": "worldforge",
+  "version": "0.1.0",
+  "schemaVersion": 1,
+  "exportedAt": 1700000000000,
+  "snapshot": {
+    "schemaVersion": 1,
+    "world": {
+      "id": "world-chaoxian",
+      "name": "潮线之外",
+      "description": "风暴潮一年年啃掉沿海湿地，燕鸥群沿海岸线去寻找一座还亮着的灯塔，",
+      "meta": {
+        "time": {
+          "unit": "年",
+          "zeroLabel": "立巢之年",
+          "defaultStart": -9,
+          "defaultEnd": 7,
+          "ageFactor": 1,
+          "allowNegative": true
+        }
+      },
+      "created_at": 1700000000000,
+      "updated_at": 1700000000000
+    },
+    "branches": [
+      {
+        "id": "branch-stay",
+        "world_id": "world-chaoxian",
+        "name": "留守线 · 守灯人没有回应",
+        "description": "第 7 年，船队第一次开进沉钟湾，守望塔上没有人下来。",
+        "color": "#ef4444",
+        "divergence": "第 7 年，船队第一次开进沉钟湾，守望塔上没有人下来。",
+        "divergence_t": 7,
+        "forked_from": null,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "branch-xiaoman-first",
+        "world_id": "world-chaoxian",
+        "name": "if 线 · 小满先找到了塔",
+        "description": "第 6 年，小满独自沿着潮沟先到了守望塔，早船队整整一年。",
+        "color": "#0ea5e9",
+        "divergence": "第 6 年，小满独自沿着潮沟先到了守望塔，早船队整整一年。",
+        "divergence_t": 6,
+        "forked_from": "branch-stay",
+        "created_at": 1700000000001,
+        "updated_at": 1700000000001
+      }
+    ],
+    "cards": [
+      {
+        "id": "card-character-灰翼-0",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "character",
+        "title": "灰翼",
+        "subtitle": "燕鸥群的首领",
+        "summary": "带队去找灯塔的那只燕鸥；她的果断底下压着一件从没做完的事。",
+        "body": "## 她为什么是首领\n\n不是因为飞得最远，而是因为**她记得最多**。芦苇荡的营地在三十年里换过四个地方，\n每一处的水深、风向、哪一年被淹过，她能直接背出来。\n\n> 老哨说过一句话，后来被群里的幼鸟反复模仿：\n> \"灰翼不需要看天，她看的是往年。\"\n\n## 那道旧伤\n\n右翼的第二根飞羽在第四年断了，长回来的是一截歪的。\n\n```text\n断羽之后能飞吗？  能。\n能飞远线吗？      不能。\n她自己承认了吗？  没有。\n```\n\n### 没人提的那件事\n\n[[定线]] 要求离巢后独自飞满一趟远线。她差最后一段没飞完就回来了 ——\n那一年营地被淹，她是唯一一个提前往回飞的人。群里的老人把这当成她的功绩，\n她自己把这当成欠账。\n\n- 功绩是可以拿出来说的\n- 欠账不行，欠账只能拿别的东西补\n- 她用来补的东西，就是接下来每一年都不许自己停下\n\n## 关系\n\n- 对 [[小满]]：先是不耐烦，然后是依赖，最后是道歉 —— 但道歉那一幕发生在\n  她已经带队走错两次路之后\n- 对 [[老哨]]：既需要他记住的旧路线，又不肯承认自己记不住新的\n- 对 [[守壤]]：她真正反对的不是留在盐仓，是**留下来的人比走的人更安全**\n\n| 时间 | 她的身份 | 她在争什么 |\n| --- | --- | --- |\n| 第 1 年 | 首领 | 让所有人相信死线在爬 |\n| 第 3 年 | 首领（开始被质疑） | 证明绕行比留在营地安全 |\n| 第 5 年 | 首领（名存实亡） | 承认路线是小满找到的 |\n| 第 7 年 | 归来的鸟 | 让守望塔上的人下来 |\n\n详细的外部资料见 [沿海湿地潮汐观测](https://example.org/tidal-wetland-notes)。\n\n~~她从不认错~~ —— 准确的说法是：**她只对自己的判断认错，从不对自己的位置认错。**",
+        "fields": {
+          "birth_t": -7,
+          "gender": "雌",
+          "race": "燕鸥",
+          "affiliation": "芦苇荡燕鸥群",
+          "identity": "首领",
+          "goal": "在死线淹掉营地之前把幼鸟带走",
+          "weakness": "不肯承认自己飞不了远线，因此听不进别人的路线判断",
+          "ability": "判断风与云，能在低气压里找到上升气流"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-character-小满-1",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "character",
+        "title": "小满",
+        "subtitle": "听不见声音的水獭",
+        "summary": "唯一能读懂潮水的人；她要证明的不是自己对，而是\"读得出来\"这件事本身可信。",
+        "body": "## 她读到的东西\n\n水在动的时候会推地面。推的力量、间隔、回来的时间差，加起来就是一张图。\n小满没有词来形容这件事，她只说：==\"水会敲门。\"==\n\n```text\n她读得到的：  水深、流速、淤泥软硬、潮沟有没有被堵住\n她读不到的：  别人喊她\n她读得最准的：涨潮前约一顿饭的时间\n```\n\n### 为什么没人信\n\n不是因为她说得不对，是因为**没人能检查**。\n\n- 老哨记的是路线：别人跟着飞一遍就知道对不对\n- 小满记的是手感：别人跟着站一遍，什么也感觉不到\n- 于是同样一句话，一个算\"经验\"，一个算\"说法\"\n\n## 她的转折\n\n第 6 年她做了一件在群规里很难看的事：**她一个人先走了。**\n\n不是为了抢功，是因为那年的潮水来得比往年早，而她说的话没有被排进日程。\n她回来的时候带着机械翼的节奏 —— 那东西后来救了整个船队，但当时\n质疑声比出发前更大：一个听不见的人，凭什么说塔动了？\n\n## 关系\n\n- 对 [[灰翼]]：她从来没有要求过信任，只要求过\"再等一天\"\n- 对 [[老哨]]：两个不同代的\"用手读世界的人\"，他教她怎么把感觉说出口\n- 对 [[孤岬]]：她第一次遇到一个不问她\"你怎么知道\"的人\n\n> ==她不是要别人相信她。她是要别人相信\"读得出来\"这件事。==",
+        "fields": {
+          "birth_t": -3,
+          "gender": "雌",
+          "race": "水獭",
+          "affiliation": "（无）",
+          "identity": "独居的潮沟观察者",
+          "goal": "把脚底读到的东西变成别人也能用的东西",
+          "weakness": "无法验证自己的判断，只能等结果",
+          "ability": "通过震动与水流判断水深、淤积与潮沟走向"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-character-老哨-2",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "character",
+        "title": "老哨",
+        "subtitle": "最老的燕鸥，巢线记录者",
+        "summary": "靠记路线活了一辈子的老鸟；他把知识给了小满，但拒绝承认路线已经不适用。",
+        "body": "## 他这份工作\n\n[[巢线]] 是燕鸥的账本：哪一年在哪个沙洲筑巢，哪一年那个沙洲没了。\n老哨不识字，也不需要 —— 他把三十年的账本背在身上，每年对一遍。\n\n### 他和小满\n\n是他先发现小满在\"读\"东西的。别人看见的是\"一只水獭在泥里站着不动\"，\n他看见的是[[回声]]第一次出现在活物身上。\n\n他做了两件事：\n\n1. 教她把感觉到的东西**按顺序**说出来（\"先硬、再软、然后一下子空了\"）\n2. 从此不再替她说话 —— 因为他知道，替她说话只会让她更像一个说法\n\n## 他错在哪\n\n他把巢线当成规律，其实巢线只是**上一轮潮水的记录**。\n第 4 年他坚持按旧路线穿过潮汐泥滩，那一次差一点淹掉两只浅翎。\n\n> \"我记的是水去过哪。我没记的是水要去哪。\"\n> —— 他后来在沉钟湾说的，说完就不肯再开口了\n\n## 关系\n\n- 对 [[小满]]：这是他一生里唯一一次把\"说话的权利\"完整交出去\n- 对 [[灰翼]]：他支持她当首领，但从没告诉她\"你欠的那段路，其实可以不还\"",
+        "fields": {
+          "birth_t": -9,
+          "gender": "雄",
+          "race": "燕鸥",
+          "affiliation": "芦苇荡燕鸥群",
+          "identity": "巢线记录者",
+          "goal": "把记下来的东西交出去，而不是带进水里",
+          "weakness": "拒绝承认旧路线会被潮水改掉",
+          "ability": "记住三十年的巢线与水深变化，教别人把感觉说成话"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-character-孤岬-3",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "character",
+        "title": "孤岬",
+        "subtitle": "守望塔的守灯人",
+        "summary": "在塔上守了很多年的老水獭；他已经不再相信还有鸟会来。",
+        "body": "## 他的一天\n\n```text\n天亮    检查机械翼的转轴\n中午    擦灯室的三块玻璃\n黄昏    看一眼潮位刻痕，划一道\n夜里    听转轴的声音\n```\n\n他不知道自己守了多少年。塔里有本 [[守灯人手册]]，上一任只写到一半，\n留白的地方被水汽糊掉了 —— 他也不打算补。\n\n## 他为什么不信\n\n因为**上一次有人来，是很多年以前，而且他们没有留下。**\n\n船队来过、问过、走了。他起初会在每年的同一段时间把灯擦得特别亮，\n后来不擦了，改成按手册来：擦，但不多擦一次。\n\n> 小满问他：塔还亮着吗？\n> 他说：**灯亮不亮，和有没有人看，是两件事。**\n\n## 关系\n\n- 对 [[小满]]：她是第一个不问他\"还有没有鸟会来\"的人，所以他先说了一句话\n- 对 [[灰翼]]：他认得她那种\"用忙碌抵债\"的样子，因为他自己就是这样",
+        "fields": {
+          "gender": "雄",
+          "race": "水獭",
+          "affiliation": "（无）",
+          "identity": "守灯人",
+          "goal": "（他自己说没有）",
+          "weakness": "把\"继续守着\"当成答案，因此拒绝做任何改变",
+          "ability": "维护机械翼、修补灯室玻璃、看懂船队的信号"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-character-守壤-4",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "character",
+        "title": "守壤",
+        "subtitle": "盐仓鼠群的首领",
+        "summary": "把旧盐仓囤成堡垒的定居派；他的方案在短时间里是对的，这才是最难反驳的地方。",
+        "body": "## 他的账\n\n盐仓是湿地北侧一处废弃的旧仓。鼠群花了三代把盐袋码成墙，\n再把墙内垫高了两尺。按他们的算法：\n\n- 死线每年抬一点点\n- 垫高的速度比死线快\n- 所以**不需要走**\n\n这个账在头几年完全成立。真正的问题不是算术错了，而是他的算式里\n没有\"某一年会一次抬很多\"这一项 —— 风暴潮不是均匀的。\n\n## 他不是反派\n\n他给过船队盐、给过避风的地方、也劝过他的族人不要抢燕鸥的巢。\n他反对迁徙的理由，每一条都能拿数字支撑。\n\n> \"你们的路线有多长？你们有几只浅翎？\"\n> \"飞不到的话，谁回来告诉我们一声？\"\n\n==这三句话，灰翼一句也答不上来。==\n\n## 关系\n\n- 对 [[灰翼]]：他并不想赢，他只是要她承认风险不对等\n- 对 [[小满]]：全篇唯一一个直接说过\"你说了不算\"的人，也是最后替她作证的人",
+        "fields": {
+          "gender": "雄",
+          "race": "盐仓鼠",
+          "affiliation": "盐仓鼠群",
+          "identity": "首领",
+          "goal": "把盐仓垫高到死线以上，永远不搬",
+          "weakness": "把\"不搬\"当成身份的证明，于是听不进任何关于时间的数字",
+          "ability": "组织囤积与分工，判断仓储与损耗"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-location-芦苇荡营地-5",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "location",
+        "title": "芦苇荡营地",
+        "subtitle": "燕鸥群的繁殖地",
+        "summary": "死线以下的旧营地；最好的巢位，也是最危险的位置。",
+        "body": "## 好在哪里\n\n芦苇密、水面浅、天敌少。燕鸥要的只是\"能站着、能看见、能起飞\"，\n这里三样都有，所以群在这里住了三十年。\n\n## 坏在哪里\n\n它在[[死线]]以下。\n\n| 年份 | 最高水位（相对基准） | 有没有淹到巢区 |\n| --- | --- | --- |\n| 第 1 年 | +0.4 | 边缘 |\n| 第 3 年 | +0.6 | 是 |\n| 第 5 年 | +0.9 | 是，淹掉三分之一 |\n| 第 7 年 | +1.4 | 全部 |\n\n~~这里很安全~~ —— 这里曾经很安全。区别在于，曾经是三十年前的事。",
+        "fields": {
+          "category": "nature",
+          "terrain": "淡水沼泽与芦苇",
+          "climate": "温带海洋性",
+          "faction": "芦苇荡燕鸥群",
+          "landmark": "二号沙洲",
+          "resource_note": "芦苇、鱼、蟹"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-location-潮汐泥滩-6",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "location",
+        "title": "潮汐泥滩",
+        "subtitle": "退潮才露出的浅滩",
+        "summary": "猫不在的地方；一脚下去能陷到膝盖，潮沟每天都在改道。",
+        "body": "## 走法\n\n有两个走法，都通过 [[小满]] 的判断：\n\n1. 沿旧木桩走 —— 木桩是很多年前的人打的，但桩底在淤\n2. 跟潮沟走 —— 潮沟每天变，但变化有方向，读得出来就能走\n\n第 4 年[[老哨]]坚持走第一种，差一点淹掉两只[[浅翎]]。之后船队改成第二种，\n但没有人承认这是换了方法 —— 大家只说\"这次运气好\"。\n\n## 危险\n\n```text\n看得见的：水深、雾、涨潮速度\n看不见的：下面有没有被掏空\n最要命的：退潮时看着是硬的，其实是被泡松的泥壳\n```",
+        "fields": {
+          "category": "nature",
+          "terrain": "潮间带泥滩",
+          "climate": "多雾",
+          "faction": "（无）",
+          "landmark": "旧木桩",
+          "resource_note": "蛤、泥螺"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-location-废弃盐仓-7",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "location",
+        "title": "废弃盐仓",
+        "subtitle": "鼠群的堡垒",
+        "summary": "湿地北侧码成墙的盐袋；把\"不走\"这件事砌成了建筑。",
+        "body": "## 结构\n\n主体是两排旧仓房，中间的空地被盐袋填满，填了三代。\n\n- 东墙：补过三次，补痕是三道不同深浅的印子\n- 中庭：垫高两尺，是全仓最高的地方\n- 地窖：存腌鱼，也是风暴潮来时最后的避难所\n\n## 它真正的功能\n\n它把[[守壤]]的算术变成了实物：**只要你还在原地加高，你就不必面对\"要不要走\"。**\n\n> 灰翼第一次站在中庭往南看，看到的是[[死线]]。\n> 守壤站在同一个地方，看到的是自己垫高的两尺。",
+        "fields": {
+          "category": "site",
+          "terrain": "低丘与盐碱地",
+          "climate": "干燥多风",
+          "faction": "盐仓鼠群",
+          "landmark": "东墙的三道补痕",
+          "resource_note": "盐、腌鱼、旧绳索"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-location-灯塔守望塔-8",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "location",
+        "title": "灯塔守望塔",
+        "subtitle": "沉钟湾北岸的旧塔",
+        "summary": "塔顶那对机械翼还在转；转不转得动，是这个故事唯一的答案。",
+        "body": "## 它是什么\n\n一座旧灯塔。灯室还能亮，靠的是塔顶那对[[铁鸟]]——风吹的时候它们转，\n转的时候带动一套齿轮，把灯芯压紧。\n\n```text\n为什么它能一直亮？\n  因为它不需要人。这也是它最让人难受的地方。\n```\n\n## 它为什么被记住\n\n因为 [[灰翼]] 小时候跟着老鸟飞过一次远线，见过它转。\n那是她唯一一次飞完的远线 —— 也是她后来反复讲的那个故事。\n\n> 她讲的时候总是同一句话：\n> \"**它没等人，它自己就在那儿转。**\"\n\n## 塔里的人\n\n[[孤岬]]住在灯室下面那一层。他不认为自己是\"守灯人\"，\n他说他只是在等手册上写的下一项。\n\n- 第 6 年：小满第一次到，塔上有人下来\n- 第 7 年：船队到，塔上没有人下来 —— 机械翼自己在转",
+        "fields": {
+          "category": "ruin",
+          "terrain": "海蚀崖",
+          "climate": "常年强风",
+          "faction": "（无）",
+          "landmark": "机械翼",
+          "resource_note": "（无）"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-location-沉钟湾-9",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "location",
+        "title": "沉钟湾",
+        "subtitle": "退大潮才露出的泥湾",
+        "summary": "淤泥下埋着一口旧钟；它响的时候，说明水位低到能看见过去。",
+        "body": "## 那口钟\n\n不知道是谁埋的、为什么埋。退大潮时露出钟口，浪推进去，就响一声 ——\n不是钟声，更像金属被水掰了一下。\n\n## 它在本故事里的作用\n\n它是**时间锚点**：故事里所有人对\"现在是什么时候\"的分歧，\n最后都用能不能听见沉钟来对齐。\n\n| 出现在第几年 | 露出程度 | 听见的人 |\n| --- | --- | --- |\n| 第 2 年 | 只见钟耳 | 无人 |\n| 第 5 年 | 露出钟口 | 老哨 |\n| 第 7 年 | 整个钟肩 | 全部船队 |",
+        "fields": {
+          "category": "nature",
+          "terrain": "潮下带泥床",
+          "climate": "多风少雨",
+          "faction": "（无）",
+          "landmark": "沉钟",
+          "resource_note": "贝类"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-location-鲱鱼汛口-10",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "location",
+        "title": "鲱鱼汛口",
+        "subtitle": "海岸线上的补给点",
+        "summary": "鱼群经过的窄口；也是灰翼受伤的地方。",
+        "body": "## 两件事都发生在这里\n\n**第一件**：鱼最多。整个海岸线上只有这一处，能让一群燕鸥在两天里吃饱。\n\n**第二件**：[[灰翼]] 在这里断了羽。窄口两边是礁，风被挤成两股，\n她为了拉一只掉队的[[浅翎]]，贴着礁面飞了一次。\n\n> 她后来把这件事讲成\"救了一只幼鸟\"。\n> [[老哨]] 记得的是另一件事：那天她本来可以不用飞那一趟。\n\n## 为什么还要回来\n\n因为迁徙绕不开它。船队必须在窄口补给，才能撑到[[灯塔守望塔]]。\n==也就是说：灰翼必须每年回到让自己变成现在这个样子的地方。==",
+        "fields": {
+          "category": "nature",
+          "terrain": "海峡窄口",
+          "climate": "多雾",
+          "faction": "（无）",
+          "landmark": "断羽礁",
+          "resource_note": "鲱鱼、海藻"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-event-大潮提前-11",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "event",
+        "title": "大潮提前",
+        "subtitle": "第 4 年的风暴潮",
+        "summary": "比往年早了一个月；它让\"死线在爬\"从说法变成事实。",
+        "body": "## 那三天\n\n```text\n第一天   水位到平常的高潮线以上\n第二天   泥滩被淹，巢线断了\n第三天   芦苇荡三分之一进水\n```\n\n## 它改变了什么\n\n在那之前，[[灰翼]] 说\"死线在爬\"是**判断**；三天之后，它成了**事实**。\n但真正被改变的是一件更小的事：\n\n> [[小满]] 在两年前就说过这一年的潮水会早。\n> 没有人记得她说过。\n\n## 事后\n\n- [[守壤]] 送来盐和干鱼，同时带来一句话：\"早一个月，不等于会到你们头上。\"\n- [[老哨]] 把这一年的巢线画在沙地上，第二天被雨冲掉了",
+        "fields": {
+          "start_t": 4,
+          "end_t": 4.3,
+          "scale": "regional",
+          "cause": "夏季异常低压在近岸停滞",
+          "process": "连续三次高潮位叠加，泥滩与芦苇荡同时被淹",
+          "outcome": "巢区损失三分之一，两只浅翎失踪，群内开始认真讨论迁徙"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-event-盐仓对峙-12",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "event",
+        "title": "盐仓对峙",
+        "subtitle": "第 5 年的谈判",
+        "summary": "两条路线的正面冲突；灰翼输了道理，赢了时间。",
+        "body": "## 守壤的三句话\n\n1. \"你们的路线有多长？\"\n2. \"你们有几只浅翎？\"\n3. \"飞不到的话，谁回来告诉我们一声？\"\n\n==灰翼一句也答不上来。==\n\n## 转折\n\n她没有反驳，改问了一个问题：**\"如果明年水位再抬一次，你的墙够高吗？\"**\n\n守壤没有回答。他给了越冬的地方，但收回了\"合并\"这个提议 ——\n从这一天起，他不再试图让燕鸥留下，而是开始私下记录潮位。\n\n## 留下的东西\n\n```text\n对灰翼：一次没有赢的谈判，换来一个冬天\n对守壤：  一份他自己也不承认在写的潮位记录\n对小满：第一次有人当着两边的面说\"她说了不算\"\n```",
+        "fields": {
+          "start_t": 5,
+          "end_t": 5.2,
+          "scale": "regional",
+          "cause": "船队需要补给与越冬地，盐仓提出合并条件",
+          "process": "守壤要求燕鸥群并入盐仓，以\"留下\"换取仓储支持",
+          "outcome": "谈判破裂，但守壤允许船队在盐仓停留越冬，条件是不得再劝族人离开"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-event-灰翼断后受伤-13",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "event",
+        "title": "灰翼断后受伤",
+        "subtitle": "第 6 年，鲱鱼汛口",
+        "summary": "为了拉一只掉队的浅翎，她贴着礁面飞了一趟，从此飞不了远线。",
+        "body": "## 现场\n\n窄口的风被礁挤成两股，中间是一条下沉的缝。\n\n- 浅翎掉队，被压向礁面\n- 灰翼折返，从外侧切入，把侧风挡住\n- 浅翎出去了，她的右翼第二根飞羽撞在礁上\n\n## 她自己的说法\n\n> \"我救了一只幼鸟。\"\n\n## 老哨记得的版本\n\n> \"那天她本来不用飞那一趟。她是想让人看见她还在飞。\"\n\n==两个版本都成立。== 这就是她后来所有决定的底色。",
+        "fields": {
+          "start_t": 6,
+          "end_t": 6.1,
+          "scale": "personal",
+          "cause": "船队穿过鲱鱼汛口时一只浅翎被侧风压向礁面",
+          "process": "灰翼折返，用身体挡住侧风把浅翎推出去，自己的第二根飞羽撞断",
+          "outcome": "她失去长途飞行的能力，首领的权威正式出现裂缝"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-event-机械翼重新转动-14",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "event",
+        "title": "机械翼重新转动",
+        "subtitle": "第 7 年，守望塔",
+        "summary": "船队抵达时塔上没有人下来，但机械翼在转。",
+        "body": "## 他们看到的\n\n```text\n第一天   机械翼在转，灯室没有灯\n第二天   机械翼在转，节奏变快（风向转北）\n第三天   机械翼在转，塔门开着\n```\n\n## 两种解释\n\n- [[小满]] 的解释：转轴在响，而响的节奏和风不一致 —— **有人在里面**\n- [[灰翼]] 的解释：她小时候见过它自己转，所以**不一定是人**\n\n==这是全篇唯一一次，灰翼用\"我记得\"去反对小满\"我读到\"。==\n\n## 它意味着什么\n\n它意味着这个故事不打算给出干净的答案：\n他们找到了灯塔，灯塔也还亮着，但\"还有没有人\"这件事，\n只能靠一个听不见的人和一个记错了很多次的人，各自坚持一半。\n\n> 本条目为**瞬时事件**（`instant = 1`）：刻度只有一个点，用来测时间轴上的菱形渲染。",
+        "fields": {
+          "start_t": 7,
+          "end_t": 7,
+          "scale": "world",
+          "cause": "船队抵达沉钟湾，观测守望塔塔顶",
+          "process": "船队等待三天，灯室无人应答，但机械翼持续转动，节奏与风向变化吻合",
+          "outcome": "（尚无定论）守望塔是否还有人，成为这条时间线上唯一没有答案的问题"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-lore-潮汐与风暴潮-15",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "lore",
+        "title": "潮汐与风暴潮",
+        "subtitle": "这片海岸的水为什么越来越凶",
+        "summary": "常规潮汐是可预测的；危险在于叠加 —— 当三个周期撞在同一天。",
+        "body": "## 三层叠加\n\n```text\n天文潮    可预测，以年为周期重复\n气压抬升  低压经过时水面被\"吸\"高\n近岸堆积  地形决定浪能堆多高，泥沙越松堆得越高\n```\n\n前两层能算，第三层要读 —— 这就是 [[小满]] 的位置：她读的是第三层。\n\n## 为什么\"平均\"没有意义\n\n[[守壤]] 的算术用平均值算垫高速度，完全正确；错的是**用平均值对付极值**。\n\n| 指标 | 数值 | 说明 |\n| --- | --- | --- |\n| 年平均抬升 | +0.1 / 年 | 与盐仓垫高速度相当 |\n| 极端事件抬升 | +1.4 / 次 | 三年一遇 |\n| 两者关系 | ~~无关~~ 独立 | 极值不参与平均 |\n\n> ==平均数描述的是\"通常\"，死线描述的是\"最坏\"。用前者准备，后者会赢。==",
+        "fields": {
+          "category": "rule",
+          "scope": "全局",
+          "source": "天文潮、气压与近岸地形",
+          "rule": "水位 = 天文潮 + 气压抬升 + 近岸堆积",
+          "cost": "无法预测\"叠加\"发生的具体日期，只能给出概率",
+          "impact": "死线逐年抬升，湿地被压缩",
+          "evolution": "基数稳定抬升，极端事件频率增加"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-lore-回声感知-16",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "lore",
+        "title": "回声感知",
+        "subtitle": "不用耳朵读世界的方法",
+        "summary": "把地面的震动当成语言来读；难点不在感知，在于它无法被验证。",
+        "body": "## 原理（用他们的话说）\n\n> \"水会敲门。门厚的，回得慢。\"\n\n```text\n先硬    踩下去立即到底        说明下面是实的\n再软    陷进去一点点          说明有浮泥\n一下子空了   突然没有阻力     说明下面是掏空的\n```\n\n## 真正的困难\n\n不是学不会，是**没法当场证明**。\n\n| 知识形式 | 载体 | 别人怎么核对 |\n| --- | --- | --- |\n| 巢线 | 路线 | 跟着飞一遍 |\n| 巢线 | 路线 | 跟着飞一遍 |\n| 回声 | 身体 | ~~无从核对~~ 暂时无从核对 |\n\n上表故意留成这个样子：第二行与第三行是同一行被重复填写的痕迹，\n用来测\"只有表头、缺少数据\"的表格在预览里的渲染表现 —— 不是排版事故。\n\n## 它最后怎么被承认的\n\n不是靠她说服别人，是靠 [[老哨]] 教她把感觉**按顺序说出来**，\n再靠 [[守壤]] 在最后替她作证。",
+        "fields": {
+          "category": "substance",
+          "scope": "特定个体",
+          "source": "触觉与侧线对低频震动的敏化",
+          "rule": "不同介质传震速度不同，回波的间隔差编码了介质结构",
+          "cost": "需要极安静的姿势与长期记忆，且结论无法当场演示",
+          "impact": "产生了一种\"只有一个人能持有\"的知识",
+          "evolution": "可以通过教与核对转化为可共享的知识"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-faction-芦苇荡燕鸥群-17",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "faction",
+        "title": "芦苇荡燕鸥群",
+        "subtitle": "迁徙派",
+        "summary": "一群靠记路线活着的候鸟；他们的制度里，\"飞得远\"等于\"说得上话\"。",
+        "body": "## 制度\n\n- [[定线]]：离巢后独自飞满一趟远线才算成年\n- 巢线：由记录者保管，每年核对一次\n- 首领：不是选出来的，是\"记得最多的人\"自然成为的\n\n## 裂缝\n\n这套制度在一个稳定的海岸上运转得很好。第 3 年之后它开始失效，\n因为**需要记的东西变了**：过去要记\"哪条路线能走\"，现在要记\"哪条路线还没被改掉\"。\n\n> 灰翼是旧制度里最好的首领，也是新问题里最差的首领。\n> 这两件事同时成立，才让第 5 年那次谈判没法收场。",
+        "fields": {
+          "leader": "灰翼",
+          "scale": "约两百只（含当年浅翎六十余只）",
+          "ideology": "在死线吞掉营地之前找到新的繁殖地",
+          "territory": "芦苇荡营地、潮汐泥滩、鲱鱼汛口",
+          "founded_t": -30
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-faction-盐仓鼠群-18",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "faction",
+        "title": "盐仓鼠群",
+        "subtitle": "定居派",
+        "summary": "把\"不走\"砌成建筑的鼠群；他们的算术在短期内是对的。",
+        "body": "## 分工\n\n```text\n盐工    维护盐袋墙，每年秋天补一次\n窖工    管理腌鱼与地窖\n记账    记录水位、损耗与人数\n```\n\n\"记账\"这个位置，是 [[守壤]] 自己设的。他不承认自己在怕，\n但他需要数字 —— 需要数字的人，心里都有一个不放心的地方。\n\n## 与燕鸥群的关系\n\n不是敌对，是**两种时间尺度的冲突**：\n\n| | 燕鸥群 | 盐仓鼠群 |\n| --- | --- | --- |\n| 看的时间 | 三十年 | 三年 |\n| 应对方式 | 换地方 | 加高度 |\n| 谁更道德 | 不确定 | 不确定 |\n\n==这张表的最后一行是故意留成\"不确定\"的：这个故事不打算发奖。==",
+        "fields": {
+          "leader": "守壤",
+          "scale": "约四百只",
+          "ideology": "把盐仓垫高到死线以上，永远不搬",
+          "territory": "废弃盐仓及北侧盐碱地"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-item-灯塔的机械翼-19",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "item",
+        "title": "灯塔的机械翼",
+        "subtitle": "靠风转的灯芯装置",
+        "summary": "不需要人也能转的东西；它的存在本身就在质疑\"守着\"这件事的意义。",
+        "body": "## 三件事\n\n1. 它不需要人。转不转只看风。\n2. 它会坏。转轴需要人上油。\n3. 它坏了以后，靠风是修不好的。\n\n==所以\"它一直在转\"这句话，同时意味着\"有人一直在上油\"。==\n\n## 争议\n\n[[小满]] 靠节奏判断有人在；[[灰翼]] 靠记忆判断不一定。\n两种判断都不完整 —— 这正是第 7 年那个瞬时事件的全部内容。",
+        "fields": {
+          "rarity": "唯一",
+          "origin": "守望塔建成时安装，制造者不明",
+          "effect": "风推动翼面，带动齿轮压紧灯芯，使灯室保持点亮",
+          "owner": "孤岬（名义上）"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-item-沉钟-20",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "item",
+        "title": "沉钟",
+        "subtitle": "埋在淤泥下的旧钟",
+        "summary": "退大潮才会露出一角；它的响声是这片海岸唯一公认的时间信号。",
+        "body": "## 它为什么重要\n\n因为它**不看任何人**。潮水到了，它就响；没到，它就不响。\n\n> 在一个人人都在争论\"现在到底算不算晚\"的故事里，\n> 一个不参与争论的东西，就是唯一的裁判。\n\n## 露出的记录\n\n| 年份 | 露出程度 | 听见的人 |\n| --- | --- | --- |\n| 第 2 年 | 钟耳 | 无人 |\n| 第 5 年 | 钟口 | 老哨 |\n| 第 7 年 | 钟肩 | 全部船队 |",
+        "fields": {
+          "rarity": "唯一",
+          "origin": "不明，比守望塔更早",
+          "effect": "水位足够低时被浪撞响，声音传遍整个沉钟湾",
+          "owner": "（无）"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-concept-回声-21",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "concept",
+        "title": "回声",
+        "subtitle": "把震动读成语言",
+        "summary": "一种只有一个人能持有的知识形式；它的问题从来不是真假，而是可验证性。",
+        "body": "## 叫法的三个版本\n\n```text\n第 2 年    \"小满又在泥里站着\"\n第 5 年    \"她说水会敲门\"\n第 7 年     \"回声\"\n```\n\n从\"她在干什么\"到\"它有名字\"，中间隔了五年和一次差点淹死人的错误路线。\n\n## 它和巢线的区别\n\n巢线记在路线上，可以复制；回声记在身体里，只能教、不能给。\n==这个区别，是整个故事真正的主题。==",
+        "fields": {
+          "domain": "感知与知识传递",
+          "alias": "敲门、脚底的话",
+          "detail": "见 [[回声感知]] 卡片，本条只记录它在群里的叫法变化"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-concept-潮线-22",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "concept",
+        "title": "潮线",
+        "subtitle": "水陆之间那条会移动的界",
+        "summary": "它每天移动两次，所以\"地图\"画的从来不是陆地，而是某个时刻的水位。",
+        "body": "## 为什么这个词重要\n\n因为整张地图都是在这条线上做妥协的。\n\n- 画在潮线以下：那是**退潮时**的样子\n- 画在潮线以上：那是**涨潮时**的样子\n- 两者都对，两者都不完整\n\n> ==地图不是世界的照片，是某个问题的答案。==\n> 营地这张图画的是\"哪里能筑巢\"，所以它画的是低潮位。\n\n## 缺口\n\n本词条的双链指向 [[潮线之外]] —— 这是一个**故意留下的未创建卡片**，\n用来测\"双链指向不存在的标题\"时的渲染样式。",
+        "fields": {
+          "domain": "地理与测绘",
+          "alias": "水边线",
+          "detail": "潮线不是一条线，是一个范围"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-concept-风信-23",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "concept",
+        "title": "风信",
+        "subtitle": "沿海岸传递的消息",
+        "summary": "消息不免费；\"用食物换消息\"是信使唯一的规矩，也是它的道德底线。",
+        "body": "## 规矩\n\n```text\n给食物   传话，原话照传\n不给     不传\n说谎     从此不再为你传\n```\n\n## 它在故事里的作用\n\n它是**唯一的外部信息源**。船队对\"外面的水位怎么样\"这件事的全部认知，\n都来自风信，而风信只保证\"原话照传\"，不保证内容正确。\n\n| 消息 | 来源 | 后来证实 |\n| --- | --- | --- |\n| 北边湿地已经没人了 | 风信（第 3 年） | 正确 |\n| 守望塔还有人 | 风信（第 5 年） | [无法核实](https://example.org/lighthouse-rumor) |\n| 盐仓明年加高两尺 | 风信（第 6 年） | 正确，但没加完 |",
+        "fields": {
+          "domain": "信息传播",
+          "alias": "过路的话",
+          "detail": "风信由猛禽承担，报酬通常是鱼"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-reference-鹭群换羽记录-24",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "reference",
+        "title": "鹭群换羽记录",
+        "subtitle": "留在盐仓墙缝里的旧纸片",
+        "summary": "一份别人留下的观察记录；它证明\"记账\"这件事不是鼠群发明的。",
+        "body": "## 它怎么被发现的\n\n[[守壤]] 在东墙补缝时抽出来的，夹在两层盐袋之间。\n\n## 为什么它扎人\n\n因为它是一份**\"离开方\"的记录**，而且写得很平静：\n\n> 第八次抬头时搬走。不打算再搬第九次。\n\n- 对 [[守壤]]：这说明\"搬\"也是一个方案，而不是逃跑\n- 对 [[灰翼]]：这说明有人比他们更早算过这笔账，而且算完了\n- 对 [[小满]]：她只关心一件事 —— 记录者有没有写\"是怎么知道水要抬头的\"",
+        "fields": {
+          "source_type": "web",
+          "author": "鹭群记录者（未署名）",
+          "url": "https://example.org/heron-molt-notes",
+          "year": "不详",
+          "quote": "\"水位第八次抬头时，我们把巢搬到了更北的地方。我们不打算再搬第九次。\"",
+          "takeaway": "离开的人也会留下记录，留下的人未必看得懂"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-reference-半张褪色的海图-25",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "reference",
+        "title": "半张褪色的海图",
+        "subtitle": "守望塔灯室墙上的残图",
+        "summary": "一张只剩一半的海图；它上面画着的海岸线，比现在的实际位置更靠北。",
+        "body": "## 它反驳了什么\n\n它反驳的是**\"旧地图可以一直用\"**这个默认假设。\n\n```text\n图上的海岸线    在北边\n实际的海岸线    在南边\n差别            约等于整个潮汐泥滩的宽度\n```\n\n## 为什么留给灰翼\n\n因为她是全篇最依赖记忆的人。==这张图是她第一次拿到\"记忆也会过期\"的实物证据。==",
+        "fields": {
+          "source_type": "image",
+          "author": "不详",
+          "year": "比守望塔更早",
+          "quote": "（无文字，只有线）",
+          "takeaway": "海岸线本身在移动，所以任何一张海图都有保质期"
+        },
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-note-巢线清单-26",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "note",
+        "title": "巢线清单",
+        "subtitle": "老哨的口述，逐条记下",
+        "summary": "三十年巢线的一次完整核对；也是旧知识最后一次被完整说出口。",
+        "body": "## 一至十年\n\n- 一号沙洲：用七年，第九年消失\n- 二号沙洲：用五年，边缘塌陷\n- 芦苇荡东：十二年，仍在用\n- 芦苇荡西：四年，水面抬高后废弃\n\n## 十一至三十年\n\n- 潮汐泥滩北缘：用过两次，都被雾耽误\n- 鲱鱼汛口南礁：用一次，那年鱼多但风坏\n- 沉钟湾背风面：用过三次，是最稳的一处\n\n> 老哨说：==\"我记的是水去过哪。我没记的是水要去哪。\"==\n\n## 这份清单之后\n\n第 4 年之后不再更新。不是因为没人记，是因为**记得的东西不再适用**。",
+        "fields": {},
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "card-note-空巡笔记-27",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "type": "note",
+        "title": "空巡笔记",
+        "subtitle": "不带目的的飞行",
+        "summary": "灰翼写下的几段飞行记录；里面没有一条是关于营地的。",
+        "body": "## 第 2 年\n\n向北飞了一整个上午，没有目的。风是侧风，云很低。\n落在一根旧木桩上，木桩上有一只不认识的水鸟，它没有赶我走。\n\n## 第 5 年\n\n今天不巡视。沿着海岸线飞，只数浪。\n数到第四十七个的时候忘了前面数到哪，于是重新开始。\n\n## 第 6 年以后\n\n> 飞不了远线以后，我改成了贴着芦苇飞。\n> 芦苇的动静比云准。这是我这几年学到的最有用的一件事，\n> 而它是我最没用的那几年学会的。\n\n~~这些笔记与营地无关~~ —— 它们和营地有关，只是不那么直接。",
+        "fields": {},
+        "cover_asset": null,
+        "pinned": 0,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      }
+    ],
+    "tags": [
+      {
+        "id": "tag-迁徙派",
+        "world_id": "world-chaoxian",
+        "name": "迁徙派",
+        "color": "#0ea5e9",
+        "created_at": 1700000000000
+      },
+      {
+        "id": "tag-定居派",
+        "world_id": "world-chaoxian",
+        "name": "定居派",
+        "color": "#f59e0b",
+        "created_at": 1700000000001
+      },
+      {
+        "id": "tag-湿地",
+        "world_id": "world-chaoxian",
+        "name": "湿地",
+        "color": "#22c55e",
+        "created_at": 1700000000002
+      },
+      {
+        "id": "tag-守望塔",
+        "world_id": "world-chaoxian",
+        "name": "守望塔",
+        "color": "#a855f7",
+        "created_at": 1700000000003
+      },
+      {
+        "id": "tag-水位",
+        "world_id": "world-chaoxian",
+        "name": "水位",
+        "color": "#ef4444",
+        "created_at": 1700000000004
+      },
+      {
+        "id": "tag-角色之内",
+        "world_id": "world-chaoxian",
+        "name": "角色之内",
+        "color": "#8b5cf6",
+        "created_at": 1700000000005
+      },
+      {
+        "id": "tag-观测",
+        "world_id": "world-chaoxian",
+        "name": "观测",
+        "color": "#64748b",
+        "created_at": 1700000000006
+      }
+    ],
+    "cardTags": [
+      {
+        "card_id": "card-character-灰翼-0",
+        "tag_id": "tag-迁徙派"
+      },
+      {
+        "card_id": "card-character-灰翼-0",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-character-灰翼-0",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-character-小满-1",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-character-小满-1",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-character-小满-1",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-character-老哨-2",
+        "tag_id": "tag-迁徙派"
+      },
+      {
+        "card_id": "card-character-老哨-2",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-character-老哨-2",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-character-孤岬-3",
+        "tag_id": "tag-守望塔"
+      },
+      {
+        "card_id": "card-character-孤岬-3",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-character-守壤-4",
+        "tag_id": "tag-定居派"
+      },
+      {
+        "card_id": "card-character-守壤-4",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-location-芦苇荡营地-5",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-location-芦苇荡营地-5",
+        "tag_id": "tag-水位"
+      },
+      {
+        "card_id": "card-location-潮汐泥滩-6",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-location-潮汐泥滩-6",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-location-废弃盐仓-7",
+        "tag_id": "tag-定居派"
+      },
+      {
+        "card_id": "card-location-废弃盐仓-7",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-location-灯塔守望塔-8",
+        "tag_id": "tag-守望塔"
+      },
+      {
+        "card_id": "card-location-灯塔守望塔-8",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-location-沉钟湾-9",
+        "tag_id": "tag-水位"
+      },
+      {
+        "card_id": "card-location-沉钟湾-9",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-location-鲱鱼汛口-10",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-location-鲱鱼汛口-10",
+        "tag_id": "tag-迁徙派"
+      },
+      {
+        "card_id": "card-event-大潮提前-11",
+        "tag_id": "tag-水位"
+      },
+      {
+        "card_id": "card-event-大潮提前-11",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-event-盐仓对峙-12",
+        "tag_id": "tag-迁徙派"
+      },
+      {
+        "card_id": "card-event-盐仓对峙-12",
+        "tag_id": "tag-定居派"
+      },
+      {
+        "card_id": "card-event-灰翼断后受伤-13",
+        "tag_id": "tag-迁徙派"
+      },
+      {
+        "card_id": "card-event-灰翼断后受伤-13",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-event-机械翼重新转动-14",
+        "tag_id": "tag-守望塔"
+      },
+      {
+        "card_id": "card-event-机械翼重新转动-14",
+        "tag_id": "tag-水位"
+      },
+      {
+        "card_id": "card-lore-潮汐与风暴潮-15",
+        "tag_id": "tag-水位"
+      },
+      {
+        "card_id": "card-lore-潮汐与风暴潮-15",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-lore-回声感知-16",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-lore-回声感知-16",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-faction-芦苇荡燕鸥群-17",
+        "tag_id": "tag-迁徙派"
+      },
+      {
+        "card_id": "card-faction-芦苇荡燕鸥群-17",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-faction-盐仓鼠群-18",
+        "tag_id": "tag-定居派"
+      },
+      {
+        "card_id": "card-item-灯塔的机械翼-19",
+        "tag_id": "tag-守望塔"
+      },
+      {
+        "card_id": "card-item-沉钟-20",
+        "tag_id": "tag-水位"
+      },
+      {
+        "card_id": "card-item-沉钟-20",
+        "tag_id": "tag-守望塔"
+      },
+      {
+        "card_id": "card-concept-回声-21",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-concept-回声-21",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-concept-潮线-22",
+        "tag_id": "tag-湿地"
+      },
+      {
+        "card_id": "card-concept-潮线-22",
+        "tag_id": "tag-水位"
+      },
+      {
+        "card_id": "card-concept-风信-23",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-reference-鹭群换羽记录-24",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-reference-鹭群换羽记录-24",
+        "tag_id": "tag-迁徙派"
+      },
+      {
+        "card_id": "card-reference-半张褪色的海图-25",
+        "tag_id": "tag-守望塔"
+      },
+      {
+        "card_id": "card-reference-半张褪色的海图-25",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-note-巢线清单-26",
+        "tag_id": "tag-观测"
+      },
+      {
+        "card_id": "card-note-巢线清单-26",
+        "tag_id": "tag-迁徙派"
+      },
+      {
+        "card_id": "card-note-空巡笔记-27",
+        "tag_id": "tag-角色之内"
+      },
+      {
+        "card_id": "card-note-空巡笔记-27",
+        "tag_id": "tag-观测"
+      }
+    ],
+    "relations": [
+      {
+        "id": "rel-1",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-灰翼-0",
+        "to_id": "card-faction-芦苇荡燕鸥群-17",
+        "label": "率领",
+        "note": "首领身份与\"记性即权威\"的制度绑定",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000000
+      },
+      {
+        "id": "rel-2",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-灰翼-0",
+        "to_id": "card-character-老哨-2",
+        "label": "对不住",
+        "note": "断羽那一年，她提前回飞没有告诉他",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000001
+      },
+      {
+        "id": "rel-3",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-老哨-2",
+        "to_id": "card-character-小满-1",
+        "label": "教过",
+        "note": "教她把感觉到的东西按顺序说出口",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000002
+      },
+      {
+        "id": "rel-4",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-小满-1",
+        "to_id": "card-lore-潮汐与风暴潮-15",
+        "label": "读得懂",
+        "note": "她读的是叠加里的第三层",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000003
+      },
+      {
+        "id": "rel-5",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-小满-1",
+        "to_id": "card-concept-回声-21",
+        "label": "解释",
+        "note": "给一种没有名字的能力起了名字",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000004
+      },
+      {
+        "id": "rel-6",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-concept-回声-21",
+        "to_id": "card-lore-回声感知-16",
+        "label": "是",
+        "note": "同一个东西的俗称与正式条目",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000005
+      },
+      {
+        "id": "rel-7",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-守壤-4",
+        "to_id": "card-faction-盐仓鼠群-18",
+        "label": "首领",
+        "note": "定居派的实际决策者",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000006
+      },
+      {
+        "id": "rel-8",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-守壤-4",
+        "to_id": "card-character-灰翼-0",
+        "label": "反对",
+        "note": "\"留下\"与\"离开\"两条路线的正面对撞",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000007
+      },
+      {
+        "id": "rel-9",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-faction-芦苇荡燕鸥群-17",
+        "to_id": "card-faction-盐仓鼠群-18",
+        "label": "对持",
+        "note": "不是敌对，是两种时间尺度的冲突",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000008
+      },
+      {
+        "id": "rel-10",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-location-潮汐泥滩-6",
+        "to_id": "card-concept-潮线-22",
+        "label": "属于",
+        "note": "泥滩就是潮线移动留下的东西",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000009
+      },
+      {
+        "id": "rel-11",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-item-沉钟-20",
+        "to_id": "card-location-沉钟湾-9",
+        "label": "位于",
+        "note": "退大潮才会露出钟口",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000010
+      },
+      {
+        "id": "rel-12",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-location-灯塔守望塔-8",
+        "to_id": "card-item-灯塔的机械翼-19",
+        "label": "有",
+        "note": "塔顶那对不需要人也能转的翼",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000011
+      },
+      {
+        "id": "rel-13",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-孤岬-3",
+        "to_id": "card-location-灯塔守望塔-8",
+        "label": "守着",
+        "note": "名义上的守灯人",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000012
+      },
+      {
+        "id": "rel-14",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-character-灰翼-0",
+        "to_id": "card-item-灯塔的机械翼-19",
+        "label": "见过",
+        "note": "她唯一一次飞完的远线",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000013
+      },
+      {
+        "id": "rel-15",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-reference-鹭群换羽记录-24",
+        "to_id": "card-location-废弃盐仓-7",
+        "label": "留在",
+        "note": "夹在东墙两层盐袋之间",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000014
+      },
+      {
+        "id": "rel-16",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "from_id": "card-reference-半张褪色的海图-25",
+        "to_id": "card-location-灯塔守望塔-8",
+        "label": "挂在",
+        "note": "灯室墙上，只剩一半",
+        "directed": 1,
+        "start_t": null,
+        "end_t": null,
+        "created_at": 1700000000015
+      }
+    ],
+    "maps": [
+      {
+        "id": "map-1",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "name": "潮间带·第 7 年（迁徙路线图）",
+        "description": "从芦苇荡营地沿海岸向南到守望塔的整条路线；标出补给点、危险段与两处势力范围。",
+        "asset_id": null,
+        "period": "第 7 年",
+        "period_t": 7,
+        "opacity": 0.9,
+        "meta": {},
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      }
+    ],
+    "pins": [
+      {
+        "id": "pin-1-1",
+        "map_id": "map-1",
+        "card_id": "card-location-芦苇荡营地-5",
+        "x": 0.14,
+        "y": 0.22,
+        "label": "芦苇荡营地",
+        "icon": "🏠",
+        "color": "#22c55e",
+        "note": "出发点；死线以下"
+      },
+      {
+        "id": "pin-1-2",
+        "map_id": "map-1",
+        "card_id": "card-location-潮汐泥滩-6",
+        "x": 0.3,
+        "y": 0.46,
+        "label": "潮汐泥滩",
+        "icon": "🌫",
+        "color": "#64748b",
+        "note": "退潮才露；潮沟每天改道"
+      },
+      {
+        "id": "pin-1-3",
+        "map_id": "map-1",
+        "card_id": "card-location-鲱鱼汛口-10",
+        "x": 0.46,
+        "y": 0.72,
+        "label": "鲱鱼汛口",
+        "icon": "🐟",
+        "color": "#0ea5e9",
+        "note": "补给点，也是灰翼断羽处"
+      },
+      {
+        "id": "pin-1-4",
+        "map_id": "map-1",
+        "card_id": "card-location-废弃盐仓-7",
+        "x": 0.66,
+        "y": 0.2,
+        "label": "废弃盐仓",
+        "icon": "🧱",
+        "color": "#f59e0b",
+        "note": "鼠群堡垒；东墙有三道补痕"
+      },
+      {
+        "id": "pin-1-5",
+        "map_id": "map-1",
+        "card_id": "card-location-沉钟湾-9",
+        "x": 0.74,
+        "y": 0.56,
+        "label": "沉钟湾",
+        "icon": "🔔",
+        "color": "#94a3b8",
+        "note": "退大潮可见沉钟"
+      },
+      {
+        "id": "pin-1-6",
+        "map_id": "map-1",
+        "card_id": "card-location-灯塔守望塔-8",
+        "x": 0.88,
+        "y": 0.38,
+        "label": "灯塔守望塔",
+        "icon": "🗼",
+        "color": "#a855f7",
+        "note": "终点；机械翼还在转"
+      }
+    ],
+    "regions": [
+      {
+        "id": "region-1-1",
+        "map_id": "map-1",
+        "name": "芦苇荡巢区",
+        "color": "#22c55e",
+        "points": [
+          [
+            0.08,
+            0.14
+          ],
+          [
+            0.22,
+            0.12
+          ],
+          [
+            0.25,
+            0.3
+          ],
+          [
+            0.1,
+            0.32
+          ]
+        ],
+        "resources": {},
+        "period": "第 7 年",
+        "note": "死线以下，第 7 年全部被淹"
+      },
+      {
+        "id": "region-1-2",
+        "map_id": "map-1",
+        "name": "盐仓控制区",
+        "color": "#f59e0b",
+        "points": [
+          [
+            0.58,
+            0.12
+          ],
+          [
+            0.74,
+            0.14
+          ],
+          [
+            0.76,
+            0.3
+          ],
+          [
+            0.6,
+            0.28
+          ]
+        ],
+        "resources": {},
+        "period": "第 7 年",
+        "note": "盐袋墙内垫高两尺，是全仓最高处"
+      }
+    ],
+    "tracks": [
+      {
+        "id": "track-1",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "name": "重大事件",
+        "kind": "event",
+        "color": "#f59e0b",
+        "order_index": 0,
+        "hidden": 0,
+        "valued": 0
+      },
+      {
+        "id": "track-2",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "name": "角色生命线",
+        "kind": "character",
+        "color": "#8b5cf6",
+        "order_index": 1,
+        "hidden": 0,
+        "valued": 0
+      },
+      {
+        "id": "track-3",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "name": "疆域变化",
+        "kind": "event",
+        "color": "#22c55e",
+        "order_index": 2,
+        "hidden": 0,
+        "valued": 0
+      },
+      {
+        "id": "track-4",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "name": "定居水平",
+        "kind": "custom",
+        "color": "#0ea5e9",
+        "order_index": 3,
+        "hidden": 0,
+        "valued": 1
+      }
+    ],
+    "entries": [
+      {
+        "id": "entry-1",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-1",
+        "card_id": null,
+        "title": "立巢",
+        "start_t": -9,
+        "end_t": -1,
+        "instant": 0,
+        "note": "",
+        "state": "建群",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000000
+      },
+      {
+        "id": "entry-2",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-1",
+        "card_id": "card-event-大潮提前-11",
+        "title": "大潮提前",
+        "start_t": 4,
+        "end_t": 4.3,
+        "instant": 0,
+        "note": "",
+        "state": "受灾",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000001
+      },
+      {
+        "id": "entry-3",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-1",
+        "card_id": "card-event-盐仓对峙-12",
+        "title": "盐仓对峙",
+        "start_t": 5,
+        "end_t": 5.2,
+        "instant": 0,
+        "note": "",
+        "state": "谈判",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000002
+      },
+      {
+        "id": "entry-4",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-1",
+        "card_id": null,
+        "title": "抵达守望塔",
+        "start_t": 7,
+        "end_t": null,
+        "instant": 1,
+        "note": "",
+        "state": "待确认",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000003
+      },
+      {
+        "id": "entry-5",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-2",
+        "card_id": "card-character-灰翼-0",
+        "title": "灰翼",
+        "start_t": -7,
+        "end_t": null,
+        "instant": 1,
+        "note": "",
+        "state": "首领",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000004
+      },
+      {
+        "id": "entry-6",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-2",
+        "card_id": "card-character-小满-1",
+        "title": "小满",
+        "start_t": -3,
+        "end_t": null,
+        "instant": 1,
+        "note": "",
+        "state": "独居",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000005
+      },
+      {
+        "id": "entry-7",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-2",
+        "card_id": "card-character-老哨-2",
+        "title": "老哨",
+        "start_t": -9,
+        "end_t": null,
+        "instant": 1,
+        "note": "",
+        "state": "记录者",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000006
+      },
+      {
+        "id": "entry-8",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-3",
+        "card_id": "card-location-芦苇荡营地-5",
+        "title": "芦苇荡巢区",
+        "start_t": -9,
+        "end_t": 7,
+        "instant": 0,
+        "note": "",
+        "state": "被淹",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000007
+      },
+      {
+        "id": "entry-9",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-3",
+        "card_id": "card-location-废弃盐仓-7",
+        "title": "盐仓控制区",
+        "start_t": 0,
+        "end_t": 7,
+        "instant": 0,
+        "note": "",
+        "state": "扩张",
+        "value": null,
+        "map_id": null,
+        "created_at": 1700000000008
+      },
+      {
+        "id": "entry-10",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-4",
+        "card_id": "card-faction-盐仓鼠群-18",
+        "title": "垫高工程",
+        "start_t": 0,
+        "end_t": 3,
+        "instant": 0,
+        "note": "",
+        "state": "完成",
+        "value": 40,
+        "map_id": null,
+        "created_at": 1700000000009
+      },
+      {
+        "id": "entry-11",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-4",
+        "card_id": "card-location-废弃盐仓-7",
+        "title": "加高两尺",
+        "start_t": 4,
+        "end_t": 6,
+        "instant": 0,
+        "note": "",
+        "state": "未完成",
+        "value": 70,
+        "map_id": null,
+        "created_at": 1700000000010
+      },
+      {
+        "id": "entry-12",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "track_id": "track-4",
+        "card_id": "card-character-守壤-4",
+        "title": "墙基渗水",
+        "start_t": 6,
+        "end_t": 7,
+        "instant": 0,
+        "note": "",
+        "state": "抢修",
+        "value": 25,
+        "map_id": null,
+        "created_at": 1700000000011
+      }
+    ],
+    "eras": [
+      {
+        "id": "era-1",
+        "world_id": "world-chaoxian",
+        "name": "安稳期",
+        "start_t": -9,
+        "end_t": -1,
+        "color": "#334155",
+        "note": "立巢之前，营地从未被淹"
+      },
+      {
+        "id": "era-2",
+        "world_id": "world-chaoxian",
+        "name": "爬升期",
+        "start_t": 0,
+        "end_t": 4,
+        "color": "#0ea5e9",
+        "note": "死线逐年抬升，但每年抬得不多"
+      },
+      {
+        "id": "era-3",
+        "world_id": "world-chaoxian",
+        "name": "决断期",
+        "start_t": 4,
+        "end_t": 7,
+        "color": "#ef4444",
+        "note": "大潮提前之后，所有决定都必须在这一年里做完"
+      }
+    ],
+    "docs": [
+      {
+        "id": "doc-1",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "kind": "manuscript",
+        "title": "第一章 · 潮线以上",
+        "content": "]\n# 第一章 · 潮线以上\n\n潮水退下去的时候，芦苇荡会露出一圈湿黑的根。灰翼站在最外那一排芦苇上，\n数着根的位置 —— 比去年又往上挪了一掌宽。\n\n[[死线]] 每年都在爬。这句话她说过很多次，说到群里的幼鸟学会了她\n说这句话时的语气：先停半拍，再压低。\n\n## 清点\n\n她把巢区走了一遍。六十余只 [[浅翎]]，其中十一只还没长出能长距离飞行的飞羽。\n\n- 二号沙洲：今年没有用，边缘塌了\n- 芦苇荡东：用了，水位离巢底只剩一指\n- 芦苇荡西：空着，去年就放弃了\n\n[[老哨]] 从东边过来，落在她旁边。他没说话，因为该说的都在这份清单里。\n\n> \"我记的是水去过哪。\"他后来才说，\"我没记的是水要去哪。\"\n\n## 那一夜\n\n夜里风转了向。灰翼在芦苇上站到很晚，听水拍根的声音。\n水拍根的节奏和往年不一样：**更快，也更闷。**\n\n她当时以为是风。后来她才知道，那一夜里，\n[[小满]] 在二十里外的[[潮汐泥滩]]上，一直站着没动。\n\n她在读。而没有人问她读到了什么。\n[",
+        "summary": "出发前一夜，灰翼最后一次清点巢区。",
+        "order_index": 0,
+        "card_id": null,
+        "created_at": 1700000000000,
+        "updated_at": 1700000000000
+      },
+      {
+        "id": "doc-2",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "kind": "outline",
+        "title": "主线大纲 · 潮线之外",
+        "content": "]\n# 主线大纲 · 潮线之外\n\n## 第一幕 · 看清\n- 大潮提前，巢区损失三分之一\n- 灰翼提出迁徙，被质疑路线\n- 小满第一次说\"水会敲门\"，无人回应\n\n## 第二幕 · 出发\n- 盐仓对峙：两条路线正面冲突\n- 鲱鱼汛口：灰翼断后，失去远飞能力\n- 小满独自先走，带回机械翼的节奏\n\n## 第三幕 · 确认\n- 船队抵达沉钟湾\n- 守望塔无人应答，机械翼仍在转\n- 两种解释并存，故事不给出结论\n[",
+        "summary": "三幕：看清、出发、确认。",
+        "order_index": 1,
+        "card_id": null,
+        "created_at": 1700000000001,
+        "updated_at": 1700000000001
+      },
+      {
+        "id": "doc-3",
+        "world_id": "world-chaoxian",
+        "branch_id": null,
+        "kind": "note",
+        "title": "作者笔记 · 为什么不做成\"家园被拆\"",
+        "content": "]\n## 一、威胁要\"慢得可以被否认\"\n\n风暴潮每年只抬一点点，所以[[守壤]]的算术在头几年是对的。\n如果威胁一眼就能看出来，这个故事里就没有真正的分歧了 —— 只剩下愚昧与清醒，\n那是另一种更便宜的故事。\n\n## 二、能力不能是\"超能力\"\n\n[[小满]] 的[[回声]]必须是**无法当场演示**的，否则她一张口就被相信，\n冲突就消失了。所以她的困难不是\"说不对\"，是\"说不清\"。\n\n```text\n超能力        立刻被验证 → 没有冲突\n不可演示的能力 需要时间与代价 → 冲突成立\n```\n\n## 三、不设反派\n\n守壤的三句话，[[灰翼]] 一句都答不上来。写的时候我反复检查：\n他有没有哪一句是故意刁难？没有。这才是意图所在。\n\n> ==如果读者读完站在守壤那一边，这个故事就成功了。==\n[",
+        "summary": "写这个设定时的三条自我约束。",
+        "order_index": 2,
+        "card_id": null,
+        "created_at": 1700000000002,
+        "updated_at": 1700000000002
+      }
+    ],
+    "outlineNodes": [
+      {
+        "id": "node-1",
+        "doc_id": "doc-2",
+        "parent_id": null,
+        "order_index": 0,
+        "title": "第一幕 · 看清",
+        "summary": "大潮之后，群内第一次认真讨论迁徙；灰翼的权威还在",
+        "status": "done",
+        "card_id": null,
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-2",
+        "doc_id": "doc-2",
+        "parent_id": "node-1",
+        "order_index": 1,
+        "title": "开场 · 清点巢区",
+        "summary": "出发前夜的巢区清点，建立\"死线在爬\"的事实",
+        "status": "done",
+        "card_id": "card-character-灰翼-0",
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-3",
+        "doc_id": "doc-2",
+        "parent_id": "node-1",
+        "order_index": 2,
+        "title": "大潮提前",
+        "summary": "比往年早一个月的风暴潮，损失三分之一巢区",
+        "status": "done",
+        "card_id": "card-event-大潮提前-11",
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-4",
+        "doc_id": "doc-2",
+        "parent_id": "node-1",
+        "order_index": 3,
+        "title": "小满第一次被无视",
+        "summary": "\"水会敲门\"第一次说出口，无人回应",
+        "status": "done",
+        "card_id": "card-character-小满-1",
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-5",
+        "doc_id": "doc-2",
+        "parent_id": null,
+        "order_index": 4,
+        "title": "第二幕 · 出发",
+        "summary": "路线之争与代价：断羽、分裂、有人先走",
+        "status": "draft",
+        "card_id": null,
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-6",
+        "doc_id": "doc-2",
+        "parent_id": "node-5",
+        "order_index": 5,
+        "title": "盐仓对峙",
+        "summary": "守壤的三句话与灰翼的一个反问",
+        "status": "done",
+        "card_id": "card-event-盐仓对峙-12",
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-7",
+        "doc_id": "doc-2",
+        "parent_id": "node-5",
+        "order_index": 6,
+        "title": "鲱鱼汛口 · 断后",
+        "summary": "灰翼为了拉一只浅翎断羽，从此飞不了远线",
+        "status": "done",
+        "card_id": "card-event-灰翼断后受伤-13",
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-8",
+        "doc_id": "doc-2",
+        "parent_id": "node-5",
+        "order_index": 7,
+        "title": "小满先走",
+        "summary": "她一个人沿着潮沟先到守望塔，比船队早一年",
+        "status": "idea",
+        "card_id": "card-character-小满-1",
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-9",
+        "doc_id": "doc-2",
+        "parent_id": null,
+        "order_index": 8,
+        "title": "第三幕 · 确认",
+        "summary": "抵达之后：灯塔还亮着，但没有人下来",
+        "status": "idea",
+        "card_id": null,
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-10",
+        "doc_id": "doc-2",
+        "parent_id": "node-9",
+        "order_index": 9,
+        "title": "抵达沉钟湾",
+        "summary": "退大潮露出沉钟，全部船队听见它响",
+        "status": "idea",
+        "card_id": "card-item-沉钟-20",
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-11",
+        "doc_id": "doc-2",
+        "parent_id": "node-9",
+        "order_index": 10,
+        "title": "机械翼与两种解释",
+        "summary": "\"有人在\"与\"不一定是人\"，两种判断各自成立",
+        "status": "idea",
+        "card_id": "card-event-机械翼重新转动-14",
+        "link_doc_id": null,
+        "meta": {}
+      },
+      {
+        "id": "node-12",
+        "doc_id": "doc-2",
+        "parent_id": "node-9",
+        "order_index": 11,
+        "title": "尾声 · 巢线之外",
+        "summary": "新的巢线画在哪里，故事不给答案",
+        "status": "idea",
+        "card_id": "card-character-老哨-2",
+        "link_doc_id": null,
+        "meta": {}
+      }
+    ]
+  }
+}

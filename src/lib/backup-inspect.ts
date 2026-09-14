@@ -129,7 +129,7 @@ export function inspectSnapshot(payload: SnapshotPayload, assetCount = 0): Backu
 
 /**
  * 把预检结果压成一句人能读的话，用于确认对话框与错误提示。
- * 例：世界观「猫猫的冒险」：48 张卡片、7 个标签、16 条关联、2 张地图。
+ * 例：世界观「潮线之外」：28 张卡片、7 个标签、16 条关联、1 张地图。
  */
 export function describeBackup(inspection: BackupInspection): string {
   const s = inspection.stats;

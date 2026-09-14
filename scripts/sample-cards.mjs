@@ -119,11 +119,16 @@ export function parseTags(sectionText) {
     if (m) tags.push({ name: m[1], color: m[2], note: m[3] });
   });
   const map = [];
+  const seen = new Set();
   (sectionText.split('[挂标签清单]')[1] ?? '').split('\n').forEach((line) => {
     // 跳过小标题与说明行，只认「卡片名 → 标签、标签」这种行
     if (line.includes('（') || !line.includes('→') || line.includes('共计')) return;
     const at = line.indexOf('→');
-    map.push({ card: line.slice(0, at).trim(), tags: listOf(line.slice(at + 1)) });
+    const card = line.slice(0, at).trim();
+    // 同一张卡片只认第一行：手抄时顺手多写一行不该让标签数翻倍
+    if (!card || seen.has(card)) return;
+    seen.add(card);
+    map.push({ card, tags: listOf(line.slice(at + 1)) });
   });
   return { tags, map };
 }
