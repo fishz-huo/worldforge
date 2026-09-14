@@ -42,7 +42,7 @@ export function buildSeedScene(worldId: string, now: number, seed: SeedCards): S
   });
 
   const pin = (cardId: string | null, x: number, y: number, label: string, icon: string, color: string, note = '') => {
-    pins.push({ id: newPinId(), map_id: mapId, card_id: cardId, x, y, label, icon, color, note });
+    pins.push({ id: newPinId(), map_id: mapId, layer_id: null, card_id: cardId, x, y, label, icon, color, note });
   };
   pin(byKey.capital.id, 0.52, 0.58, '焚天城', '🏛', '#ef4444', '灵脉节点');
   pin(byKey.mineTown.id, 0.24, 0.33, '灰港矿镇', '⛏', '#94a3b8');
@@ -51,13 +51,13 @@ export function buildSeedScene(worldId: string, now: number, seed: SeedCards): S
 
   regions.push(
     {
-      id: newRegionId(), map_id: mapId, name: '灰烬王国', color: '#ef4444',
+      id: newRegionId(), map_id: mapId, layer_id: null, name: '灰烬王国', color: '#ef4444',
       points: [[0.3, 0.4], [0.65, 0.35], [0.78, 0.55], [0.6, 0.78], [0.32, 0.7]],
       resources: { population: 420, agriculture: 30, mineral: 90, military: 75, trade: 55 },
       period: '焚天历 245 年', note: '以焚天城为绝对中心',
     },
     {
-      id: newRegionId(), map_id: mapId, name: '北境联盟', color: '#0ea5e9',
+      id: newRegionId(), map_id: mapId, layer_id: null, name: '北境联盟', color: '#0ea5e9',
       points: [[0.1, 0.05], [0.5, 0.02], [0.55, 0.25], [0.2, 0.3]],
       resources: { population: 180, agriculture: 45, mineral: 60, military: 65, trade: 40 },
       period: '焚天历 245 年', note: '灵息稀薄，反而较早发展灵械',

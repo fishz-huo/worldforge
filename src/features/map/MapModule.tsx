@@ -20,12 +20,15 @@ export function MapModule() {
   const maps = useStore((s) => s.maps);
   const selectedMapId = useStore((s) => s.selectedMapId);
   const selectMap = useStore((s) => s.selectMap);
+  const layers = useStore((s) => s.layers);
   const pins = useStore((s) => s.pins);
   const regions = useStore((s) => s.regions);
   const addPin = useStore((s) => s.addPin);
   const addRegion = useStore((s) => s.addRegion);
   const updatePin = useStore((s) => s.updatePin);
   const moveRegionPoint = useStore((s) => s.moveRegionPoint);
+  const addLayer = useStore((s) => s.addLayer);
+  const updateLayer = useStore((s) => s.updateLayer);
 
   const [tool, setTool] = useState<MapTool>('select');
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
@@ -40,6 +43,19 @@ export function MapModule() {
   }, [selectedMapId, maps, selectMap]);
 
   const map = maps.find((m) => m.id === selectedMapId) ?? null;
+  /**
+   * 老库兼容：v0.2 之前「一张地图 = 一张底图」，图存在 maps.asset_id 上。
+   * 第一次打开这种地图时把它补成一个同名图层，之后所有渲染都只看 layers，
+   * 只有一条代码路径要维护；用户也不会突然看到底图消失。
+   */
+  useEffect(() => {
+    if (!map || !map.asset_id) return;
+    if (layers.some((l) => l.map_id === map.id)) return;
+    const id = addLayer(map.id, map.name || '底图');
+    updateLayer(id, { asset_id: map.asset_id, opacity: map.opacity });
+  }, [map, layers, addLayer, updateLayer]);
+
+  const mapLayers = layers.filter((l) => l.map_id === map?.id);
   const mapPins = pins.filter((p) => p.map_id === map?.id);
   const mapRegions = regions.filter((r) => r.map_id === map?.id);
 
@@ -97,6 +113,7 @@ export function MapModule() {
             <div className="min-h-0 flex-1 p-3">
               <MapCanvas
                 map={map}
+                layers={mapLayers}
                 pins={mapPins}
                 regions={mapRegions}
                 tool={tool}

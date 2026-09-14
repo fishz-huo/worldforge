@@ -10,10 +10,11 @@ import { emptyMap } from '@/types';
 import { newMapId, newPinId, newRegionId } from '@/lib/id';
 import { mapsRepo, pinsRepo, regionsRepo } from '@/lib/db';
 import { purgeMap } from '@/lib/db/purge';
+import { createMapLayerActions, type MapLayerActions } from './mapLayerSlice';
 import { removeById, removeWhere, upsert } from '../helpers';
 import type { Slice } from '../types';
 
-export interface MapSlice {
+export interface MapSlice extends MapLayerActions {
   /** 新建地图，返回 mapId */
   createMap: (name: string) => string;
   updateMap: (id: string, patch: Partial<MapDef>) => void;
@@ -31,118 +32,127 @@ export interface MapSlice {
   deleteRegion: (id: string) => void;
 }
 
-export const createMapSlice: Slice<MapSlice> = (set, get) => ({
+export const createMapSlice: Slice<MapSlice> = (...args) => {
+  const [set, get] = args;
+  return {
   createMap: (name) => {
-    const worldId = get().currentWorldId;
-    if (!worldId) return '';
-    const now = Date.now();
-    const map: MapDef = {
-      ...emptyMap(worldId, get().currentBranchId, name),
-      id: newMapId(),
-      created_at: now,
-      updated_at: now,
-    };
-    mapsRepo.save(map);
-    set({ maps: [...get().maps, map], selectedMapId: map.id });
-    get().toast(`已创建地图「${name}」`, 'success');
-    return map.id;
-  },
+      const worldId = get().currentWorldId;
+      if (!worldId) return '';
+      const now = Date.now();
+      const map: MapDef = {
+        ...emptyMap(worldId, get().currentBranchId, name),
+        id: newMapId(),
+        created_at: now,
+        updated_at: now,
+      };
+      mapsRepo.save(map);
+      set({ maps: [...get().maps, map], selectedMapId: map.id });
+      get().toast(`已创建地图「${name}」`, 'success');
+      return map.id;
+    },
 
-  updateMap: (id, patch) => {
-    const map = get().maps.find((m) => m.id === id);
-    if (!map) return;
-    const next = { ...map, ...patch, updated_at: Date.now() };
-    mapsRepo.save(next);
-    set({ maps: upsert(get().maps, next) });
-  },
+    updateMap: (id, patch) => {
+      const map = get().maps.find((m) => m.id === id);
+      if (!map) return;
+      const next = { ...map, ...patch, updated_at: Date.now() };
+      mapsRepo.save(next);
+      set({ maps: upsert(get().maps, next) });
+    },
 
-  deleteMap: (id) => {
-    purgeMap(id);
-    set({
-      maps: removeById(get().maps, id),
-      pins: removeWhere(get().pins, (p) => p.map_id === id),
-      regions: removeWhere(get().regions, (r) => r.map_id === id),
-      selectedMapId: get().selectedMapId === id ? null : get().selectedMapId,
-    });
-    get().toast('地图已删除', 'warn');
-  },
+    deleteMap: (id) => {
+      purgeMap(id);
+      set({
+        maps: removeById(get().maps, id),
+        pins: removeWhere(get().pins, (p) => p.map_id === id),
+        regions: removeWhere(get().regions, (r) => r.map_id === id),
+        selectedMapId: get().selectedMapId === id ? null : get().selectedMapId,
+      });
+      get().toast('地图已删除', 'warn');
+    },
 
-  addPin: (mapId, x, y, init = {}) => {
-    const pin: MapPin = {
-      id: newPinId(),
-      map_id: mapId,
-      card_id: init.card_id ?? null,
-      x,
-      y,
-      label: init.label ?? '新标记',
-      icon: init.icon ?? '📍',
-      color: init.color ?? '#ef4444',
-      note: init.note ?? '',
-    };
-    pinsRepo.save(pin);
-    set({ pins: [...get().pins, pin] });
-    return pin.id;
-  },
+    addPin: (mapId, x, y, init = {}) => {
+      const pin: MapPin = {
+        id: newPinId(),
+        map_id: mapId,
+        // 默认不归属任何图层：老行为不变，用户想分类时再指派
+        layer_id: init.layer_id ?? null,
+        card_id: init.card_id ?? null,
+        x,
+        y,
+        label: init.label ?? '新标记',
+        icon: init.icon ?? '📍',
+        color: init.color ?? '#ef4444',
+        note: init.note ?? '',
+      };
+      pinsRepo.save(pin);
+      set({ pins: [...get().pins, pin] });
+      return pin.id;
+    },
 
-  updatePin: (id, patch) => {
-    const pin = get().pins.find((p) => p.id === id);
-    if (!pin) return;
-    const next = { ...pin, ...patch };
-    pinsRepo.save(next);
-    set({ pins: upsert(get().pins, next) });
-  },
+    updatePin: (id, patch) => {
+      const pin = get().pins.find((p) => p.id === id);
+      if (!pin) return;
+      const next = { ...pin, ...patch };
+      pinsRepo.save(next);
+      set({ pins: upsert(get().pins, next) });
+    },
 
-  deletePin: (id) => {
-    pinsRepo.remove(id);
-    set({ pins: removeById(get().pins, id) });
-  },
+    deletePin: (id) => {
+      pinsRepo.remove(id);
+      set({ pins: removeById(get().pins, id) });
+    },
 
-  addRegion: (mapId) => {
-    const region: MapRegion = {
-      id: newRegionId(),
-      map_id: mapId,
-      name: `新区域 ${get().regions.filter((r) => r.map_id === mapId).length + 1}`,
-      color: '#38bdf8',
-      // 默认一个居中的菱形，避免用户从零开始画
-      points: [[0.45, 0.35], [0.6, 0.45], [0.55, 0.62], [0.38, 0.55]],
-      resources: {},
-      period: get().maps.find((m) => m.id === mapId)?.period ?? '',
-      note: '',
-    };
-    regionsRepo.save(region);
-    set({ regions: [...get().regions, region] });
-    return region.id;
-  },
+    addRegion: (mapId) => {
+      const region: MapRegion = {
+        id: newRegionId(),
+        map_id: mapId,
+        layer_id: null,
+        name: `新区域 ${get().regions.filter((r) => r.map_id === mapId).length + 1}`,
+        color: '#38bdf8',
+        // 默认一个居中的菱形，避免用户从零开始画
+        points: [[0.45, 0.35], [0.6, 0.45], [0.55, 0.62], [0.38, 0.55]],
+        resources: {},
+        period: get().maps.find((m) => m.id === mapId)?.period ?? '',
+        note: '',
+      };
+      regionsRepo.save(region);
+      set({ regions: [...get().regions, region] });
+      return region.id;
+    },
 
-  updateRegion: (id, patch) => {
-    const region = get().regions.find((r) => r.id === id);
-    if (!region) return;
-    const next = { ...region, ...patch };
-    regionsRepo.save(next);
-    set({ regions: upsert(get().regions, next) });
-  },
+    updateRegion: (id, patch) => {
+      const region = get().regions.find((r) => r.id === id);
+      if (!region) return;
+      const next = { ...region, ...patch };
+      regionsRepo.save(next);
+      set({ regions: upsert(get().regions, next) });
+    },
 
-  appendRegionPoint: (id, point) => {
-    const region = get().regions.find((r) => r.id === id);
-    if (!region) return;
-    get().updateRegion(id, { points: [...region.points, point] });
-  },
+    appendRegionPoint: (id, point) => {
+      const region = get().regions.find((r) => r.id === id);
+      if (!region) return;
+      get().updateRegion(id, { points: [...region.points, point] });
+    },
 
-  removeRegionPoint: (id, index) => {
-    const region = get().regions.find((r) => r.id === id);
-    if (!region || region.points.length <= 3) return;
-    get().updateRegion(id, { points: region.points.filter((_, i) => i !== index) });
-  },
+    removeRegionPoint: (id, index) => {
+      const region = get().regions.find((r) => r.id === id);
+      if (!region || region.points.length <= 3) return;
+      get().updateRegion(id, { points: region.points.filter((_, i) => i !== index) });
+    },
 
-  moveRegionPoint: (id, index, point) => {
-    const region = get().regions.find((r) => r.id === id);
-    if (!region) return;
-    const points = region.points.map((p, i) => (i === index ? point : p));
-    get().updateRegion(id, { points });
-  },
+    moveRegionPoint: (id, index, point) => {
+      const region = get().regions.find((r) => r.id === id);
+      if (!region) return;
+      const points = region.points.map((p, i) => (i === index ? point : p));
+      get().updateRegion(id, { points });
+    },
 
-  deleteRegion: (id) => {
-    regionsRepo.remove(id);
-    set({ regions: removeById(get().regions, id) });
-  },
-});
+    deleteRegion: (id) => {
+      regionsRepo.remove(id);
+      set({ regions: removeById(get().regions, id) });
+    },
+
+    // 图层的那一组动作来自 mapLayerSlice.ts（展开合并，对外仍是一个 slice）
+    ...createMapLayerActions(...args),
+  };
+};

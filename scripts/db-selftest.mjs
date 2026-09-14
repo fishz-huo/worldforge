@@ -22,7 +22,9 @@ await test('初始化数据库并写入示例世界观', async () => {
   assert.ok(state().tracks.length >= 4, '应有示例泳道');
   assert.ok(state().entries.length >= 8, '应有示例时间轴条目');
   assert.ok(state().docs.length >= 2, '应有正文与大纲各一篇');
-  assert.equal(db.listTables().length, 19, '应建好 19 张表');
+  // 表数量与 schema.ts 的 TABLE_NAMES 对齐：加表时两边一起改，
+  // 免得这里写成硬编码数字之后，忘了同步的那一方默默通过
+  assert.equal(db.listTables().length, db.TABLE_NAMES.length, `应建好 ${db.TABLE_NAMES.length} 张表`);
 });
 
 await test('落盘到 IndexedDB（写入二进制快照）', async () => {

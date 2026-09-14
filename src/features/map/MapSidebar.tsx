@@ -15,6 +15,7 @@ import { RESOURCE_METRICS } from '@/types';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import { MapListPanel } from './MapListPanel';
+import { MapLayerPanel } from './MapLayerPanel';
 import { MapSettingsForm } from './MapSettingsForm';
 
 /** 绘制工具 */
@@ -87,6 +88,9 @@ export function MapSidebar({
             >
               区域（{mapRegions.length}）
             </SectionTitle>
+
+            {/* 图层紧挨着绘制工具：先决定"在哪一层上画"，再选工具 */}
+            <MapLayerPanel mapId={map.id} />
 
             <SectionTitle>显示选项</SectionTitle>
             <div className="space-y-1.5 px-1">

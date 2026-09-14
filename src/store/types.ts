@@ -5,7 +5,7 @@
  * 这里只做类型汇总，运行时逻辑分散在 slices/ 目录，保证单文件不超过 200 行。
  */
 import type { StateCreator } from 'zustand';
-import type { Asset, Branch, Card, CardAsset, Doc, Era, MapDef, MapPin, MapRegion, OutlineNode, PluginRecord, Relation, Tag, TimelineEntry, Track, Version, World } from '@/types';
+import type { Asset, Branch, Card, CardAsset, Doc, Era, MapDef, MapLayer, MapPin, MapRegion, OutlineNode, PluginRecord, Relation, Tag, TimelineEntry, Track, Version, World } from '@/types';
 
 /** 主模块标识（左侧导航栏） */
 export type ModuleKey =
@@ -42,6 +42,8 @@ export interface DataState {
   cardTags: { card_id: string; tag_id: string }[];
   relations: Relation[];
   maps: MapDef[];
+  /** 地图图层（一张地图可叠多层底图） */
+  layers: MapLayer[];
   pins: MapPin[];
   regions: MapRegion[];
   tracks: Track[];
@@ -102,6 +104,5 @@ export type AppStore = DataState &
   import('./slices/outlineSlice').OutlineSlice &
   import('./slices/versionSlice').VersionSlice &
   import('./slices/pluginSlice').PluginSlice;
-
 /** slice 创建器简写 */
 export type Slice<T> = StateCreator<AppStore, [], [], T>;

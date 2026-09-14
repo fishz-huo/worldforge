@@ -11,7 +11,7 @@ import { buildSeed } from '@/lib/seed';
 import type { Card } from '@/types';
 import {
   assetsRepo, branchesRepo, cardAssetsRepo, cardsRepo, docsRepo, entriesRepo, erasRepo,
-  flush, getSetting, initDatabase, installLifecycleFlush, listAllCardTags, mapsRepo,
+  flush, getSetting, initDatabase, installLifecycleFlush, layersRepo, listAllCardTags, mapsRepo,
   outlineRepo, pinsRepo, pluginsRepo, regionsRepo, relationsRepo,
   tagsRepo, tracksRepo, versionsRepo, worldsRepo,
 } from '@/lib/db';
@@ -53,6 +53,7 @@ export const createDataSlice: Slice<DataSlice> = (set, get) => ({
   cardTags: [],
   relations: [],
   maps: [],
+  layers: [],
   pins: [],
   regions: [],
   tracks: [],
@@ -108,6 +109,9 @@ export const createDataSlice: Slice<DataSlice> = (set, get) => ({
       cardTags: listAllCardTags(worldId),
       relations: relationsRepo.list('world_id = ?', [worldId]),
       maps: mapsRepo.list('world_id = ?', [worldId], 'created_at ASC'),
+      layers: layersRepo.list(
+        'map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId], 'order_index ASC',
+      ),
       pins: pinsRepo.list('map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]),
       regions: regionsRepo.list('map_id IN (SELECT id FROM maps WHERE world_id = ?)', [worldId]),
       tracks: tracksRepo.list('world_id = ?', [worldId], 'order_index ASC'),
