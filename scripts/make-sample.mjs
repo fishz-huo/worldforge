@@ -28,7 +28,14 @@ const OUT_JSON = join(OUT_DIR, '潮线之外.worldforge.json');
 const REQUIRED = ['一、顶层设定', '三、卡片', '四、标签', '五、关联', '六、地图', '七、时间轴', '八、文稿', '九、大纲树'];
 
 /* ------------------------------ 解析 ------------------------------ */
-const text = readFileSync(TXT, 'utf8');
+/**
+ * 读手册并**归一化换行**。
+ * 这一步不能省：手册在仓库里是 LF，但 Windows 检出后本地会变成 CRLF
+ * （git 的换行转换），而 splitTopSections 的小节边框正则是按 `\n` 写的 ——
+ * 一旦带着 `\r`，所有顶层小节都切不出来，报错却是
+ * "Cannot read properties of undefined"，完全指错方向。
+ */
+const text = readFileSync(TXT, 'utf8').replace(/\r\n?/g, '\n');
 const S = splitTopSections(text);
 REQUIRED.forEach((key) => {
   if (!S[key]) throw new Error(`文本缺少小节：${key}`);

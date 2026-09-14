@@ -3,6 +3,10 @@
  * ------------------------------------------------------------------
  * 把「字段 / 标签 / 图库 / 关联」这些结构化编辑集中在一列，
  * 正文编辑留在左侧，形成「内容 + 结构」并排的工作面。
+ *
+ * compact 模式：详情页多了「属性区」页签之后，字段/标签/关联在那边
+ * 也有一份等价的文本投影。两边同时可改容易让人以为要改两遍，
+ * 所以切到属性区时把这一列收成只留封面与图库 —— 单一入口，不产生歧义。
  */
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -42,12 +46,21 @@ export function Collapsible({
 }
 
 /** 详情视图的右列 */
-export function CardAside({ cardId }: { cardId: string }) {
+export function CardAside({ cardId, compact = false }: { cardId: string; compact?: boolean }) {
   const card = useStore((s) => s.cards.find((c) => c.id === cardId));
   const cardTags = useStore((s) => s.cardTags);
   const tagIds = cardTags.filter((ct) => ct.card_id === cardId).map((ct) => ct.tag_id);
 
   if (!card) return null;
+
+  /** 紧凑模式只留图库：字段/标签/关联改到「属性区」里编辑 */
+  if (compact) {
+    return (
+      <Collapsible title="封面图库">
+        <CardGallery cardId={cardId} />
+      </Collapsible>
+    );
+  }
 
   return (
     <div className="space-y-2">

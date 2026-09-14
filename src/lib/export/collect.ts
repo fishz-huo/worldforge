@@ -20,7 +20,7 @@ import {
 } from '@/types';
 import { countWords } from '@/lib/markdown';
 import { outlineToMarkdown } from '@/lib/outline-text';
-import { getCardType, getFieldsFor, listCardTypes } from '@/lib/plugin/registry';
+import { cardTypeOf, getFieldsFor, listCardTypes } from '@/lib/plugin/registry';
 
 /** 采集选项 */
 export interface CollectOptions {
@@ -72,7 +72,9 @@ function relationsOfCard(cardId: string, source: ExportSource): string[] {
 
 /** 一张卡片 → 一个条目 */
 function cardToItem(card: Card, source: ExportSource, opts: CollectOptions): ExportItem {
-  const type = getCardType(card.type);
+  // 用 cardTypeOf：作者给「其他类型」起的名字（礼仪 / 菜谱）要显示出来，
+  // 而不是笼统的「其他类型」
+  const type = cardTypeOf(card);
   const meta: ExportMeta[] = [{ label: '类型', value: type.label }];
   if (card.subtitle) meta.push({ label: '副标题', value: card.subtitle });
   if (card.summary) meta.push({ label: type.summaryLabel ?? '摘要', value: card.summary });
@@ -84,6 +86,12 @@ function cardToItem(card: Card, source: ExportSource, opts: CollectOptions): Exp
   return {
     id: card.id,
     title: card.title,
+    /**
+     * kind: 'card' 让 Markdown 渲染知道"这个条目有属性区"。
+     * meta 仍然保留：Word / PDF 那两路排版要用它渲染人类可读的属性表，
+     * 而 Markdown 那一路会改用属性区围栏（同一份信息不写两遍）。
+     */
+    kind: 'card',
     subtitle: '',
     meta,
     markdown: card.body ?? '',
@@ -102,6 +110,7 @@ function docToItem(doc: Doc, source: ExportSource): ExportItem {
   return {
     id: doc.id,
     title: doc.title,
+    kind: 'doc',
     subtitle: '',
     meta,
     markdown: doc.content ?? '',
@@ -127,7 +136,7 @@ function outlineToItem(doc: Doc, source: ExportSource): ExportItem {
   const linked = doc.card_id ? source.cards.find((c) => c.id === doc.card_id) : null;
   if (linked) meta.push({ label: '关联卡片', value: linked.title });
   if (doc.summary) meta.push({ label: '摘要', value: doc.summary });
-  return { id: doc.id, title: doc.title, subtitle: '', meta, markdown, tags: [], relations: [] };
+  return { id: doc.id, title: doc.title, kind: 'outline', subtitle: '', meta, markdown, tags: [], relations: [] };
 }
 
 /** 采集某一个区域；没有内容时返回 null（界面上显示为「空」，不生成空文件） */

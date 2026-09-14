@@ -5,6 +5,7 @@
  * 概念、参考资料、随笔。插件注册的新类型会在 lib/registry.ts 里合并进来。
  */
 import type { CardTypeDef } from './field';
+import { OTHER_CARD_TYPE } from './card-type-other';
 import {
   LOCATION_CATEGORIES,
   LORE_CATEGORIES,
@@ -178,7 +179,7 @@ const note: CardTypeDef = {
   fields: [],
 };
 
-/** 全部内置类型，顺序即侧边栏展示顺序 */
+/** 全部内置类型，顺序即侧边栏展示顺序（「其他类型」定义见 card-type-other.ts） */
 export const BUILTIN_CARD_TYPES: CardTypeDef[] = [
   character,
   location,
@@ -189,6 +190,7 @@ export const BUILTIN_CARD_TYPES: CardTypeDef[] = [
   concept,
   reference,
   note,
+  OTHER_CARD_TYPE,
 ];
 
 /** 内置类型快速索引 */
