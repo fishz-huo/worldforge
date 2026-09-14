@@ -79,9 +79,17 @@ export function scrollLeftToKeep(anchorTime: number, anchorPx: number, range: Ti
 /**
  * 让某个时间点居中：返回应该设置的 scrollLeft。
  * 「定位到某条目」用得到。
+ *
+ * @param fixedLeftPx 滚动容器**内部**左侧被固定的宽度。
+ *   时间轴的泳道名称列放在滚动容器外面（它是另一个 flex 子项），
+ *   所以这里传 0；只有当名称列也在容器里并用 sticky 固定时才需要传它的宽度。
+ *   留这个参数是因为"按整个宽度取中点"是最容易犯的居中错误：
+ *   固定列压住左边时，中点会跑到固定列底下。
  */
-export function scrollLeftToCenter(t: number, viewportPx: number, range: TimeRange, pxPerUnit: number): number {
-  return timeToX(t, range, pxPerUnit) - viewportPx / 2;
+export function scrollLeftToCenter(
+  t: number, viewportPx: number, range: TimeRange, pxPerUnit: number, fixedLeftPx = 0,
+): number {
+  return timeToX(t, range, pxPerUnit) - (viewportPx - fixedLeftPx) / 2;
 }
 
 /**
@@ -107,12 +115,10 @@ export function clampPxPerUnit(value: number): number {
 }
 
 /**
- * 缩放一步：factor > 1 放大。
- * 分三种情况，别混在一起：
- *   - 倍数算坏了（NaN / 无穷）→ 返回中性值 1，用户会看到"缩放没反应"，
+ * 缩放一步：factor > 1 放大。三种情况别混在一起：
+ *   - 倍数算坏（NaN / 无穷）→ 中性值 1，用户看到的是"缩放没反应"，
  *     而不是界面突然缩到最小；
- *   - 倍数 <= 0（滚轮连续缩小、调用方把 factor 越乘越小）→ 缩到最小，
- *     这是最自然的行为；
+ *   - 倍数 <= 0（滚轮连续缩小）→ 缩到最小，这是最自然的行为；
  *   - 正常倍数 → 乘完夹到区间内。
  */
 export function zoomBy(pxPerUnit: number, factor: number): number {
@@ -123,19 +129,15 @@ export function zoomBy(pxPerUnit: number, factor: number): number {
 
 /**
  * 刻度步长与「好看的 1/2/5 × 10ⁿ」规则沿用 types/timeline.ts 的 niceStep，
- * 这里不再实现一份 —— 两处各写一套迟早会出现"刻度尺和吸附用的步长不一样"。
- * 唯一的区别是判断依据：旧代码按「可见区间」算，新代码按「屏幕上一格多少像素」算，
+ * 不再实现第二份 —— 两处各写一套迟早会出现"刻度尺和吸附用的步长不一样"。
+ * 区别只在判断依据：旧代码按「可见区间」算，新代码按「屏幕上一格多少像素」算，
  * 于是缩放时刻度会自动变密或变疏。
  */
 export { niceStep } from '@/types';
 
 /**
  * 按屏幕像素密度决定刻度步长与要画的刻度序列。
- * @param range        内容范围
- * @param pxPerUnit    比例尺
- * @param viewportPx   视口像素宽
- * @param scrollLeft   当前滚动位置
- * @param minLabelPx   两个刻度之间至少留多少像素（避免标签叠在一起）
+ * @param minLabelPx 两个刻度之间至少留多少像素（避免标签叠在一起）
  */
 export function visibleTicks(
   range: TimeRange,

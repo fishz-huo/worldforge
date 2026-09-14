@@ -16,7 +16,14 @@ import {
   timeToX, xToTime, zoomBy, type TimeRange,
 } from './scale';
 
-/** 泳道名称列的宽度（与 CSS 里的 w-36 一致）；轴与泳道共用它来对齐 */
+/**
+ * 泳道名称列的宽度。
+ * 必须与三处保持一致，否则刻度尺与条目会错开一格：
+ *   - useTimelineView 的 LABEL_COL（本常量，用于居中定位的换算）
+ *   - TimelineAxis 里刻度尺左侧留白的 `w-36`
+ *   - TimelineCanvas 里名称列的 `w-36`
+ * 单独提出来是为了让"改宽度时要改哪几处"这件事在代码里看得见。
+ */
 export const LABEL_COL = 144;
 
 export function useTimelineView(fullRange: TimeRange) {
@@ -88,12 +95,14 @@ export function useTimelineView(fullRange: TimeRange) {
     });
   }, [range, viewportPx]);
 
-  /** 把某个刻度滚到视口中央（「定位到该条目」用） */
+  /** 把某个刻度滚到视口中央（「定位到该条目 / 这一刻」用） */
   const centerOn = useCallback(
     (t: number) => {
       const el = scrollRef.current;
       if (!el) return;
-      el.scrollTo({ left: Math.max(0, scrollLeftToCenter(t, el.clientWidth, range, pxPerUnit)), behavior: 'smooth' });
+      // 名称列在滚动容器之外，所以容器宽度就是时间轴本体的宽度，不用扣偏移
+      const left = scrollLeftToCenter(t, el.clientWidth, range, pxPerUnit);
+      el.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
     },
     [range, pxPerUnit],
   );
