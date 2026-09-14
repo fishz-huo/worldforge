@@ -5,7 +5,7 @@
  * 布局开关（rail / sidebar / inspector）与主题都会持久化到 localStorage。
  */
 import { newId } from '@/lib/id';
-import { loadPrefs, savePrefs } from '../prefs';
+import { clampWidth, DEFAULT_PREFS, loadPrefs, savePrefs, WIDTH_LIMITS, type UiScale } from '../prefs';
 import type { ModuleKey, Slice, Toast, UiState } from '../types';
 
 const saved = loadPrefs();
@@ -41,6 +41,13 @@ export interface UiSlice extends UiState {
   setCardColumns: (n: 2 | 3 | 4) => void;
   setEditorSplit: (v: boolean) => void;
   setEditorFontSize: (n: number) => void;
+  /** 拖动面板分隔条时高频调用，落盘由 lib/layout-sync.ts 去抖 */
+  setSidebarWidth: (rem: number) => void;
+  setInspectorWidth: (rem: number) => void;
+  /** 重置左右栏宽度到默认值（分隔条双击） */
+  resetPanelWidths: () => void;
+  /** 整界面缩放到指定档位 */
+  setUiScale: (scale: UiScale) => void;
   toast: (message: string, kind?: Toast['kind']) => void;
   dismissToast: (id: string) => void;
 }
@@ -70,6 +77,9 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
   cardColumns: saved.cardColumns,
   editorSplit: saved.editorSplit,
   editorFontSize: saved.editorFontSize,
+  sidebarWidth: saved.sidebarWidth,
+  inspectorWidth: saved.inspectorWidth,
+  uiScale: saved.uiScale,
 
   setModule: (module) => {
     set({ module });
@@ -136,6 +146,26 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
   setEditorFontSize: (editorFontSize) => {
     set({ editorFontSize });
     savePrefs({ editorFontSize });
+  },
+  setSidebarWidth: (sidebarWidth) => {
+    set({ sidebarWidth: clampWidth(sidebarWidth, WIDTH_LIMITS.sidebar) });
+  },
+  setInspectorWidth: (inspectorWidth) => {
+    set({ inspectorWidth: clampWidth(inspectorWidth, WIDTH_LIMITS.inspector) });
+  },
+  resetPanelWidths: () => {
+    set({
+      sidebarWidth: DEFAULT_PREFS.sidebarWidth,
+      inspectorWidth: DEFAULT_PREFS.inspectorWidth,
+    });
+    savePrefs({
+      sidebarWidth: DEFAULT_PREFS.sidebarWidth,
+      inspectorWidth: DEFAULT_PREFS.inspectorWidth,
+    });
+  },
+  setUiScale: (uiScale) => {
+    set({ uiScale });
+    savePrefs({ uiScale });
   },
   toast: (message, kind = 'info') => {
     const item: Toast = { id: newId('n'), message, kind, at: Date.now() };

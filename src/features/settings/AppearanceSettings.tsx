@@ -4,11 +4,13 @@
  * 需求 6：界面简约易看；需求 14：插件可提供配色（registerTheme）。
  */
 import { Check, Moon, Palette, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { SectionTitle } from '@/components/ui/primitives';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
+import { UI_SCALE_OPTIONS } from '@/store/prefs';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 
@@ -39,6 +41,9 @@ export function AppearanceSettings() {
   const setEditorSplit = useStore((s) => s.setEditorSplit);
   const fontSize = useStore((s) => s.editorFontSize);
   const setFontSize = useStore((s) => s.setEditorFontSize);
+  const uiScale = useStore((s) => s.uiScale);
+  const setUiScale = useStore((s) => s.setUiScale);
+  const resetPanelWidths = useStore((s) => s.resetPanelWidths);
   const registry = usePluginRegistry();
 
   return (
@@ -62,6 +67,32 @@ export function AppearanceSettings() {
               {opt.label}
             </button>
           ))}
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <SectionTitle>界面大小</SectionTitle>
+        <div className="px-1">
+          <div className="grid grid-cols-4 gap-1">
+            {UI_SCALE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setUiScale(opt.value)}
+                className={cn(
+                  'rounded-md border py-1.5 text-xs transition-colors',
+                  uiScale === opt.value
+                    ? 'border-primary bg-primary/15 text-primary'
+                    : 'border-border hover:bg-accent',
+                )}
+              >
+                {opt.label}
+                <span className="ml-1 text-[10px] text-muted-foreground">{Math.round(opt.value * 100)}%</span>
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+            整界面等比缩放（工具栏、面板、字号一起变）。只影响显示，不影响导出的字号。
+          </p>
         </div>
       </section>
 
@@ -144,6 +175,14 @@ export function AppearanceSettings() {
           <div className="space-y-1">
             <Label>编辑器字号：{fontSize}px</Label>
             <Slider value={[fontSize]} min={12} max={22} step={1} onValueChange={([v]) => setFontSize(v)} />
+          </div>
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[10px] leading-relaxed text-muted-foreground">
+              左右两栏宽度：拖动两栏之间的分隔条调整，双击复位。
+            </span>
+            <Button variant="outline" size="sm" className="shrink-0" onClick={() => resetPanelWidths()}>
+              重置宽度
+            </Button>
           </div>
         </div>
       </section>
