@@ -15,6 +15,7 @@
  */
 import type { Card, FieldValue, Relation } from '@/types';
 import type { CardProps, RelationRef } from '@/lib/markdown';
+import { aliasesOf, codeOf, findCodeConflict, normalizeCode, validateCode } from '@/lib/card-code';
 
 /** 应用时需要的最小 store 能力（便于自测里传假实现） */
 export interface PropsApplyEnv {
@@ -38,6 +39,10 @@ export interface ApplyReport {
   relationsUpdated: number;
   /** 找不到对端卡片的关联标题 */
   unresolved: string[];
+  /** 编号被改成什么（没改就不带这个字段） */
+  codeChanged?: string;
+  /** 编号没能采用的原因（被占用 / 格式不合法） */
+  codeProblem?: string;
 }
 
 /** 按 id 或标题找对端卡片 */
@@ -107,6 +112,38 @@ function applyRelations(card: Card, props: CardProps, env: PropsApplyEnv) {
   return { relationsAdded: added, relationsUpdated: updated, unresolved };
 }
 
+/**
+ * 属性区里的编号 → 卡片。
+ *
+ * 两道保护，因为「粘一段文本」不该有破坏性：
+ *   1. 被别的卡片占用的编号**直接拒绝**（返回原因、不改），否则同一个世界观里
+ *      会出现两张同号的卡，[[编号]] 指向谁就说不清了；
+ *   2. 换号时把旧编号留成别名 —— 不然粘一次文本，原有引用就全断。
+ * 这里不弹「是否替换全库引用」：粘属性区是「改这一张卡」的动作，
+ * 保留别名已经能让旧引用继续生效，比批量改写正文更保守。
+ */
+function applyCode(
+  card: Card,
+  props: CardProps,
+  env: PropsApplyEnv,
+  patch: Partial<Card>,
+): { changed?: string; problem?: string } {
+  if (!props.code) return {};
+  const next = normalizeCode(props.code);
+  const invalid = validateCode(next);
+  if (invalid) return { problem: `属性区里的编号「${props.code}」不能采用：${invalid}` };
+  const current = codeOf(card);
+  if (next.toLowerCase() === current.toLowerCase()) {
+    if (next !== current) patch.code = next; // 只差大小写：采纳文本里的写法
+    return {};
+  }
+  const conflict = findCodeConflict(env.cards, next, card.id);
+  if (conflict) return { problem: `属性区里的编号 ${next} 已被【${conflict.title}】使用，编号未改动` };
+  patch.code = next;
+  patch.code_aliases = [...new Set([...aliasesOf(card), current].filter(Boolean))];
+  return { changed: next };
+}
+
 /** 把属性区解析结果写回卡片；返回改了些什么 */
 export function applyProps(card: Card, props: CardProps, env: PropsApplyEnv): ApplyReport {
   const patch: Partial<Card> = { fields: mergePropsFields(card, props) };
@@ -114,9 +151,16 @@ export function applyProps(card: Card, props: CardProps, env: PropsApplyEnv): Ap
   if (props.summary !== null) patch.summary = props.summary;
   // 类型只在文本里明确写了、且与当前不同时才改
   if (props.type && props.type !== card.type) patch.type = props.type;
+  const code = applyCode(card, props, env, patch);
   env.updateCard(card.id, patch);
 
   const tagsAdded = applyTags(card, props, env);
   const rel = applyRelations(card, props, env);
-  return { fields: Object.keys(props.fields).length, tagsAdded, ...rel };
+  return {
+    fields: Object.keys(props.fields).length,
+    tagsAdded,
+    ...rel,
+    codeChanged: code.changed,
+    codeProblem: code.problem,
+  };
 }

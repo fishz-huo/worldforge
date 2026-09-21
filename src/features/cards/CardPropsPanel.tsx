@@ -78,9 +78,11 @@ export function CardPropsPanel({ cardId }: { cardId: string }) {
     if (result.tagsAdded) bits.push(`新增标签 ${result.tagsAdded}`);
     if (result.relationsAdded) bits.push(`新增关联 ${result.relationsAdded}`);
     if (result.relationsUpdated) bits.push(`更新关联 ${result.relationsUpdated}`);
+    if (result.codeChanged) bits.push(`编号 → ${result.codeChanged}（旧编号留为别名）`);
     const warn = result.unresolved.length ? `；${result.unresolved.length} 条关联找不到对端卡片：${result.unresolved.join('、')}` : '';
-    setReport(`已应用：${bits.join('，')}${warn}`);
-    toast('属性区已应用到卡片', result.unresolved.length ? 'warn' : 'success');
+    const problem = result.codeProblem ? `；${result.codeProblem}` : '';
+    setReport(`已应用：${bits.join('，')}${warn}${problem}`);
+    toast(result.codeProblem ? '属性区已应用（编号未改）' : '属性区已应用到卡片', result.unresolved.length || result.codeProblem ? 'warn' : 'success');
   };
 
   const copy = () => {
@@ -134,7 +136,7 @@ export function CardPropsPanel({ cardId }: { cardId: string }) {
           </span>
         ) : (
           <>
-            块首 `type` / `subtitle` / `summary` / `tags`，缩进的 `fields:` 是结构化字段，
+            块首 `code` / `type` / `subtitle` / `summary` / `tags`，缩进的 `fields:` 是结构化字段，
             `relations:` 每行一条关联（→ 出边、← 入边、↔ 无向，行尾 `[[卡片id]]` 保证改标题也不指错）。
             改完点「应用到卡片」写回；这里只做单向投影，卡片表单仍是唯一数据源。
           </>

@@ -16,6 +16,7 @@
  */
 import type { Card, FieldDef } from '@/types';
 import { getFieldsFor } from '@/lib/plugin/registry';
+import { codeOf } from '@/lib/card-code';
 import { formatFieldValue, joinRelations } from './props-format';
 
 /** 属性区的围栏标记。用 `---` 与 YAML 一致；解析时靠它精确切出这一段。 */
@@ -49,6 +50,12 @@ export function renderProps(input: PropsInput): string {
 
   // 类型：写在最前面，回读时靠它决定字段怎么解释
   lines.push(`type: ${formatFieldValue(card.type)}`);
+  /**
+   * 编号：导出给别的工具看时，「这张卡是谁」靠它 —— 标题可以改，编号不会。
+   * 未编号的卡片不写这一行（与空字段不写出去同一个原则：导出保持干净）。
+   */
+  const code = codeOf(card);
+  if (code) lines.push(`code: ${formatFieldValue(code)}`);
   // 自定义类型卡片的显示名（「其他类型」用），没有就不写，保持导出干净
   const typeLabel = card.fields?.typeLabel;
   if (typeof typeLabel === 'string' && typeLabel.trim()) {

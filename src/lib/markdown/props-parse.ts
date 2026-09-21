@@ -14,6 +14,8 @@ import { VALID_KEY } from './props-format';
 /** 解析结果 */
 export interface CardProps {
   type: string | null;
+  /** 卡片编号（导出文本里有；外部手写的属性区可能没有） */
+  code: string | null;
   typeLabel: string | null;
   subtitle: string | null;
   summary: string | null;
@@ -133,7 +135,7 @@ function parseRelation(line: string): RelationRef | null {
 /** 解析属性区文本；输入可带 `---` 围栏，也可不带（用户可能只复制了中间那段） */
 export function parseProps(text: string): CardProps {
   const out: CardProps = {
-    type: null, typeLabel: null, subtitle: null, summary: null,
+    type: null, code: null, typeLabel: null, subtitle: null, summary: null,
     tags: null, fields: {}, relations: [],
   };
   /** 当前所处的段：null = 顶层；'fields' / 'relations' = 缩进段 */
@@ -168,6 +170,7 @@ export function parseProps(text: string): CardProps {
     }
     section = null;
     if (key === 'type') out.type = String(parseScalar(value)) || null;
+    else if (key === 'code') out.code = String(parseScalar(value)) || null;
     else if (key === 'typeLabel') out.typeLabel = String(parseScalar(value)) || null;
     else if (key === 'subtitle') out.subtitle = String(parseScalar(value));
     else if (key === 'summary') out.summary = String(parseScalar(value));
@@ -181,6 +184,7 @@ export function parseProps(text: string): CardProps {
 export function propsKeys(props: CardProps): string[] {
   const keys = Object.keys(props.fields);
   if (props.type) keys.unshift('type');
+  if (props.code) keys.splice(props.type ? 1 : 0, 0, 'code');
   if (props.subtitle !== null) keys.push('subtitle');
   if (props.summary !== null) keys.push('summary');
   if (props.tags) keys.push('tags');

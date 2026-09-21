@@ -19,7 +19,7 @@ import { cardTypeOf } from '@/lib/plugin/registry';
 
 /** 导出文件里属性区的顶部注释（用 YAML 注释符，任何解析器都会忽略） */
 const HEAD_NOTE = [
-  '# 以下为 WorldForge 属性区：类型 / 字段 / 标签 / 关联',
+  '# 以下为 WorldForge 属性区：编号 / 类型 / 字段 / 标签 / 关联',
   '# 可在应用的「卡片 → 属性区」里原样粘贴回来',
 ];
 
@@ -58,4 +58,4 @@ export function cardPropsBlock(card: Card, source: ExportSource): string {
  * 属性区里出现的键是不是我们认得的。
  * 给自测用：导出的格式一旦被误删注释或改错键名，这里能立刻发现。
  */
-export const PROPS_KEYS = ['title', 'typeName', 'type', 'subtitle', 'summary', 'tags', 'fields', 'relations'] as const;
+export const PROPS_KEYS = ['title', 'typeName', 'code', 'type', 'subtitle', 'summary', 'tags', 'fields', 'relations'] as const;

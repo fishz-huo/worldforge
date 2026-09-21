@@ -3,11 +3,12 @@
  * ------------------------------------------------------------------
  * 用法：node scripts/export-props-test.mjs
  *
- * 守三件事：
- *   1. 卡片条目在 Markdown 里带一段属性区（标签 / 结构化字段 / 关联都在里面）；
+ * 守四件事：
+ *   1. 卡片条目在 Markdown 里带一段属性区（编号 / 标签 / 结构化字段 / 关联都在里面）；
  *   2. 那段文本与**界面「属性区」页签渲染出来的完全一致** ——
  *      两条路走的是同一个渲染器，否则用户从导出文件里抄回来就对不上卡片了；
- *   3. 从导出文件里把属性区粘回来，字段值与类型逐个相等（真往返）。
+ *   3. 从导出文件里把属性区粘回来，字段值与类型逐个相等（真往返）；
+ *   4. 编号也跟着往返：粘回来能改号、旧号自动留成别名，被别人占用时拒绝改号。
  */
 import { assert, finish, group, test } from './test-runner.mjs';
 import { makeSource, collectAreas, areaToMarkdown, FIXED_AT } from './export-fixture.mjs';
@@ -16,6 +17,7 @@ const { renderPropsBlock, parseProps } = await import('@/lib/markdown/index.ts')
 const { propsResolver, itemToMarkdown } = await import('@/lib/export/render-md.ts');
 const { cardPropsBlock } = await import('@/lib/export/props.ts');
 const { joinRelations } = await import('@/lib/markdown/props-format.ts');
+const { applyProps } = await import('@/lib/props-apply.ts');
 const { tagsOf } = await import('@/types/index.ts');
 
 group('条目带上卡片标记');
@@ -48,6 +50,15 @@ await test('属性区里带注释、标题与类型名（给别的工具读）',
   assert.match(md, /# 以下为 WorldForge 属性区/);
   assert.match(md, /^title: /m);
   assert.match(md, /^typeName: /m);
+});
+
+await test('属性区里带卡片编号（未编号的卡片不写这一行）', () => {
+  const card = source.cards.find((c) => c.title === '云中君');
+  assert.ok(card.code, '夹具卡片应当有编号');
+  assert.match(fenceOf('云中君'), new RegExp(`^code: ${card.code}$`, 'm'));
+  // 没有编号的卡片保持干净：不写空的 code 行
+  const bare = renderPropsBlock({ card: { ...card, code: '' }, tags: [], relations: [] });
+  assert.ok(!bare.includes('code:'), '未编号的卡片不该写出 code 行');
 });
 
 await test('标签与关联不再以「**标签**：」「**关联**：」重复出现', () => {
@@ -110,7 +121,48 @@ await test('cardPropsBlock 与 itemToMarkdown 组合后仍是可解析的完整�
   assert.ok(block.startsWith('## 云中君'));
   const parsed = parseProps(block);
   assert.equal(parsed.type, 'character');
+  assert.equal(parsed.code, card.code, '编号也要能从导出的条目里读回来');
   assert.equal(parsed.relations[0].title, '灰港');
   void FIXED_AT;
   void cardPropsBlock;
+});
+
+group('编号跟着属性区往返');
+
+/** 只够 applyProps 用的最小环境：记下每次 updateCard 的补丁 */
+function makeEnv(cards) {
+  const patches = [];
+  return {
+    patches,
+    env: {
+      cards,
+      relations: [],
+      ensureTag: (name) => ({ id: `t-${name}` }),
+      setCardTagsOf: () => {},
+      addRelation: () => {},
+      updateRelation: () => {},
+      updateCard: (id, patch) => patches.push({ id, patch }),
+      existingTagIds: [],
+    },
+  };
+}
+
+await test('粘回属性区能改编号，旧编号自动留成别名（引用不会断）', () => {
+  const card = source.cards.find((c) => c.title === '云中君');
+  const { env, patches } = makeEnv(source.cards);
+  const report = applyProps(card, parseProps(`code: HERO-900\ntype: ${card.type}\n`), env);
+  assert.equal(report.codeChanged, 'HERO-900', `应报告改号，实际 ${JSON.stringify(report)}`);
+  assert.equal(patches[0].patch.code, 'HERO-900');
+  assert.deepEqual(patches[0].patch.code_aliases, [card.code], '旧编号必须留成别名');
+});
+
+await test('属性区里的编号已被别人占用时拒绝改号（并说明是谁用了）', () => {
+  const card = source.cards.find((c) => c.title === '云中君');
+  const other = source.cards.find((c) => c.id !== card.id && c.code);
+  assert.ok(other, '夹具里应有另一张带编号的卡片');
+  const { env, patches } = makeEnv(source.cards);
+  const report = applyProps(card, parseProps(`code: ${other.code}\n`), env);
+  assert.ok(report.codeProblem, '应给出拒绝原因');
+  assert.match(report.codeProblem, new RegExp(other.title), `原因里应点名占用者，实际：${report.codeProblem}`);
+  assert.equal(patches[0].patch.code, undefined, '被拒绝时不能写编号');
 });

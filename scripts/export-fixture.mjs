@@ -25,10 +25,11 @@ export const { getFieldsFor } = await import('@/lib/plugin/registry.ts');
 /** 取某个区域（不存在时返回 undefined，让断言自己报错） */
 export const areaById = (areas, id) => areas.find((a) => a.id === id);
 
-/** 造一张卡片（默认角色类型，可覆盖任意字段） */
+/** 造一张卡片（默认角色类型，可覆盖任意字段；编号默认留空 = 未编号） */
 export const makeCard = (id, title, extra = {}) => ({
-  id, world_id: 'w1', branch_id: null, type: 'character', title, subtitle: '', summary: '',
-  body: '', fields: {}, cover_asset: null, pinned: 0, created_at: 1, updated_at: 1, ...extra,
+  id, world_id: 'w1', branch_id: null, type: 'character', code: '', code_aliases: [], title,
+  subtitle: '', summary: '', body: '', fields: {}, cover_asset: null, pinned: 0,
+  created_at: 1, updated_at: 1, ...extra,
 });
 
 /**
@@ -44,12 +45,13 @@ export function makeSource(over = {}) {
     exportedAt: FIXED_AT,
     cards: [
       makeCard('c1', '云中君', {
+        code: 'CHR-001',
         subtitle: '天穹守夜人',
         summary: '守夜人的头儿',
         fields: { [def.key]: def.kind === 'select' ? def.options[0].value : '测试值' },
         body: '# 生平\n\n他是**守夜人**，住在[[灰港]]。\n\n- 出生在灰港\n\n![肖像](asset:a1)',
       }),
-      makeCard('c2', '灰港', { type: 'location', body: '一座港口。' }),
+      makeCard('c2', '灰港', { type: 'location', code: 'LOC-001', body: '一座港口。' }),
       makeCard('c3', '分支人物', { branch_id: 'b1', body: '只存在于分支里。' }),
       makeCard('c4', '另一个分支人物', { branch_id: 'b2', body: '别的分支的人。' }),
     ],
