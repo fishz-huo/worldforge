@@ -74,7 +74,8 @@ export function clampWidth(value: number, limit: { min: number; max: number }): 
 
 /** 默认偏好 */
 export const DEFAULT_PREFS: Prefs = {
-  theme: 'dark',
+  /** 首次打开默认亮色（原来是暗色）；已经设置过主题的用户不受影响，见 loadPrefs */
+  theme: 'light',
   accent: '262 83% 58%',
   railOpen: true,
   sidebarOpen: true,
@@ -96,7 +97,11 @@ export function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_PREFS };
-    const merged = { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) };
+    const stored = JSON.parse(raw) as Partial<Prefs>;
+    const merged = { ...DEFAULT_PREFS, ...stored };
+    // 老版本存过的偏好里没有 theme 字段：那说明用户从没自己选过主题，
+    // 他实际看到的始终是当时的默认暗色 —— 按暗色继续，别因为默认值改成亮色就被"跳变"。
+    if (stored.theme === undefined) merged.theme = 'dark';
     return sanitizePrefs(merged);
   } catch {
     return { ...DEFAULT_PREFS };

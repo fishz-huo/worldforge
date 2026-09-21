@@ -1,9 +1,15 @@
 <!doctype html>
-<html lang="zh-CN" class="dark">
+<!--
+  根节点上的主题类必须与 store 的默认主题一致（DEFAULT_PREFS.theme = 'light'）：
+  首屏 HTML 先于 React 渲染，类名写错会出现「先暗后亮 / 先亮后暗」的闪烁。
+  用户已选过主题时，App.tsx 会在挂载后按偏好覆盖这个类。
+-->
+<html lang="zh-CN" class="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0b0f19" />
+    <!-- 亮色主题的 --background 是 hsl(0 0% 100%)，窗口色跟着用白 -->
+    <meta name="theme-color" content="#ffffff" />
     <meta name="description" content="WorldForge 世界观工坊 — 本地优先的轻量 Wiki 与零切换写作工具" />
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
     <link rel="apple-touch-icon" href="./icons/icon-192.png" />
