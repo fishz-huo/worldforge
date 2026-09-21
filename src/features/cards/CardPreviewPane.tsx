@@ -23,16 +23,20 @@ export function CardPreviewPane({
   className?: string;
 }) {
   return (
-    <div className={cn('space-y-2 rounded-lg border border-border p-3', className)}>
+    <div className={cn('flex flex-col gap-2 rounded-lg border border-border p-3', className)}>
       {/* 抬头直接读渲染值，这样预览就是一张从顶部长起的「卡片页面」 */}
-      <div className="space-y-0.5">
+      <div className="shrink-0 space-y-0.5">
         <h1 className="text-xl font-semibold leading-tight">{card.title || '（无标题）'}</h1>
         {card.subtitle && <div className="text-xs text-muted-foreground">{card.subtitle}</div>}
         {card.summary && (
           <p className="text-xs leading-relaxed text-muted-foreground">{card.summary}</p>
         )}
       </div>
-      <div className="border-t border-border pt-2">
+      {/*
+        正文区：min-h-0 + overflow-y-auto 让它在限高容器（分栏那一栏）里自己滚；
+        外层没限高（「预览」页签）时高度由内容决定，滚动条不会出现。
+      */}
+      <div className="min-h-0 overflow-y-auto border-t border-border pt-2">
         {card.body.trim() ? (
           <MarkdownView text={card.body} onCardClick={onCardClick} />
         ) : (

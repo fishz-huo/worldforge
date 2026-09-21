@@ -79,10 +79,15 @@ export function CardDetailView({ cardId }: { cardId: string }) {
         于是左右两列各自缩成几十像素、内容互相盖住（"结构化字段和编辑器重叠"）。
         auto-rows-min 让每行取自己的内容高度，超出部分由外层 overflow-y-auto 滚。
         右列只在开关打开时占一列，收起时主内容区吃满整个宽度。
+
+        行高两种口径：默认 auto-rows-min（编辑/属性区可能很长，行高跟着内容长，
+        超出交给外层滚）；只有「分栏」改用 auto-rows-fr —— 行高按容器剩余空间分配，
+        两栏因此都能撑满、不在下面留一片空白，窄屏堆叠时上下两行还天然各占一半。
       */}
       <div
         className={cn(
-          'grid min-h-0 flex-1 auto-rows-min grid-cols-1 overflow-y-auto',
+          'grid min-h-0 flex-1 grid-cols-1 overflow-y-auto',
+          mode === 'split' ? 'auto-rows-fr' : 'auto-rows-min',
           asideOpen && 'lg:grid-cols-[1fr_20rem]',
         )}
       >
@@ -134,16 +139,20 @@ export function CardDetailView({ cardId }: { cardId: string }) {
               改用「每栏最小 240px」交给浏览器算：≥496px 并排，更窄就上下堆叠
               （与写作模块同一套行为，写法更省事）。
             */}
-            <TabsContent value="split" className="mt-1 min-h-[320px] flex-1">
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+            <TabsContent value="split" className="mt-1 min-h-0 flex-1">
+              <div className="grid h-full grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
                 {/* 左栏自带抬头三段：那三个输入本来就只在编辑态出现 */}
-                <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex h-full min-h-0 min-w-0 flex-col gap-2">
                   <CardHeadFields card={card} def={def} />
-                  {editor}
+                  <div className="flex min-h-0 flex-1 flex-col">{editor}</div>
                 </div>
                 {/* 右栏：同一张预览面，与「预览」页签共用一份渲染逻辑 */}
-                <div className="min-w-0">
-                  <CardPreviewPane card={card} onCardClick={(id) => selectCard(id)} />
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                  <CardPreviewPane
+                    card={card}
+                    className="flex-1"
+                    onCardClick={(id) => selectCard(id)}
+                  />
                 </div>
               </div>
             </TabsContent>
