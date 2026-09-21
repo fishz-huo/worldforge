@@ -142,11 +142,11 @@ export function WriterModule() {
               placeholder="开始写作…输入 [[ 可引用设定卡片；提到已存在的卡片标题会自动变成可悬停预览的双链"
             />
           )}
-          {/* 分栏：右半预览（带左侧分隔线）；预览：整宽预览 */}
+          {/* 分栏：右半预览（带左侧分隔线）；预览：整宽预览，左右留白稍宽一些 */}
           {tab === 'split' && (
             <WriterPreviewPane text={debounced} className="border-t border-border p-4 lg:border-l lg:border-t-0" />
           )}
-          {tab === 'preview' && <WriterPreviewPane text={debounced} className="p-4" />}
+          {tab === 'preview' && <WriterPreviewPane text={debounced} className="px-6 py-4 lg:px-8" />}
         </div>
       </ModuleBody>
 
