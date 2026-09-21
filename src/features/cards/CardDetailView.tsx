@@ -35,7 +35,8 @@ export function CardDetailView({ cardId }: { cardId: string }) {
   const updateCard = useStore((s) => s.updateCard);
   const selectCard = useStore((s) => s.selectCard);
   const branches = useStore((s) => s.branches);
-  const [mode, setMode] = useState<ViewMode>('edit');
+  /** 打开卡片默认进「预览」：先看内容，要改再切「编辑」 */
+  const [mode, setMode] = useState<ViewMode>('preview');
   /** 右列结构面板：默认收起（设计稿口径），每次进卡片都重新收起 */
   const [asideOpen, setAsideOpen] = useState(false);
 
@@ -80,14 +81,15 @@ export function CardDetailView({ cardId }: { cardId: string }) {
         auto-rows-min 让每行取自己的内容高度，超出部分由外层 overflow-y-auto 滚。
         右列只在开关打开时占一列，收起时主内容区吃满整个宽度。
 
-        行高两种口径：默认 auto-rows-min（编辑/属性区可能很长，行高跟着内容长，
-        超出交给外层滚）；只有「分栏」改用 auto-rows-fr —— 行高按容器剩余空间分配，
-        两栏因此都能撑满、不在下面留一片空白，窄屏堆叠时上下两行还天然各占一半。
+        行高口径：**所有视图都用 auto-rows-fr**（行高按容器空间分配，不是按内容算）。
+        曾经用 auto-rows-min，结果编辑/预览这两个单栏视图下面留一大片空白 ——
+        因为 min 只按内容给高度，子元素的 h-full / flex-1 再怎么写也撑不起来。
+        fr 之下每行吃满容器高，内部该滚的（编辑器 textarea、预览正文区）自己滚。
+        分栏时是两行（窄屏堆叠）或一行两列，fr 保证两行/两栏都吃满，堆叠时各占一半。
       */}
       <div
         className={cn(
-          'grid min-h-0 flex-1 grid-cols-1 overflow-y-auto',
-          mode === 'split' ? 'auto-rows-fr' : 'auto-rows-min',
+          'grid min-h-0 flex-1 auto-rows-fr grid-cols-1 overflow-hidden',
           asideOpen && 'lg:grid-cols-[1fr_20rem]',
         )}
       >
@@ -96,11 +98,11 @@ export function CardDetailView({ cardId }: { cardId: string }) {
             {/* 页签栏在最上；右侧那串字数/时间是动态数据，不是要删的东西 */}
             <div className="flex items-center justify-between">
               <TabsList>
-                <TabsTrigger value="edit" className="gap-1">
-                  <Pencil className="size-3" /> 编辑
-                </TabsTrigger>
                 <TabsTrigger value="preview" className="gap-1">
                   <Eye className="size-3" /> 预览
+                </TabsTrigger>
+                <TabsTrigger value="edit" className="gap-1">
+                  <Pencil className="size-3" /> 编辑
                 </TabsTrigger>
                 <TabsTrigger value="split" className="gap-1">
                   <Columns2 className="size-3" /> 分栏
@@ -115,21 +117,29 @@ export function CardDetailView({ cardId }: { cardId: string }) {
             </div>
 
             {/*
-              注意：TabsContent 上不能写 flex / grid 这类 display 类。Radix 用
-              hidden 属性隐藏未激活面板，Tailwind 的 flex 会覆盖 display:none ——
-              切到预览时编辑器仍实打实占着 400 多像素，把预览顶到很下面。
-              所以下面每块都套一层 div 来撑布局。
+              注意：TabsContent 上不要写 flex / grid 这类 display 类。Radix 用 hidden
+              属性隐藏未激活面板（源码里 hidden: !present），而 Tailwind 的 .hidden{display:none}
+              与 .flex 同为 0-1-0 优先级，谁赢只看构建产物里的先后顺序 ——
+              历史上就因此让编辑器在预览态仍占 400 多像素、把预览顶下 474px。
+              现在实测 .hidden 恰好排在 .flex 之后（安全），但别赌这个顺序：
+              每块内容都套一层 div 来撑布局，TabsContent 只留高度与间距。
             */}
-            <TabsContent value="edit" className="mt-1 min-h-[320px] flex-1">
+            <TabsContent value="edit" className="mt-1 min-h-0 flex-1">
               <div className="flex h-full min-h-0 flex-col gap-2">
                 <CardHeadFields card={card} def={def} />
                 {editor}
               </div>
             </TabsContent>
 
-            <TabsContent value="preview" className="mt-1 flex-1">
-              {/* 预览面撑满：不再重复一段抬头，页面从最上方开始 */}
-              <CardPreviewPane card={card} onCardClick={(id) => selectCard(id)} />
+            <TabsContent value="preview" className="mt-1 min-h-0 flex-1">
+              <div className="flex h-full min-h-0 flex-col">
+                {/* 预览面撑满整个可用高度：不再重复一段抬头，页面从最上方开始 */}
+                <CardPreviewPane
+                  card={card}
+                  className="min-h-0 flex-1"
+                  onCardClick={(id) => selectCard(id)}
+                />
+              </div>
             </TabsContent>
 
             {/*
@@ -157,7 +167,7 @@ export function CardDetailView({ cardId }: { cardId: string }) {
               </div>
             </TabsContent>
 
-            <TabsContent value="props" className="mt-1 min-h-[340px] flex-1">
+            <TabsContent value="props" className="mt-1 min-h-0 flex-1">
               <div className="flex h-full min-h-0 flex-col">
                 <CardPropsPanel cardId={card.id} />
               </div>
