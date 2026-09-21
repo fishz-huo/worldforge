@@ -160,7 +160,7 @@ export function CardDetailView({ cardId }: { cardId: string }) {
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                   <CardPreviewPane
                     card={card}
-                    className="flex-1"
+                    className="min-h-0 flex-1"
                     onCardClick={(id) => selectCard(id)}
                   />
                 </div>
@@ -175,9 +175,17 @@ export function CardDetailView({ cardId }: { cardId: string }) {
           </Tabs>
         </div>
 
-        {/* 右列：结构编辑。切到「属性区」时收成只剩图库，避免两个入口改同一批数据 */}
+        {/*
+          右列：结构编辑。切到「属性区」时收成只剩图库，避免两个入口改同一批数据。
+          三件事都得有，少一个就会「看不到下面的内容」：
+          ① 窄屏单列时必须显式 grid-cols-1，否则这个第二列会被塞进隐式列、跑到容器右侧
+             被 overflow-hidden 裁掉（曾经就是这样，窗口不够宽时 Aside 直接消失）；
+          ② min-h-0：Grid 子项默认 min-height:auto 会让它按内容撑高、顶破行高；
+          ③ overflow-y-auto：标签/字段/关联那三个区块长了就自己滚，整列高度不跟着长
+             （它自己就是滚动区，CardAside 内部没有需要固定的表头）。
+        */}
         {asideOpen && (
-          <div className="border-t border-border p-2 lg:border-l lg:border-t-0">
+          <div className="grid min-h-0 grid-cols-1 overflow-y-auto border-t border-border p-2 lg:border-l lg:border-t-0">
             <CardAside cardId={card.id} compact={mode === 'props'} />
           </div>
         )}
