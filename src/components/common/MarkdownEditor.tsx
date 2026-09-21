@@ -8,7 +8,9 @@
  *  - 支持粘贴与拖拽图片，图片存进本地资源库并以 `asset:` 引用。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Card } from '@/types';
 import { cn, matches } from '@/lib/utils';
+import { wikiRefOf } from '@/lib/card-code';
 import { importImageBlob } from '@/lib/assets';
 import { useStore } from '@/store';
 import { MarkdownToolbar } from './MarkdownToolbar';
@@ -91,22 +93,27 @@ export function MarkdownEditor({
     }
   };
 
-  /** 候选卡片 */
+  /** 候选卡片：标题与编号都能搜；编号完全命中的排最前（回车即中） */
   const candidates = useMemo(() => {
     if (!suggest) return [];
-    return cards.filter((c) => matches(suggest.query, c.title, c.summary)).slice(0, 8);
+    const q = suggest.query.trim().toLowerCase();
+    return cards
+      .filter((c) => matches(suggest.query, c.title, c.code, c.summary))
+      .sort((a, b) => Number((b.code ?? '').toLowerCase() === q) - Number((a.code ?? '').toLowerCase() === q))
+      .slice(0, 8);
   }, [suggest, cards]);
 
-  /** 把 `[[query` 替换成 `[[标题]]` */
-  const applySuggestion = (title: string) => {
+  /** 把 `[[query` 替换成 `[[编号|标题]]`（未编号的卡片退回 `[[标题]]`） */
+  const applySuggestion = (card: Card) => {
     if (!suggest) return;
     const el = ref.current;
     const caret = el?.selectionStart ?? value.length;
-    onChange(`${value.slice(0, suggest.start)}[[${title}]]${value.slice(caret)}`);
+    const link = wikiRefOf(card);
+    onChange(`${value.slice(0, suggest.start)}${link}${value.slice(caret)}`);
     setSuggest(null);
     requestAnimationFrame(() => {
       el?.focus();
-      const pos = suggest.start + title.length + 4;
+      const pos = suggest.start + link.length;
       el?.setSelectionRange(pos, pos);
     });
   };
@@ -160,7 +167,7 @@ export function MarkdownEditor({
         onKeyDown={(e) => {
           if (suggest && candidates.length > 0 && (e.key === 'Enter' || e.key === 'Tab')) {
             e.preventDefault();
-            applySuggestion(candidates[0].title);
+            applySuggestion(candidates[0]);
           } else if (e.key === 'Escape') {
             setSuggest(null);
           } else if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
@@ -183,10 +190,7 @@ export function MarkdownEditor({
           candidates={candidates}
           query={suggest.query}
           onPick={applySuggestion}
-          onCreate={(title) => {
-            createCard('concept', { title });
-            applySuggestion(title);
-          }}
+          onCreate={(title) => applySuggestion(createCard('concept', { title }))}
         />
       )}
     </div>

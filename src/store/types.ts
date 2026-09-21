@@ -86,6 +86,8 @@ export interface UiState {
   inspectorWidth: number;
   /** 整界面缩放档位 */
   uiScale: import('./prefs').UiScale;
+  /** 改卡片编号时是否默认替换全库引用（见 prefs.ts） */
+  autoReplaceCodeRefs: boolean;
 }
 
 /** 各 slice 的合并类型（具体签名见对应文件） */
@@ -95,6 +97,7 @@ export type AppStore = DataState &
   import('./slices/dataSlice').DataSlice &
   import('./slices/worldSlice').WorldSlice &
   import('./slices/cardSlice').CardSlice &
+  import('./slices/cardCodeSlice').CardCodeSlice &
   import('./slices/tagSlice').TagSlice &
   import('./slices/mapSlice').MapSlice &
   import('./slices/timelineSlice').TimelineSlice &

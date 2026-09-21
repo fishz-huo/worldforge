@@ -7,6 +7,7 @@
  */
 import type { Card, CardTag, Relation, RelationEdge, Tag, TimelineEntry } from '@/types';
 import { edgeOf } from '@/types';
+import { linkKeysOf } from './card-code';
 import { matches } from './utils';
 
 /** 卡片筛选条件 */
@@ -30,7 +31,8 @@ export function cardText(card: Card): string {
   const fieldText = Object.values(card.fields ?? {})
     .map((v) => (Array.isArray(v) ? v.join(' ') : String(v ?? '')))
     .join(' ');
-  return [card.title, card.subtitle, card.summary, card.body, fieldText].join('\n');
+  // 编号与旧编号也参与搜索：输入 CHR-001 能直接搜到那张卡
+  return [card.title, card.code, ...linkKeysOf(card), card.subtitle, card.summary, card.body, fieldText].join('\n');
 }
 
 /** 按条件筛选卡片 */
@@ -83,7 +85,15 @@ export function otherEnd(edge: RelationEdge, cardId: string): string {
   return edge.from_id === cardId ? edge.to_id : edge.from_id;
 }
 
-/** 建立「标题 → 卡片」索引，供 [[双链]] 与悬浮预览使用 */
+/**
+ * 建立「引用键 → 卡片」索引，供 [[双链]]、悬浮预览与正文自动关联使用。
+ *
+ * 索引里有两类键，顺序即优先级：
+ *   1. **标题**（含去掉书名号/括号的宽松写法）：老文稿里的 [[焚天城]] 照旧能用；
+ *   2. **编号与旧编号（别名）**：后写入，覆盖同名标题 ——
+ *      也就是「解析 [[X]] 时先按编号找，找不到再按标题找」。
+ *      编号同时写入小写形式，[[chr-001]] 也能命中 CHR-001。
+ */
 export function buildTitleIndex(cards: Card[]): Map<string, Card> {
   const map = new Map<string, Card>();
   cards.forEach((c) => {
@@ -92,6 +102,12 @@ export function buildTitleIndex(cards: Card[]): Map<string, Card> {
     // 同时接受去掉书名号/括号的写法，降低输入成本
     const loose = c.title.replace(/^[《【\[]|[》】\]]$/g, '');
     if (loose && !map.has(loose)) map.set(loose, c);
+  });
+  cards.forEach((c) => {
+    linkKeysOf(c).forEach((key) => {
+      map.set(key, c);
+      map.set(key.toLowerCase(), c);
+    });
   });
   return map;
 }

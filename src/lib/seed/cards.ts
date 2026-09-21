@@ -5,6 +5,7 @@
  * 避免在多个文件之间传递一长串局部变量。
  */
 import type { Card, Relation, Tag } from '@/types';
+import { assignSequentialCodes } from '@/lib/card-code';
 import { newCardId, newRelationId, newTagId } from '@/lib/id';
 
 /** 建卡小工具，减少样板代码 */
@@ -22,6 +23,9 @@ function makeCardFactory(worldId: string, now: number) {
     world_id: worldId,
     branch_id: branchId,
     type,
+    // 编号留到下面统一发（见 assignSequentialCodes）：示例数据也用真实规则编号
+    code: '',
+    code_aliases: [],
     title,
     subtitle,
     summary,
@@ -124,6 +128,9 @@ export function buildSeedCards(worldId: string, now: number): SeedCards {
     });
 
   const cards = [lore, loreTech, protagonist, mentor, capital, mineTown, warEvent, reference];
+  // 示例卡片也带编号（角色 CHR-001、地点 LOC-001…），规则与新建卡片完全一致，
+  // 这样示例世界观一打开就能演示 [[编号]] 引用
+  assignSequentialCodes(cards);
 
   /* ------------------------------ 标签 ------------------------------ */
   const tagDefs: [string, string][] = [

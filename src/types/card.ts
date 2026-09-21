@@ -14,6 +14,14 @@ export interface Card extends Stamps {
   branch_id: Id | null;
   /** 卡片类型，对应 CardTypeDef.type（可为插件注册的自定义类型） */
   type: string;
+  /**
+   * 永久编号（如 CHR-001）：类型前缀 + 三位序号，标题随便改也不影响引用。
+   * 空串表示「未编号」——老数据、旧备份导入的卡片都是这个状态，
+   * 用户在卡片详情页补填，或用「批量补全编号」一次生成。
+   */
+  code: string;
+  /** 改过编号后留下来的旧编号：旧文稿里的 [[旧编号]] 仍然跳得到这张卡 */
+  code_aliases: string[];
   title: string;
   /** 副标题，例如角色的称号、地点的所属国 */
   subtitle: string;

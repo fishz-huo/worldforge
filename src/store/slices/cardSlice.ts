@@ -43,6 +43,10 @@ export const createCardSlice: Slice<CardSlice> = (set, get) => ({
       world_id: worldId,
       branch_id: init.branch_id ?? get().currentBranchId,
       type,
+      // 编号按类型自动发号（CHR-001…），并且**不复用**：创建副本时也会拿到新号，
+      // 不能继承原卡的编号，否则两张卡的 [[编号]] 会互相打架。
+      code: get().takeNextCode(type),
+      code_aliases: [],
       title: init.title ?? '未命名',
       subtitle: init.subtitle ?? '',
       summary: init.summary ?? '',
@@ -69,6 +73,10 @@ export const createCardSlice: Slice<CardSlice> = (set, get) => ({
   },
 
   deleteCard: (id) => {
+    // 删卡前把编号记进发号记录：否则删掉最大号后，新卡会复用这个号，
+    // 旧文稿里的 [[CHR-007]] 就指到别人身上了
+    const doomed = get().cards.find((c) => c.id === id);
+    if (doomed?.code) get().rememberCode(doomed.code);
     purgeCard(id);
     set({
       cards: removeById(get().cards, id),

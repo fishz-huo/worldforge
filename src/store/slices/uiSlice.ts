@@ -48,6 +48,8 @@ export interface UiSlice extends UiState {
   resetPanelWidths: () => void;
   /** 整界面缩放到指定档位 */
   setUiScale: (scale: UiScale) => void;
+  /** 改编号时是否默认替换全库引用 */
+  setAutoReplaceCodeRefs: (v: boolean) => void;
   toast: (message: string, kind?: Toast['kind']) => void;
   dismissToast: (id: string) => void;
 }
@@ -80,6 +82,7 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
   sidebarWidth: saved.sidebarWidth,
   inspectorWidth: saved.inspectorWidth,
   uiScale: saved.uiScale,
+  autoReplaceCodeRefs: saved.autoReplaceCodeRefs,
 
   setModule: (module) => {
     set({ module });
@@ -166,6 +169,10 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
   setUiScale: (uiScale) => {
     set({ uiScale });
     savePrefs({ uiScale });
+  },
+  setAutoReplaceCodeRefs: (autoReplaceCodeRefs) => {
+    set({ autoReplaceCodeRefs });
+    savePrefs({ autoReplaceCodeRefs });
   },
   toast: (message, kind = 'info') => {
     const item: Toast = { id: newId('n'), message, kind, at: Date.now() };

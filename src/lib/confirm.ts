@@ -20,6 +20,8 @@ export interface ConfirmRequest {
   message: string;
   /** 确认按钮文案，默认「确定」 */
   confirmText?: string;
+  /** 取消按钮文案，默认「取消」。用于「两个都不是取消、只是两种做法」的询问 */
+  cancelText?: string;
   /** 危险操作：标题带警示图标、确认按钮用红色 */
   danger?: boolean;
 }

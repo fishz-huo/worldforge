@@ -39,7 +39,9 @@ export function extractWikiTargets(text: string): string[] {
 
 /** 生成双链 HTML；找不到对应卡片时标记 is-missing */
 function wikiLink(target: string, label: string, index?: Map<string, Card>): string {
-  const card = index?.get(unescapeHtml(target));
+  const key = unescapeHtml(target);
+  // 编号大小写不敏感：[[chr-001]] 也要能找到 CHR-001
+  const card = index?.get(key) ?? index?.get(key.toLowerCase());
   const cls = card ? 'wiki-link' : 'wiki-link is-missing';
   const data = card ? ` data-wiki-id="${card.id}"` : '';
   return `<span class="${cls}"${data} data-wiki="${target}" title="${card ? '悬停查看设定卡' : '尚未创建该卡片'}">${label}</span>`;
@@ -95,8 +97,21 @@ export function renderInline(text: string, index?: Map<string, Card>, autoLink =
 /** 参与自动关联的最大标题数量，避免超大世界观拖慢渲染 */
 const AUTOLINK_LIMIT = 400;
 
+/** 编号形如 CHR-001：整串都是 ASCII 字母/数字/连字符时才需要词边界保护 */
+const CODE_LIKE = /^[A-Za-z][A-Za-z0-9_]*-[A-Za-z0-9]+$/;
+
 /**
- * 在 HTML 字符串的「纯文本片段」中，把出现过的卡片标题包成双链。
+ * 匹配到的编号前后不能还是编号字符。
+ * 否则文本里的 `CHR-0011` 会被认成 `CHR-001` 后面跟了个 `1`，链接指错卡片。
+ */
+function standaloneCode(text: string, at: number, len: number): boolean {
+  const before = text[at - 1] ?? '';
+  const after = text[at + len] ?? '';
+  return !/[A-Za-z0-9_-]/.test(before) && !/[A-Za-z0-9_-]/.test(after);
+}
+
+/**
+ * 在 HTML 字符串的「纯文本片段」中，把出现过的卡片标题（以及卡片编号）包成双链。
  * 用标签栈跳过 code / pre / a / 已有双链 内部的内容，避免嵌套破坏结构。
  */
 export function autoLinkTitles(html: string, index: Map<string, Card>): string {
@@ -105,26 +120,36 @@ export function autoLinkTitles(html: string, index: Map<string, Card>): string {
     .sort((a, b) => b.length - a.length)
     .slice(0, AUTOLINK_LIMIT);
   if (titles.length === 0) return html;
-  const pattern = new RegExp(`(${titles.map(escapeRegExp).join('|')})`, 'g');
+  // 不加捕获组：回调才拿得到 offset（用来判断编号的词边界）
+  const pattern = new RegExp(titles.map(escapeRegExp).join('|'), 'g');
   /** 不允许自动关联的容器标签 */
   const SKIP = new Set(['code', 'pre', 'a', 'img', 'mark']);
-  const stack: string[] = [];
+  /** 标签栈：wiki-link 的 <span> 内部已经是链接，不能再套一层 */
+  const stack: { tag: string; wiki: boolean }[] = [];
   return html
     .split(/(<[^>]*>)/g)
     .map((segment) => {
       if (segment.startsWith('<')) {
         const close = /^<\s*\/\s*([a-zA-Z0-9]+)/.exec(segment);
         if (close) {
-          const idx = stack.lastIndexOf(close[1].toLowerCase());
-          if (idx >= 0) stack.splice(idx, 1);
+          const tag = close[1].toLowerCase();
+          for (let i = stack.length - 1; i >= 0; i -= 1) {
+            if (stack[i].tag === tag) {
+              stack.splice(i, 1);
+              break;
+            }
+          }
           return segment;
         }
         const open = /^<\s*([a-zA-Z0-9]+)/.exec(segment);
-        if (open && !segment.endsWith('/>')) stack.push(open[1].toLowerCase());
+        if (open && !segment.endsWith('/>')) {
+          stack.push({ tag: open[1].toLowerCase(), wiki: segment.includes('wiki-link') });
+        }
         return segment;
       }
-      if (stack.some((tag) => SKIP.has(tag))) return segment;
-      return segment.replace(pattern, (match) => {
+      if (stack.some((frame) => SKIP.has(frame.tag) || frame.wiki)) return segment;
+      return segment.replace(pattern, (match: string, offset: number) => {
+        if (CODE_LIKE.test(match) && !standaloneCode(segment, offset, match.length)) return match;
         const card = index.get(match);
         if (!card) return match;
         return `<span class="wiki-link" data-wiki-id="${card.id}" data-wiki="${escapeHtml(match)}" title="悬停查看设定卡">${match}</span>`;

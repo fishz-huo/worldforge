@@ -33,7 +33,7 @@ export function CardPicker({ open, onOpenChange, onSelect, types, excludeIds = [
     return cards
       .filter((c) => !excludeIds.includes(c.id))
       .filter((c) => (types && types.length > 0 ? types.includes(c.type) : true))
-      .filter((c) => matches(query, c.title, c.subtitle, c.summary))
+      .filter((c) => matches(query, c.title, c.code, c.subtitle, c.summary))
       .slice(0, 200);
   }, [cards, types, excludeIds, query]);
 
@@ -47,7 +47,7 @@ export function CardPicker({ open, onOpenChange, onSelect, types, excludeIds = [
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜索卡片标题 / 摘要"
+            placeholder="搜索卡片标题 / 编号 / 摘要"
             className="h-8 pl-7 text-xs"
           />
         </div>

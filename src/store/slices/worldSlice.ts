@@ -152,7 +152,19 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
     const sourceCards = get().cards.filter(
       (c) => c.branch_id === source || (source === null && c.branch_id === null),
     );
-    const clones = sourceCards.map((c) => ({ ...c, id: newCardId(), branch_id: branch.id }));
+    /**
+     * 副本要重新发号：编号在一个世界观里必须唯一（这是「[[编号]] 找得到唯一一张卡」
+     * 的前提，也是界面里那道查重检查的依据）。若直接沿用源卡片的编号，
+     * 主世界与分支里就会各有一张 CHR-001，谁都不确定引用会落到哪一张。
+     * 旧编号不进别名 —— 那会让「同一张卡」的错觉持续存在。
+     */
+    const clones = sourceCards.map((c) => ({
+      ...c,
+      id: newCardId(),
+      branch_id: branch.id,
+      code: get().takeNextCode(c.type),
+      code_aliases: [],
+    }));
     cardsRepo.saveMany(clones);
 
     set({ branches: branchesRepo.list('world_id = ?', [worldId], 'created_at ASC') });

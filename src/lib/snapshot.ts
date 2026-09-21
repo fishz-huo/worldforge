@@ -109,6 +109,20 @@ export function normalizeSnapshot(payload: SnapshotPayload): SnapshotPayload {
   arrays.forEach((key) => {
     if (!Array.isArray(payload[key])) (payload as unknown as Record<string, unknown>)[key] = [];
   });
+  /**
+   * 卡片编号是后加的列：老备份里的卡片没有 code / code_aliases 两个字段。
+   * 写库时每个列都会被显式绑定（见 table.ts 的 saveRow），缺字段会绑成 NULL，
+   * 而这两列是 NOT NULL —— 不补默认值的话，导入旧备份会直接失败。
+   * 统一补成空串与空数组，语义上也正好是「未编号」。
+   */
+  payload.cards = payload.cards.map((card) => {
+    const row = card as unknown as Record<string, unknown>;
+    return {
+      ...row,
+      code: typeof row.code === 'string' ? row.code : '',
+      code_aliases: Array.isArray(row.code_aliases) ? row.code_aliases : [],
+    } as unknown as (typeof payload.cards)[number];
+  });
   return payload;
 }
 

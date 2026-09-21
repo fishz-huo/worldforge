@@ -1,8 +1,12 @@
 /**
  * 双链引用候选弹层
  * ------------------------------------------------------------------
- * 在编辑器里输入 `[[` 时弹出，回车即把 `[[标题]]` 插入正文。
+ * 在编辑器里输入 `[[` 时弹出，回车即把引用插入正文。
  * 这是「零切换写作」的核心：不用离开键盘去翻卡片库。
+ *
+ * 编号支持：候选框同时按标题与编号匹配，并把编号显示出来（一眼看清引用的是哪张卡）。
+ * 选中有编号的卡片时插入 `[[CHR-001|艾拉]]` —— 显示的是标题、定位靠编号，
+ * 所以之后把标题改掉，这条引用也不会断。
  */
 import { Sparkles } from 'lucide-react';
 import type { Card } from '@/types';
@@ -12,7 +16,7 @@ import { Icon } from '@/components/Icon';
 interface Props {
   candidates: Card[];
   query: string;
-  onPick: (title: string) => void;
+  onPick: (card: Card) => void;
   /** 无匹配时是否显示「回车即时创建」提示 */
   onCreate?: (title: string) => void;
 }
@@ -34,7 +38,7 @@ export function WikiSuggestPopup({ candidates, query, onPick, onCreate }: Props)
         return (
           <button
             key={card.id}
-            onClick={() => onPick(card.title)}
+            onClick={() => onPick(card)}
             className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent ${
               index === 0 ? 'bg-accent/60' : ''
             }`}
@@ -46,6 +50,11 @@ export function WikiSuggestPopup({ candidates, query, onPick, onCreate }: Props)
                 <span className="block truncate text-[10px] text-muted-foreground">{card.summary}</span>
               )}
             </span>
+            {card.code && (
+              <span className="shrink-0 rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
+                {card.code}
+              </span>
+            )}
             <span className="shrink-0 text-[10px] text-muted-foreground">{def.label}</span>
           </button>
         );

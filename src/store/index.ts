@@ -10,6 +10,7 @@
 import { create } from 'zustand';
 import { emitPluginEvent } from '@/lib/plugin/events';
 import { createCardSlice } from './slices/cardSlice';
+import { createCardCodeSlice } from './slices/cardCodeSlice';
 import { createDataSlice } from './slices/dataSlice';
 import { createDocSlice } from './slices/docSlice';
 import { createMapSlice } from './slices/mapSlice';
@@ -28,6 +29,7 @@ export const useStore = create<AppStore>()((...args) => ({
   ...createDataSlice(...args),
   ...createWorldSlice(...args),
   ...createCardSlice(...args),
+  ...createCardCodeSlice(...args),
   ...createTagSlice(...args),
   ...createMapSlice(...args),
   ...createTimelineSlice(...args),

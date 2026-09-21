@@ -38,6 +38,11 @@ CREATE TABLE IF NOT EXISTS cards (
   world_id TEXT NOT NULL,
   branch_id TEXT,
   type TEXT NOT NULL,
+  -- 永久编号（如 CHR-001）。空串 = 未编号；改编号时旧编号进 code_aliases。
+  -- 注意：这两列只对「新建的库」生效，老库靠 migrate-columns.ts 的
+  -- COLUMN_MIGRATIONS 补齐（CREATE TABLE IF NOT EXISTS 不会给已存在的表加列）。
+  code TEXT NOT NULL DEFAULT '',
+  code_aliases TEXT NOT NULL DEFAULT '[]',
   title TEXT NOT NULL DEFAULT '',
   subtitle TEXT NOT NULL DEFAULT '',
   summary TEXT NOT NULL DEFAULT '',

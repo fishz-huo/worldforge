@@ -40,6 +40,19 @@ export const COLUMN_MIGRATIONS: ColumnMigration[] = [
     ddl: 'TEXT',
     why: 'v0.2 地图多图层：区域可以归属某一层；老数据为 NULL',
   },
+  {
+    table: 'cards',
+    column: 'code',
+    ddl: "TEXT NOT NULL DEFAULT ''",
+    why: '卡片永久编号（CHR-001）：让 [[编号]] 在标题改动后依然指向同一张卡片；'
+      + '老数据为空串，表示「未编号」，由用户手填或一键批量补全',
+  },
+  {
+    table: 'cards',
+    column: 'code_aliases',
+    ddl: "TEXT NOT NULL DEFAULT '[]'",
+    why: '改编号后保留的旧编号（JSON 数组）：旧文稿里的 [[旧编号]] 仍然能跳转；老数据为空数组',
+  },
 ];
 
 /**

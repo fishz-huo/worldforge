@@ -48,7 +48,7 @@ export function ConfirmHost() {
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" size="sm" onClick={() => settle(false)}>
-            取消
+            {request?.cancelText ?? '取消'}
           </Button>
           <Button
             variant={request?.danger ? 'destructive' : 'default'}

@@ -27,6 +27,13 @@ export interface WorldMeta {
   time?: TimeConfig;
   /** 自定义主题色（插件可覆盖） */
   accent?: string;
+  /**
+   * 卡片编号的「已发到几号」记录：{ CHR: 7, LOC: 3 }。
+   * 为什么不能只看库里现有的最大号：删掉 CHR-007 之后，最大号会退回 6，
+   * 下一张新卡又会拿到 CHR-007 —— 旧文稿里的 [[CHR-007]] 就指错卡片了。
+   * 这个记录随世界观一起进快照与备份，所以换设备也不复用旧编号。
+   */
+  codeSeq?: Record<string, number>;
   [key: string]: unknown;
 }
 

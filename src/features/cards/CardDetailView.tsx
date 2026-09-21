@@ -21,6 +21,7 @@ import { countWords } from '@/lib/markdown';
 import { cn, formatTime } from '@/lib/utils';
 import { useStore } from '@/store';
 import { CardAside } from './CardAside';
+import { CardCodeBadge } from './CardCodeBadge';
 import { CardPropsPanel } from './CardPropsPanel';
 import { askConfirm } from '@/lib/confirm';
 
@@ -60,6 +61,7 @@ export function CardDetailView({ cardId }: { cardId: string }) {
             {branch.name}
           </Badge>
         )}
+        <CardCodeBadge cardId={card.id} />
         <span className="ml-auto flex items-center gap-0.5">
           <Hint label={card.pinned ? '取消置顶' : '置顶'}>
             <Button variant="ghost" size="icon-sm" onClick={() => togglePin(card.id)}>
@@ -70,10 +72,7 @@ export function CardDetailView({ cardId }: { cardId: string }) {
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={async () => {
-                const id = duplicateCard(card.id);
-                if (id) selectCard(id);
-              }}
+              onClick={() => { const id = duplicateCard(card.id); if (id) selectCard(id); }}
             >
               <Copy />
             </Button>

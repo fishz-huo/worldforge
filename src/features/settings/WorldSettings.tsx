@@ -12,6 +12,7 @@ import { SectionTitle } from '@/components/ui/primitives';
 import { Dot } from '@/components/ui/primitives';
 import { DEFAULT_TIME_CONFIG } from '@/types';
 import { useStore } from '@/store';
+import { CardCodeSection } from './CardCodeSection';
 
 export function WorldSettings() {
   const world = useStore((s) => s.worlds.find((w) => w.id === s.currentWorldId));
@@ -147,6 +148,8 @@ export function WorldSettings() {
           )}
         </div>
       </section>
+
+      <CardCodeSection />
     </div>
   );
 }

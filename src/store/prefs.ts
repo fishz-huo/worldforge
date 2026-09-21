@@ -41,6 +41,11 @@ export interface Prefs {
   inspectorWidth: number;
   /** 整界面缩放倍率 */
   uiScale: UiScale;
+  /**
+   * 改卡片编号时，默认把全库引用一起替换。
+   * 开（默认）：弹窗并把「替换引用」放在主按钮上；关：不再询问，直接保留旧编号为别名。
+   */
+  autoReplaceCodeRefs: boolean;
 }
 
 /**
@@ -83,6 +88,7 @@ export const DEFAULT_PREFS: Prefs = {
   sidebarWidth: 16,
   inspectorWidth: 20,
   uiScale: 1,
+  autoReplaceCodeRefs: true,
 };
 
 /** 读取偏好（容错：解析失败回落默认值，数值越界一律夹回合法区间） */

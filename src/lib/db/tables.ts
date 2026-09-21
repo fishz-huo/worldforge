@@ -35,8 +35,8 @@ export const BRANCH_SPEC = defineTable('branches',
   ['world_id', 'name', 'description', 'color', 'divergence', 'divergence_t', 'forked_from', 'created_at', 'updated_at']);
 
 export const CARD_SPEC = defineTable('cards',
-  ['world_id', 'branch_id', 'type', 'title', 'subtitle', 'summary', 'body', 'fields',
-    'cover_asset', 'pinned', 'created_at', 'updated_at'], { fields: {} });
+  ['world_id', 'branch_id', 'type', 'code', 'code_aliases', 'title', 'subtitle', 'summary', 'body', 'fields',
+    'cover_asset', 'pinned', 'created_at', 'updated_at'], { fields: {}, code_aliases: [] });
 
 export const CARD_ASSET_SPEC = defineTable('card_assets',
   ['card_id', 'asset_id', 'caption', 'order_index']);
