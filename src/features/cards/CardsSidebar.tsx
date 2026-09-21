@@ -1,7 +1,8 @@
 /**
  * 卡片库侧栏
  * ------------------------------------------------------------------
- * 筛选与导航：类型、标签、置顶。
+ * 筛选与导航：类型、标签、置顶。点任何筛选项都先退出详情、回到列表
+ * （筛选想表达的是「看一批卡片」，停在详情页会显得没生效；「新建卡片」例外）。
  * 需求 11：通过 tag 筛选卡片；tag 内容自由填写（在 TagPicker 里）。
  */
 import { useMemo } from 'react';
@@ -81,7 +82,13 @@ export function CardsSidebar() {
   const branchId = useStore((s) => s.currentBranchId);
   const pinnedOnly = useStore((s) => s.pinnedOnly);
   const setPinnedOnly = useStore((s) => s.setPinnedOnly);
+  const selectCard = useStore((s) => s.selectCard);
   usePluginRegistry();
+
+  /** 有选中卡片时才清空选中（回到列表）；筛选条件本身照常生效 */
+  const deselectCard = () => {
+    if (useStore.getState().selectedCardId) selectCard(null);
+  };
 
   /** 各类型数量（考虑分支可见性） */
   const counts = useMemo(() => {
@@ -106,6 +113,7 @@ export function CardsSidebar() {
           className={cn(!hasFilter && 'opacity-40')}
           onClick={() => {
             clearFilters();
+            deselectCard();
           }}
         >
           <X />
@@ -119,6 +127,7 @@ export function CardsSidebar() {
           onClick={() => {
             setCardType(null);
             setPinnedOnly(false);
+            deselectCard();
           }}
           className={cn(
             'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
@@ -131,7 +140,10 @@ export function CardsSidebar() {
         </button>
 
         <button
-          onClick={() => setPinnedOnly(!pinnedOnly)}
+          onClick={() => {
+            setPinnedOnly(!pinnedOnly);
+            deselectCard();
+          }}
           className={cn(
             'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
             pinnedOnly ? 'bg-amber-500/15 text-amber-400' : 'hover:bg-accent',
@@ -150,7 +162,10 @@ export function CardsSidebar() {
             return (
               <button
                 key={t.type}
-                onClick={() => setCardType(selectedType === t.type ? null : t.type)}
+                onClick={() => {
+                  setCardType(selectedType === t.type ? null : t.type);
+                  deselectCard();
+                }}
                 className={cn(
                   'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
                   selectedType === t.type ? 'bg-primary/15 text-primary' : 'hover:bg-accent',
@@ -167,7 +182,7 @@ export function CardsSidebar() {
         <SectionTitle
           right={
             selectedTagIds.length > 0 ? (
-              <button className="text-[10px] text-primary hover:underline" onClick={() => setTagFilter([])}>
+              <button className="text-[10px] text-primary hover:underline" onClick={() => { setTagFilter([]); deselectCard(); }}>
                 清除
               </button>
             ) : (
@@ -177,7 +192,8 @@ export function CardsSidebar() {
         >
           按标签{selectedTagIds.length > 0 ? `（${selectedTagIds.length}）` : ''}
         </SectionTitle>
-        <TagCheckList value={selectedTagIds} onChange={setTagFilter} />
+        {/* 标签筛选的按钮在 TagPicker 里，这里包一层顺带退出详情 */}
+        <TagCheckList value={selectedTagIds} onChange={(ids) => { setTagFilter(ids); deselectCard(); }} />
       </div>
     </SidePanel>
   );
