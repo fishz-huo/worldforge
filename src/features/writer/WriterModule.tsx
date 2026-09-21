@@ -51,6 +51,22 @@ export function WriterModule() {
   const draft = doc?.content ?? '';
   const debounced = useDebouncedValue(draft, 400);
 
+  /** 三态视图（本地）；初始值沿用 store 里上次「分栏」的偏好 */
+  const [tab, setTab] = useState<WriterTab>(split ? 'split' : 'text');
+  /** 一旦用户自己点过页签，就不再被 store 覆盖 */
+  const [userPicked, setUserPicked] = useState(false);
+  useEffect(() => {
+    if (!userPicked) setTab(split ? 'split' : 'text');
+  }, [split, userPicked]);
+
+  /*
+    ⚠️ 早退分支必须放在**所有 hook 之后**。
+    曾经把下面这组 useState / useEffect 写在早退之后：首次渲染（store 还没加载出文稿、
+    「未选中时默认打开第一篇」那个 effect 也还没生效）只跑了 10 个 hook，同一实例再次
+    渲染时变成 12 个，React 直接抛
+    「Rendered more hooks than during the previous render」并整块白屏（ErrorBoundary 兜住）。
+    规则：hook 数量必须在每次渲染都一致 —— 要么全在早退之前，要么抽成子组件。
+  */
   if (!doc) {
     return (
       <ModuleLayout>
@@ -71,14 +87,6 @@ export function WriterModule() {
       </ModuleLayout>
     );
   }
-
-  /** 三态视图（本地）；初始值沿用 store 里上次「分栏」的偏好 */
-  const [tab, setTab] = useState<WriterTab>(split ? 'split' : 'text');
-  /** 一旦用户自己点过页签，就不再被 store 覆盖 */
-  const [userPicked, setUserPicked] = useState(false);
-  useEffect(() => {
-    if (!userPicked) setTab(split ? 'split' : 'text');
-  }, [split, userPicked]);
 
   /** 切换视图：只有「纯文本 / 分栏」两态回写 store 的分栏偏好（预览只是看，不该改动它） */
   const changeTab = (next: WriterTab) => {
