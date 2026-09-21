@@ -3,37 +3,41 @@
  * ------------------------------------------------------------------
  * 主内容区里的「一页 Wiki」：左边写正文，右边改结构（字段/标签/图库/关联）。
  * 所有输入都是自动保存，符合「设定层不需要点保存」的直觉。
+ *
+ * 四种视图（页签栏在最上，抬头三段只跟着「编辑」与「分栏」出现）：
+ *   edit    单栏：抬头三段 + 正文编辑器
+ *   preview 单栏：整张渲染出来的卡片页面（CardPreviewPane 撑满，自带抬头）
+ *   split   左右各半：左=编辑区（含抬头三段），右=预览面；窄了改上下堆叠
+ *   props   单栏：属性区（结构化字段/标签/关联的文本投影）
+ *
+ * 右列（CardAside）默认收起，由头部开关控制 —— 它打开时会挤压主内容区，
+ * 所以切到「分栏」会自动收起它，免得编辑区被压到 240px 以下没法用。
+ * 顶部条与抬头三段各自拆成独立文件，保证本文件不超 200 行。
  */
 import { useMemo, useState } from 'react';
-import {
-  ArrowLeft, Braces, Copy, Eye, Pencil, Star, Trash2,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Hint } from '@/components/ui/tooltip';
+import { Braces, Columns2, Eye, Pencil } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AutoInput, AutoTextarea } from '@/components/common/AutoField';
 import { MarkdownEditor } from '@/components/common/MarkdownEditor';
-import { MarkdownView } from '@/components/common/MarkdownView';
-import { Icon } from '@/components/Icon';
 import { cardTypeOf } from '@/lib/plugin/registry';
 import { countWords } from '@/lib/markdown';
 import { cn, formatTime } from '@/lib/utils';
 import { useStore } from '@/store';
 import { CardAside } from './CardAside';
-import { CardCodeBadge } from './CardCodeBadge';
+import { CardDetailHeader } from './CardDetailHeader';
+import { CardHeadFields } from './CardHeadFields';
+import { CardPreviewPane } from './CardPreviewPane';
 import { CardPropsPanel } from './CardPropsPanel';
-import { askConfirm } from '@/lib/confirm';
+
+type ViewMode = 'edit' | 'preview' | 'split' | 'props';
 
 export function CardDetailView({ cardId }: { cardId: string }) {
   const card = useStore((s) => s.cards.find((c) => c.id === cardId));
   const updateCard = useStore((s) => s.updateCard);
-  const deleteCard = useStore((s) => s.deleteCard);
-  const duplicateCard = useStore((s) => s.duplicateCard);
-  const togglePin = useStore((s) => s.togglePin);
   const selectCard = useStore((s) => s.selectCard);
   const branches = useStore((s) => s.branches);
-  const [mode, setMode] = useState<'edit' | 'preview' | 'props'>('edit');
+  const [mode, setMode] = useState<ViewMode>('edit');
+  /** 右列结构面板：默认收起（设计稿口径），每次进卡片都重新收起 */
+  const [asideOpen, setAsideOpen] = useState(false);
 
   const def = useMemo(() => (card ? cardTypeOf(card) : null), [card]);
   if (!card || !def) {
@@ -45,92 +49,46 @@ export function CardDetailView({ cardId }: { cardId: string }) {
   }
   const branch = branches.find((b) => b.id === card.branch_id);
 
+  /** 切页签：选「分栏」时顺手收起右列，把宽度让给编辑区与预览面 */
+  const changeMode = (next: ViewMode) => {
+    if (next === 'split') setAsideOpen(false);
+    setMode(next);
+  };
+
+  const editor = (
+    <MarkdownEditor
+      value={card.body}
+      onChange={(body) => updateCard(card.id, { body })}
+      className="rounded-lg border border-border"
+      placeholder="写设定正文…支持 Markdown；提到其它卡片标题会自动变成可悬停预览的双链"
+    />
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* 头部：返回 + 类型 + 操作 */}
-      <header className="flex shrink-0 items-center gap-2 border-b border-border px-2 py-1.5">
-        <Button variant="ghost" size="sm" className="gap-1" onClick={() => selectCard(null)}>
-          <ArrowLeft className="size-3.5" /> 返回列表
-        </Button>
-        <span className="flex items-center gap-1.5 text-xs" style={{ color: def.color }}>
-          <Icon name={def.icon} className="size-3.5" />
-          {def.label}
-        </span>
-        {branch && (
-          <Badge variant="outline" className="border-0 text-[10px]" style={{ background: `${branch.color}22`, color: branch.color }}>
-            {branch.name}
-          </Badge>
-        )}
-        <CardCodeBadge cardId={card.id} />
-        <span className="ml-auto flex items-center gap-0.5">
-          <Hint label={card.pinned ? '取消置顶' : '置顶'}>
-            <Button variant="ghost" size="icon-sm" onClick={() => togglePin(card.id)}>
-              <Star className={cn(card.pinned === 1 && 'fill-amber-400 text-amber-400')} />
-            </Button>
-          </Hint>
-          <Hint label="创建副本">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => { const id = duplicateCard(card.id); if (id) selectCard(id); }}
-            >
-              <Copy />
-            </Button>
-          </Hint>
-          <Hint label="删除卡片">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-destructive"
-              onClick={async () => {
-                if (await askConfirm(`删除卡片「${card.title}」？相关关联也会一并移除。`)) {
-                  deleteCard(card.id);
-                  selectCard(null);
-                }
-              }}
-            >
-              <Trash2 />
-            </Button>
-          </Hint>
-        </span>
-      </header>
+      <CardDetailHeader
+        card={card}
+        def={def}
+        branch={branch}
+        asideOpen={asideOpen}
+        onToggleAside={() => setAsideOpen(!asideOpen)}
+      />
 
       {/*
         窄屏只有一列时高度必须交给内容：Grid 的自动行默认会被压进容器高度，
         于是左右两列各自缩成几十像素、内容互相盖住（"结构化字段和编辑器重叠"）。
         auto-rows-min 让每行取自己的内容高度，超出部分由外层 overflow-y-auto 滚。
+        右列只在开关打开时占一列，收起时主内容区吃满整个宽度。
       */}
-      <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-1 overflow-y-auto lg:grid-cols-[1fr_20rem]">
+      <div
+        className={cn(
+          'grid min-h-0 flex-1 auto-rows-min grid-cols-1 overflow-y-auto',
+          asideOpen && 'lg:grid-cols-[1fr_20rem]',
+        )}
+      >
         <div className="flex min-h-0 flex-col gap-2 p-3">
-          {/*
-            三段输入框只在编辑态出现，预览态的页签栏因此直接置顶，卡片抬头与正文
-            一起渲染进下方的预览框里 —— 预览就从最上方开始（此前它们一直占着约
-            120px，把预览正文压得很靠下）。
-          */}
-          {mode === 'edit' && (
-            <>
-              <AutoInput
-                value={card.title}
-                onCommit={(title) => updateCard(card.id, { title })}
-                placeholder={def.titlePlaceholder ?? '标题'}
-                className="h-auto border-0 bg-transparent px-0 text-xl font-semibold shadow-none focus-visible:ring-0"
-              />
-              <AutoInput
-                value={card.subtitle}
-                onCommit={(subtitle) => updateCard(card.id, { subtitle })}
-                placeholder="副标题 / 称号 / 所属"
-                className="h-auto border-0 bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
-              />
-              <AutoTextarea
-                value={card.summary}
-                onCommit={(summary) => updateCard(card.id, { summary })}
-                placeholder={`${def.summaryLabel ?? '一句话摘要'}（会显示在卡片列表与悬浮预览里）`}
-                className="min-h-[52px] text-xs"
-              />
-            </>
-          )}
-
-          <Tabs value={mode} onValueChange={(v) => setMode(v as 'edit' | 'preview')} className="flex min-h-0 flex-1 flex-col">
+          <Tabs value={mode} onValueChange={(v) => changeMode(v as ViewMode)} className="flex min-h-0 flex-1 flex-col">
+            {/* 页签栏在最上；右侧那串字数/时间是动态数据，不是要删的东西 */}
             <div className="flex items-center justify-between">
               <TabsList>
                 <TabsTrigger value="edit" className="gap-1">
@@ -138,6 +96,9 @@ export function CardDetailView({ cardId }: { cardId: string }) {
                 </TabsTrigger>
                 <TabsTrigger value="preview" className="gap-1">
                   <Eye className="size-3" /> 预览
+                </TabsTrigger>
+                <TabsTrigger value="split" className="gap-1">
+                  <Columns2 className="size-3" /> 分栏
                 </TabsTrigger>
                 <TabsTrigger value="props" className="gap-1">
                   <Braces className="size-3" /> 属性区
@@ -147,40 +108,46 @@ export function CardDetailView({ cardId }: { cardId: string }) {
                 {countWords(card.body)} 字 · 更新于 {formatTime(card.updated_at)}
               </span>
             </div>
+
             {/*
               注意：TabsContent 上不能写 flex / grid 这类 display 类。Radix 用
               hidden 属性隐藏未激活面板，Tailwind 的 flex 会覆盖 display:none ——
               切到预览时编辑器仍实打实占着 400 多像素，把预览顶到很下面。
+              所以下面每块都套一层 div 来撑布局。
             */}
             <TabsContent value="edit" className="mt-1 min-h-[320px] flex-1">
-              <div className="flex h-full min-h-0 flex-col">
-                <MarkdownEditor
-                  value={card.body}
-                  onChange={(body) => updateCard(card.id, { body })}
-                  className="rounded-lg border border-border"
-                  placeholder="写设定正文…支持 Markdown；提到其它卡片标题会自动变成可悬停预览的双链"
-                />
+              <div className="flex h-full min-h-0 flex-col gap-2">
+                <CardHeadFields card={card} def={def} />
+                {editor}
               </div>
             </TabsContent>
+
             <TabsContent value="preview" className="mt-1 flex-1">
-              <div className="space-y-2 rounded-lg border border-border p-3">
-                {/* 抬头直接读渲染值，这样预览就是一张从顶部长起的「卡片页面」 */}
-                <div className="space-y-0.5">
-                  <h1 className="text-xl font-semibold leading-tight">{card.title || '（无标题）'}</h1>
-                  {card.subtitle && <div className="text-xs text-muted-foreground">{card.subtitle}</div>}
-                  {card.summary && (
-                    <p className="text-xs leading-relaxed text-muted-foreground">{card.summary}</p>
-                  )}
+              {/* 预览面撑满：不再重复一段抬头，页面从最上方开始 */}
+              <CardPreviewPane card={card} onCardClick={(id) => selectCard(id)} />
+            </TabsContent>
+
+            {/*
+              分栏：左右各 50%，间隙 12px（gap-3）。这里没有用 lg: 那档视口断点，
+              因为主内容区实际有多宽取决于侧栏 256 + 右列 320 + 界面缩放 ——
+              同一块屏幕上它可能是 600 也可能是 300，视口断点会判错。
+              改用「每栏最小 240px」交给浏览器算：≥496px 并排，更窄就上下堆叠
+              （与写作模块同一套行为，写法更省事）。
+            */}
+            <TabsContent value="split" className="mt-1 min-h-[320px] flex-1">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+                {/* 左栏自带抬头三段：那三个输入本来就只在编辑态出现 */}
+                <div className="flex min-w-0 flex-col gap-2">
+                  <CardHeadFields card={card} def={def} />
+                  {editor}
                 </div>
-                <div className="border-t border-border pt-2">
-                  {card.body.trim() ? (
-                    <MarkdownView text={card.body} onCardClick={(id) => selectCard(id)} />
-                  ) : (
-                    <div className="text-xs text-muted-foreground">正文还是空的。</div>
-                  )}
+                {/* 右栏：同一张预览面，与「预览」页签共用一份渲染逻辑 */}
+                <div className="min-w-0">
+                  <CardPreviewPane card={card} onCardClick={(id) => selectCard(id)} />
                 </div>
               </div>
             </TabsContent>
+
             <TabsContent value="props" className="mt-1 min-h-[340px] flex-1">
               <div className="flex h-full min-h-0 flex-col">
                 <CardPropsPanel cardId={card.id} />
@@ -190,9 +157,11 @@ export function CardDetailView({ cardId }: { cardId: string }) {
         </div>
 
         {/* 右列：结构编辑。切到「属性区」时收成只剩图库，避免两个入口改同一批数据 */}
-        <div className="border-t border-border p-2 lg:border-l lg:border-t-0">
-          <CardAside cardId={card.id} compact={mode === 'props'} />
-        </div>
+        {asideOpen && (
+          <div className="border-t border-border p-2 lg:border-l lg:border-t-0">
+            <CardAside cardId={card.id} compact={mode === 'props'} />
+          </div>
+        )}
       </div>
     </div>
   );
