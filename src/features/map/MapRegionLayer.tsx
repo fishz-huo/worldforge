@@ -8,10 +8,13 @@
 import type { MapRegion } from '@/types';
 import { centroid } from '@/types';
 import { regionFill, regionPath } from './mapRender';
+import type { MapViewMode } from './mapRender';
 
 interface Props {
   regions: MapRegion[];
   selectedRegionId: string | null;
+  /** 编辑 / 预览：预览下不显示顶点手柄、也不写坐标 */
+  viewMode: MapViewMode;
   mode: 'fill' | 'outline' | 'resource';
   metric: string;
   maxValue: number;
@@ -23,12 +26,14 @@ interface Props {
 }
 
 export function MapRegionLayer({
-  regions, selectedRegionId, mode, metric, maxValue, showLabels, onSelect, onPointMove, toNorm,
+  regions, selectedRegionId, viewMode, mode, metric, maxValue, showLabels, onSelect, onPointMove, toNorm,
 }: Props) {
   /** 拖动手柄：用 window 级监听，避免鼠标移出小圆点就中断 */
   const startDrag = (regionId: string, index: number) => (e: React.PointerEvent) => {
     e.stopPropagation();
     const move = (ev: PointerEvent) => {
+      // 预览模式不写坐标（手柄本来就不渲染，这里再兜一层）
+      if (viewMode !== 'edit') return;
       const [x, y] = toNorm(ev.clientX, ev.clientY);
       onPointMove(regionId, index, x, y);
     };
@@ -70,7 +75,8 @@ export function MapRegionLayer({
                 {region.name}
               </text>
             )}
-            {active &&
+            {viewMode === 'edit' &&
+              active &&
               region.points.map(([x, y], i) => (
                 <circle
                   key={i}

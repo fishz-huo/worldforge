@@ -9,19 +9,22 @@
  * 坐标系统：0~1 归一化，渲染时乘以画布尺寸，
  * 因此底图换分辨率、窗口缩放都不会错位。
  */
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MapDef, MapPin, MapRegion, MapTool } from '@/types';
 import { cn } from '@/lib/utils';
 import { MapBackground } from './MapBackground';
 import { MapPinLayer } from './MapPinLayer';
 import { MapRegionLayer } from './MapRegionLayer';
 import { clampNorm } from './mapRender';
+import type { MapViewMode } from './mapRender';
 
 interface Props {
   map: MapDef;
   pins: MapPin[];
   regions: MapRegion[];
   tool: MapTool;
+  /** 编辑 / 预览：预览下不落点、不写坐标 */
+  viewMode: MapViewMode;
   selectedPinId: string | null;
   selectedRegionId: string | null;
   /** 区域显示模式：填充 / 仅轮廓 / 资源热度 */
@@ -37,7 +40,7 @@ interface Props {
 }
 
 export function MapCanvas({
-  map, pins, regions, tool, selectedPinId, selectedRegionId, regionMode, resourceKey,
+  map, pins, regions, tool, viewMode, selectedPinId, selectedRegionId, regionMode, resourceKey,
   showLabels, onCanvasClick, onPinMove, onPinSelect, onRegionSelect, onRegionPointMove, className,
 }: Props) {
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -60,16 +63,35 @@ export function MapCanvas({
     [regions, resourceKey],
   );
 
+  /**
+   * 切到预览时清掉「正在被拖动」的标记。
+   * 否则拖到一半切模式，松手前那几次 pointermove 还在往库里写坐标。
+   */
+  useEffect(() => {
+    if (viewMode === 'preview') setDraggingPin(null);
+  }, [viewMode]);
+
+  /** 光标：预览模式不需要「可以画」的提示，编辑模式按当前工具给 */
+  const cursorClass =
+    viewMode === 'preview'
+      ? 'cursor-default'
+      : tool === 'pan'
+        ? 'cursor-grab'
+        : tool === 'pin'
+          ? 'cursor-crosshair'
+          : 'cursor-default';
+
   return (
     <div
       ref={surfaceRef}
       className={cn(
         'relative h-full w-full overflow-hidden rounded-lg border border-border bg-grid',
-        tool === 'pan' ? 'cursor-grab' : tool === 'pin' ? 'cursor-crosshair' : 'cursor-default',
+        cursorClass,
         className,
       )}
       onPointerMove={(e) => {
-        if (!draggingPin) return;
+        // 预览模式不写坐标（拖拽本就不该开始，这里再兜一层）
+        if (viewMode !== 'edit' || !draggingPin) return;
         const [x, y] = toNorm(e.clientX, e.clientY);
         onPinMove(draggingPin, x, y);
       }}
@@ -78,7 +100,8 @@ export function MapCanvas({
       onClick={(e) => {
         // 只有点在「空白画布」上才算：标记与区域内部会 stopPropagation
         if ((e.target as HTMLElement).dataset.surface !== 'true') return;
-        if (tool === 'pin') {
+        // 预览模式只允许「点空白取消选中」，绝不落点（写入回调在这里就返回）
+        if (viewMode === 'edit' && tool === 'pin') {
           const [x, y] = toNorm(e.clientX, e.clientY);
           onCanvasClick(x, y);
         } else {
@@ -101,6 +124,7 @@ export function MapCanvas({
       <MapRegionLayer
         regions={regions}
         selectedRegionId={selectedRegionId}
+        viewMode={viewMode}
         mode={regionMode}
         metric={String(resourceKey)}
         maxValue={maxResource}
@@ -113,6 +137,7 @@ export function MapCanvas({
       <MapPinLayer
         pins={pins}
         selectedPinId={selectedPinId}
+        viewMode={viewMode}
         showLabels={showLabels}
         onSelect={onPinSelect}
         onDragStart={setDraggingPin}

@@ -12,6 +12,7 @@ import { SectionTitle } from '@/components/ui/primitives';
 import { RESOURCE_METRICS } from '@/types';
 import { useStore } from '@/store';
 import { RegionCompareChart, ResourceOverTime } from './ResourceChart';
+import type { MapViewMode } from './mapRender';
 
 /** 指标选择器 */
 function MetricPicker({
@@ -41,7 +42,7 @@ function MetricPicker({
   );
 }
 
-export function MapOverview({ mapId }: { mapId: string }) {
+export function MapOverview({ mapId, viewMode }: { mapId: string; viewMode: MapViewMode }) {
   // ⚠️ selector 里绝不能做 filter/map/slice：它们每次都返回新数组，
   // zustand 用 Object.is 比较快照，会永远判定「数据变了」并无限重渲染
   // （React 报 "Maximum update depth exceeded"，整个应用白屏）。
@@ -71,7 +72,8 @@ export function MapOverview({ mapId }: { mapId: string }) {
   return (
     <div className="space-y-3 p-2">
       <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-        <Info className="size-3" /> 点击地图上的标记或区域即可编辑
+        <Info className="size-3" />
+        {viewMode === 'preview' ? '预览模式：点击地图上的标记或区域可查看信息' : '点击地图上的标记或区域即可编辑'}
       </div>
 
       <MetricPicker value={metric} onChange={setMetric} />

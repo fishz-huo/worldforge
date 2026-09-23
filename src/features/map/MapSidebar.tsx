@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import { MapListPanel } from './MapListPanel';
 import { MapSettingsForm } from './MapSettingsForm';
+import type { MapViewMode } from './mapRender';
 
 /** 绘制工具 */
 const TOOLS: { tool: MapTool; label: string; icon: string; hint: string }[] = [
@@ -26,6 +27,8 @@ const TOOLS: { tool: MapTool; label: string; icon: string; hint: string }[] = [
 ];
 
 interface Props {
+  /** 编辑 / 预览：预览下收起「绘制工具」（画布上的编辑入口） */
+  viewMode: MapViewMode;
   tool: MapTool;
   setTool: (t: MapTool) => void;
   showLabels: boolean;
@@ -37,7 +40,7 @@ interface Props {
 }
 
 export function MapSidebar({
-  tool, setTool, showLabels, setShowLabels, regionMode, setRegionMode, resourceKey, setResourceKey,
+  viewMode, tool, setTool, showLabels, setShowLabels, regionMode, setRegionMode, resourceKey, setResourceKey,
 }: Props) {
   const maps = useStore((s) => s.maps);
   const selectedMapId = useStore((s) => s.selectedMapId);
@@ -57,26 +60,31 @@ export function MapSidebar({
           <>
             <MapSettingsForm map={map} />
 
-            <SectionTitle>绘制工具</SectionTitle>
-            <div className="grid grid-cols-4 gap-1">
-              {TOOLS.map((t) => (
-                <button
-                  key={t.tool}
-                  onClick={() => setTool(t.tool)}
-                  title={t.hint}
-                  className={cn(
-                    'flex flex-col items-center gap-0.5 rounded-md border py-1.5 text-[10px] transition-colors',
-                    tool === t.tool ? 'border-primary bg-primary/15 text-primary' : 'border-border hover:bg-accent',
-                  )}
-                >
-                  <span className="text-sm">{t.icon}</span>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] leading-relaxed text-muted-foreground">
-              {TOOLS.find((t) => t.tool === tool)?.hint}
-            </p>
+            {/* 绘制工具只在编辑模式出现：预览模式是纯查看，不该有画笔 */}
+            {viewMode === 'edit' && (
+              <>
+                <SectionTitle>绘制工具</SectionTitle>
+                <div className="grid grid-cols-4 gap-1">
+                  {TOOLS.map((t) => (
+                    <button
+                      key={t.tool}
+                      onClick={() => setTool(t.tool)}
+                      title={t.hint}
+                      className={cn(
+                        'flex flex-col items-center gap-0.5 rounded-md border py-1.5 text-[10px] transition-colors',
+                        tool === t.tool ? 'border-primary bg-primary/15 text-primary' : 'border-border hover:bg-accent',
+                      )}
+                    >
+                      <span className="text-sm">{t.icon}</span>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] leading-relaxed text-muted-foreground">
+                  {TOOLS.find((t) => t.tool === tool)?.hint}
+                </p>
+              </>
+            )}
 
             <SectionTitle
               right={

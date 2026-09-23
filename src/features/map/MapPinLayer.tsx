@@ -6,16 +6,19 @@
  */
 import type { MapPin } from '@/types';
 import { cn } from '@/lib/utils';
+import type { MapViewMode } from './mapRender';
 
 interface Props {
   pins: MapPin[];
   selectedPinId: string | null;
+  /** 编辑 / 预览：预览下点击只选中，不启动拖拽 */
+  viewMode: MapViewMode;
   showLabels: boolean;
   onSelect: (pinId: string) => void;
   onDragStart: (pinId: string) => void;
 }
 
-export function MapPinLayer({ pins, selectedPinId, showLabels, onSelect, onDragStart }: Props) {
+export function MapPinLayer({ pins, selectedPinId, viewMode, showLabels, onSelect, onDragStart }: Props) {
   return (
     <>
       {pins.map((pin) => {
@@ -32,8 +35,9 @@ export function MapPinLayer({ pins, selectedPinId, showLabels, onSelect, onDragS
             onPointerDown={(e) => {
               // 阻止冒泡：否则会被画布当成「空白点击」而新建标记
               e.stopPropagation();
-              onDragStart(pin.id);
               onSelect(pin.id);
+              // 预览模式只选中：不进入拖拽（拖拽的每次 pointermove 都会写坐标）
+              if (viewMode === 'edit') onDragStart(pin.id);
             }}
             onClick={(e) => e.stopPropagation()}
           >

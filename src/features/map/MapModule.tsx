@@ -14,7 +14,9 @@ import type { MapTool, RegionResources } from '@/types';
 import { useStore } from '@/store';
 import { MapCanvas } from './MapCanvas';
 import { MapInspector } from './MapInspector';
+import { MapModeSwitch } from './MapModeSwitch';
 import { MapSidebar } from './MapSidebar';
+import type { MapViewMode } from './mapRender';
 
 export function MapModule() {
   const maps = useStore((s) => s.maps);
@@ -28,6 +30,11 @@ export function MapModule() {
   const moveRegionPoint = useStore((s) => s.moveRegionPoint);
 
   const [tool, setTool] = useState<MapTool>('select');
+  /**
+   * 视图模式（编辑 / 预览）。只活在组件里：约束不允许动 store 与偏好文件，
+   * 所以换模块或刷新都会回到「编辑」，不会留下"上次是预览"的隐状态。
+   */
+  const [mode, setMode] = useState<MapViewMode>('edit');
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [showLabels, setShowLabels] = useState(true);
@@ -38,6 +45,16 @@ export function MapModule() {
   useEffect(() => {
     if (!selectedMapId && maps.length > 0) selectMap(maps[0].id);
   }, [selectedMapId, maps, selectMap]);
+
+  /**
+   * 切模式时把工具复位成「选择」。
+   * 否则从「打点」切到预览、再切回编辑时，tool 还停在打点状态，
+   * 随手点一下画布就多出一个标记 —— 用户看不出因果，只会觉得"它自己乱加东西"。
+   */
+  const changeMode = (next: MapViewMode) => {
+    setMode(next);
+    if (next === 'preview') setTool('select');
+  };
 
   const map = maps.find((m) => m.id === selectedMapId) ?? null;
   /**
@@ -51,6 +68,7 @@ export function MapModule() {
   return (
     <ModuleLayout>
       <MapSidebar
+        viewMode={mode}
         tool={tool}
         setTool={setTool}
         showLabels={showLabels}
@@ -77,31 +95,43 @@ export function MapModule() {
                 · 标记 {mapPins.length} · 区域 {mapRegions.length}
               </span>
               <div className="ml-auto flex items-center gap-1">
-                <Button
-                  variant={tool === 'pin' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => setTool('pin')}
-                >
-                  <Crosshair className="size-3.5" /> 打点模式
-                </Button>
-                <Button
-                  variant={tool === 'select' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => setTool('select')}
-                >
-                  <MousePointer2 className="size-3.5" /> 选择
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => addRegion(map.id)}>
-                  新建区域
-                </Button>
+                {/* 编辑模式：绘制入口；预览模式只留一个「选择」（对齐设计稿） */}
+                {mode === 'edit' ? (
+                  <>
+                    <Button
+                      variant={tool === 'pin' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => setTool('pin')}
+                    >
+                      <Crosshair className="size-3.5" /> 打点模式
+                    </Button>
+                    <Button
+                      variant={tool === 'select' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => setTool('select')}
+                    >
+                      <MousePointer2 className="size-3.5" /> 选择
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => addRegion(map.id)}>
+                      新建区域
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="secondary" size="sm" className="gap-1" onClick={() => setTool('select')}>
+                    <MousePointer2 className="size-3.5" /> 选择
+                  </Button>
+                )}
+                <span aria-hidden className="mx-0.5 h-4 w-px bg-border" />
+                <MapModeSwitch mode={mode} onChange={changeMode} />
               </div>
             </div>
 
             <div className="min-h-0 flex-1 p-3">
               <MapCanvas
                 map={map}
+                viewMode={mode}
                 pins={mapPins}
                 regions={mapRegions}
                 tool={tool}
@@ -135,7 +165,7 @@ export function MapModule() {
         )}
       </ModuleBody>
 
-      <MapInspector selectedPinId={selectedPinId} selectedRegionId={selectedRegionId} />
+      <MapInspector selectedPinId={selectedPinId} selectedRegionId={selectedRegionId} viewMode={mode} />
     </ModuleLayout>
   );
 }
