@@ -1,11 +1,15 @@
 /**
  * 地图标记层
  * ------------------------------------------------------------------
- * 用 HTML 而不是 SVG 画标记点：这样可以直接放 emoji、用 Tailwind 做
- * hover 缩放，并且拖拽时不必处理 SVG 坐标变换。
+ * 用 HTML 而不是 SVG 画标记点：这样可以直接用 Tailwind 做 hover 缩放，
+ * 拖拽时也不必处理 SVG 坐标变换。
+ *
+ * 视觉对齐设计稿：24px 白底圆 + 1.5px 色边框 + 细线图标（图标见 PinGlyph，
+ * 不再直出 emoji）；编辑模式下选中的标记外面套一圈虚线控制圈，表示「可拖动」。
  */
 import type { MapPin } from '@/types';
 import { cn } from '@/lib/utils';
+import { PinGlyph } from './PinGlyph';
 import type { MapViewMode } from './mapRender';
 
 interface Props {
@@ -42,13 +46,23 @@ export function MapPinLayer({ pins, selectedPinId, viewMode, showLabels, onSelec
             onClick={(e) => e.stopPropagation()}
           >
             <span
-              className="flex size-6 items-center justify-center rounded-full border-2 text-xs shadow-lg"
+              className="flex size-6 items-center justify-center rounded-full border-[1.5px] shadow-sm"
               style={{ borderColor: pin.color, background: 'hsl(var(--card))' }}
             >
-              {pin.icon}
+              <PinGlyph icon={pin.icon} className="size-3.5 text-foreground" />
             </span>
+
+            {/* 选中的虚线控制圈：只在编辑模式出现（预览模式下它属于「编辑痕迹」） */}
+            {active && viewMode === 'edit' && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -inset-1.5 rounded-full border border-dashed"
+                style={{ borderColor: pin.color }}
+              />
+            )}
+
             {showLabels && (
-              <span className="absolute left-1/2 top-full mt-0.5 -translate-x-1/2 whitespace-nowrap rounded bg-background/85 px-1 text-[10px] text-foreground shadow">
+              <span className="absolute left-1/2 top-full mt-0.5 -translate-x-1/2 whitespace-nowrap rounded bg-card/90 px-1.5 py-0.5 text-[10px] text-card-foreground shadow-sm">
                 {pin.label}
               </span>
             )}

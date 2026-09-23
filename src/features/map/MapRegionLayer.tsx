@@ -7,7 +7,7 @@
  */
 import type { MapRegion } from '@/types';
 import { centroid } from '@/types';
-import { regionFill, regionPath } from './mapRender';
+import { regionFill, regionPath, regionStroke } from './mapRender';
 import type { MapViewMode } from './mapRender';
 
 interface Props {
@@ -49,14 +49,16 @@ export function MapRegionLayer({
     <svg data-surface="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
       {regions.map((region) => {
         const active = region.id === selectedRegionId;
+        const stroke = regionStroke(region, active);
         const [cx, cy] = centroid(region.points);
         return (
           <g key={region.id}>
             <path
               d={regionPath(region)}
               fill={regionFill(region, mode, metric, maxValue)}
-              stroke={active ? '#ffffff' : region.color}
-              strokeWidth={active ? 0.6 : 0.35}
+              stroke={stroke.color}
+              strokeWidth={stroke.width}
+              strokeOpacity={stroke.opacity}
               vectorEffect="non-scaling-stroke"
               className="cursor-pointer"
               onClick={(e) => {
@@ -75,6 +77,13 @@ export function MapRegionLayer({
                 {region.name}
               </text>
             )}
+            {/*
+              顶点手柄：白色圆点 + 区域色细边（对齐设计稿：白底圆、1.5px 描边）。
+              TODO: 手柄在宽画布下会变扁椭圆，下一轮修
+              —— viewBox 是 0~100 且 preserveAspectRatio="none"，半径 1 实际等于
+              画布宽度的 2%、高度的 2%，画布一拉宽两个方向就不等长。
+              修法：把手柄挪到 HTML 层，或按画布宽高比补偿半径。
+            */}
             {viewMode === 'edit' &&
               active &&
               region.points.map(([x, y], i) => (
@@ -85,7 +94,8 @@ export function MapRegionLayer({
                   r={1}
                   fill="#ffffff"
                   stroke={region.color}
-                  strokeWidth={0.4}
+                  strokeWidth={1.5}
+                  vectorEffect="non-scaling-stroke"
                   className="cursor-move"
                   onPointerDown={startDrag(region.id, i)}
                 />

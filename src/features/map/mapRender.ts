@@ -48,5 +48,18 @@ export function regionFill(
     const value = Number((region.resources as Record<string, unknown>)?.[metric] ?? 0);
     return heatColor((value / Math.max(1, maxValue)) * 100, 0.45);
   }
-  return `${region.color}44`;
+  // 35%：设计稿是 27%，用户要求 30~40%，取中值让色块看得清、又能透出底图
+  return `${region.color}59`;
+}
+
+/**
+ * 区域描边：与填充分离的细边，选中时更实更粗一点。
+ * 未选中也留一条 1px 半透明边 —— 浅灰画布上没有边的话，
+ * 相邻区域会糊成一坨分不清（用户确认过这个取舍）。
+ */
+export function regionStroke(
+  region: MapRegion,
+  active: boolean,
+): { color: string; width: number; opacity: number } {
+  return { color: region.color, width: active ? 1.5 : 1, opacity: active ? 1 : 0.6 };
 }

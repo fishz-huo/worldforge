@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MapDef, MapPin, MapRegion, MapTool } from '@/types';
 import { cn } from '@/lib/utils';
 import { MapBackground } from './MapBackground';
+import { MapGridLayer } from './MapGridLayer';
 import { MapPinLayer } from './MapPinLayer';
 import { MapRegionLayer } from './MapRegionLayer';
 import { clampNorm } from './mapRender';
@@ -85,7 +86,9 @@ export function MapCanvas({
     <div
       ref={surfaceRef}
       className={cn(
-        'relative h-full w-full overflow-hidden rounded-lg border border-border bg-grid',
+        // 画布底色：浅暖灰（设计稿要求不要纯白）；暗色换一档更深的蓝灰
+        'relative h-full w-full overflow-hidden rounded-lg border border-border',
+        'bg-[#F5F4F0] dark:bg-[#121722]',
         cursorClass,
         className,
       )}
@@ -110,6 +113,9 @@ export function MapCanvas({
         }
       }}
     >
+      {/* 网格只在编辑模式出现，且画在底图之下：底图不透明时它自然被盖住 */}
+      {viewMode === 'edit' && <MapGridLayer />}
+
       {/* 底图 */}
       <MapBackground map={map} />
 

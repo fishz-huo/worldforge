@@ -12,9 +12,11 @@ import { Label } from '@/components/ui/label';
 import { SectionTitle } from '@/components/ui/primitives';
 import { AutoInput, AutoNumber, AutoTextarea } from '@/components/common/AutoField';
 import { Icon } from '@/components/Icon';
+import { cn } from '@/lib/utils';
 import { getCardType } from '@/lib/plugin/registry';
 import { useStore } from '@/store';
 import { CardPicker } from '@/features/cards/CardPicker';
+import { PIN_GLYPH_KINDS } from './PinGlyph';
 
 export function PinEditor({ pinId }: { pinId: string }) {
   const pin = useStore((s) => s.pins.find((p) => p.id === pinId));
@@ -34,10 +36,16 @@ export function PinEditor({ pinId }: { pinId: string }) {
 
       <div className="grid grid-cols-2 gap-1.5">
         <div className="space-y-1">
-          <Label>图标（emoji）</Label>
+          <Label>图标</Label>
           <AutoInput
             value={pin.icon}
-            onCommit={(icon) => updatePin(pin.id, { icon: icon.slice(0, 2) || '📍' })}
+            placeholder="city"
+            /**
+             * 以前这里只留 2 个字符（那时只存 emoji）；现在字段里既可以是
+             * 图标名（city/harbor…）也可以是老 emoji，所以放到 8 个字符，
+             * 否则「city」会被截成「ci」而认不出来。
+             */
+            onCommit={(icon) => updatePin(pin.id, { icon: icon.slice(0, 8).trim() })}
             className="text-center"
           />
         </div>
@@ -49,6 +57,28 @@ export function PinEditor({ pinId }: { pinId: string }) {
             onChange={(e) => updatePin(pin.id, { color: e.target.value })}
             className="h-8 w-full cursor-pointer rounded border border-border bg-transparent"
           />
+        </div>
+      </div>
+
+      {/* 常用图标快捷选择：写进 icon 字段的是图标名；老数据里的 emoji 也认
+          （映射表见 PinGlyph），两种写法都能正常显示。 */}
+      <div className="space-y-1">
+        <Label>常用图标</Label>
+        <div className="flex flex-wrap gap-1">
+          {PIN_GLYPH_KINDS.slice(0, 5).map(({ key, label, Icon: GlyphIcon }) => (
+            <button
+              key={key}
+              onClick={() => updatePin(pin.id, { icon: key })}
+              title={`换成「${label}」图标`}
+              className={cn(
+                'flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px]',
+                pin.icon === key ? 'border-primary text-primary' : 'border-border hover:bg-accent',
+              )}
+            >
+              <GlyphIcon className="size-3" />
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
