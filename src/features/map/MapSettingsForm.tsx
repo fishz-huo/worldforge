@@ -30,7 +30,7 @@ export function MapSettingsForm({ map }: { map: MapDef }) {
   };
 
   return (
-    <div className="space-y-2 rounded-md border border-border p-2">
+    <div className="space-y-2 rounded-md border border-border bg-card p-2">
       <div className="space-y-1">
         <Label>名称</Label>
         <Input defaultValue={map.name} onBlur={(e) => updateMap(map.id, { name: e.target.value })} className="h-7 text-xs" />

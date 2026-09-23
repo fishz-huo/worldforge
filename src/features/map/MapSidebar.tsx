@@ -4,7 +4,8 @@
  * 管理「多张地图」（见 MapListPanel）、当前地图属性（见 MapSettingsForm）、
  * 绘制工具与图层显示选项。
  */
-import { Layers } from 'lucide-react';
+import { Crosshair, Layers, MousePointer2, Move, Pentagon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -18,12 +19,16 @@ import { MapListPanel } from './MapListPanel';
 import { MapSettingsForm } from './MapSettingsForm';
 import type { MapViewMode } from './mapRender';
 
-/** 绘制工具 */
-const TOOLS: { tool: MapTool; label: string; icon: string; hint: string }[] = [
-  { tool: 'select', label: '选择', icon: '🖱', hint: '点选地图上的标记或区域进行编辑' },
-  { tool: 'pin', label: '打点', icon: '📍', hint: '在空白处点击即落一个标记点' },
-  { tool: 'region', label: '区域', icon: '⬟', hint: '新建区域后拖动白色顶点调整轮廓' },
-  { tool: 'pan', label: '平移', icon: '✥', hint: '预留：拖动整张画布' },
+/**
+ * 绘制工具
+ * 图标换成 lucide 细线（原来是 🖱📍⬟✥ 这类 emoji）：地图画布上的标记
+ * 已经改成线性图标，侧栏再用 emoji 会明显不是一套。
+ */
+const TOOLS: { tool: MapTool; label: string; Icon: LucideIcon; hint: string }[] = [
+  { tool: 'select', label: '选择', Icon: MousePointer2, hint: '点选地图上的标记或区域进行编辑' },
+  { tool: 'pin', label: '打点', Icon: Crosshair, hint: '在空白处点击即落一个标记点' },
+  { tool: 'region', label: '区域', Icon: Pentagon, hint: '新建区域后拖动白色顶点调整轮廓' },
+  { tool: 'pan', label: '平移', Icon: Move, hint: '预留：拖动整张画布' },
 ];
 
 interface Props {
@@ -51,8 +56,10 @@ export function MapSidebar({
   const map = maps.find((m) => m.id === selectedMapId) ?? null;
   const mapRegions = regions.filter((r) => r.map_id === map?.id);
 
+  // 侧栏底色只传 class：SidePanel 是所有模块共用的外壳，不改它。
+  // 设计稿要的是「浅灰背景 + 选中项淡紫」，后者列表项与工具按钮自己已经带了。
   return (
-    <SidePanel title="地图">
+    <SidePanel title="地图" className="bg-muted/40">
       <div className="space-y-3 p-2">
         <MapListPanel />
 
@@ -65,18 +72,20 @@ export function MapSidebar({
               <>
                 <SectionTitle>绘制工具</SectionTitle>
                 <div className="grid grid-cols-4 gap-1">
-                  {TOOLS.map((t) => (
+                  {TOOLS.map(({ tool: value, label, Icon: ToolIcon, hint }) => (
                     <button
-                      key={t.tool}
-                      onClick={() => setTool(t.tool)}
-                      title={t.hint}
+                      key={value}
+                      onClick={() => setTool(value)}
+                      title={hint}
                       className={cn(
                         'flex flex-col items-center gap-0.5 rounded-md border py-1.5 text-[10px] transition-colors',
-                        tool === t.tool ? 'border-primary bg-primary/15 text-primary' : 'border-border hover:bg-accent',
+                        value === tool
+                          ? 'border-primary bg-primary/15 text-primary'
+                          : 'border-border bg-card hover:bg-accent',
                       )}
                     >
-                      <span className="text-sm">{t.icon}</span>
-                      {t.label}
+                      <ToolIcon className="size-3.5" />
+                      {label}
                     </button>
                   ))}
                 </div>
@@ -88,9 +97,17 @@ export function MapSidebar({
 
             <SectionTitle
               right={
-                <Button variant="ghost" size="sm" className="h-6 gap-1 text-[10px]" onClick={() => addRegion(map.id)}>
-                  新建区域
-                </Button>
+                // 预览模式不给「新建区域」：它是画布编辑入口，建出来的区域在预览下也拖不动
+                viewMode === 'edit' ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 gap-1 text-[10px]"
+                    onClick={() => addRegion(map.id)}
+                  >
+                    新建区域
+                  </Button>
+                ) : undefined
               }
             >
               区域（{mapRegions.length}）
@@ -111,7 +128,9 @@ export function MapSidebar({
                       onClick={() => setRegionMode(m)}
                       className={cn(
                         'flex-1 rounded border px-1 py-1 text-[10px]',
-                        regionMode === m ? 'border-primary bg-primary/15 text-primary' : 'border-border hover:bg-accent',
+                        regionMode === m
+                          ? 'border-primary bg-primary/15 text-primary'
+                          : 'border-border bg-card hover:bg-accent',
                       )}
                     >
                       {m === 'fill' ? '填充' : m === 'outline' ? '轮廓' : '资源热度'}
@@ -129,7 +148,9 @@ export function MapSidebar({
                         onClick={() => setResourceKey(m.key)}
                         className={cn(
                           'rounded border px-1.5 py-0.5 text-[10px]',
-                          resourceKey === m.key ? 'border-primary text-primary' : 'border-border hover:bg-accent',
+                          resourceKey === m.key
+                            ? 'border-primary bg-primary/15 text-primary'
+                            : 'border-border bg-card hover:bg-accent',
                         )}
                       >
                         {m.label}

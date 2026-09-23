@@ -32,7 +32,8 @@ export function MapInspector({
   const preview = viewMode === 'preview';
 
   return (
-    <InspectorPanel title={preview ? `${title}（预览）` : title}>
+    // 检查器要是「白底表单」：外壳默认是 bg-card/40 半透明，这里传实底（twMerge 后者优先）
+    <InspectorPanel title={preview ? `${title}（预览）` : title} className="bg-card">
       {!mapId ? (
         <EmptyState icon={<Crosshair />} title="还没有地图" description="在左侧新建一张地图，然后开始打点。" />
       ) : preview ? (
