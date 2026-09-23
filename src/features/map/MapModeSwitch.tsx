@@ -29,7 +29,7 @@ export function MapModeSwitch({
     <div
       role="tablist"
       aria-label="地图视图模式"
-      className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border bg-muted/60 p-0.5"
+      className="inline-flex h-8 shrink-0 items-center gap-0.5 rounded-full border border-border bg-muted/60 p-0.5"
     >
       {ITEMS.map(({ mode: value, label, Icon }) => {
         const active = value === mode;
@@ -42,13 +42,16 @@ export function MapModeSwitch({
             title={value === 'edit' ? '编辑模式：可打点、可拖动、可改属性' : '预览模式：只查看，不会修改任何数据'}
             onClick={() => onChange(value)}
             className={cn(
-              'flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] transition-colors',
+              // h-full = 撑满胶囊内容区（外高 h-8 减掉 1px 边框与 2px 内边距），
+              // 这样胶囊的**外高**才与旁边 h-8 的按钮完全一致
+              'flex h-full items-center gap-1 rounded-full px-2.5 text-xs transition-colors',
               active
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            <Icon className="size-3" />
+            {/* Button 组件里有 [&_svg]:size-4（16px），这里跟着用同尺寸，两边图标才一样大 */}
+            <Icon className="size-4" />
             {label}
           </button>
         );

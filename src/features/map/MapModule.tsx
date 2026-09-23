@@ -10,6 +10,7 @@ import { Crosshair, Map as MapIcon, MousePointer2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/primitives';
 import { ModuleBody, ModuleLayout } from '@/components/layout/Panel';
+import { cn } from '@/lib/utils';
 import type { MapTool, RegionResources } from '@/types';
 import { useStore } from '@/store';
 import { MapCanvas } from './MapCanvas';
@@ -17,6 +18,13 @@ import { MapInspector } from './MapInspector';
 import { MapModeSwitch } from './MapModeSwitch';
 import { MapSidebar } from './MapSidebar';
 import type { MapViewMode } from './mapRender';
+
+/**
+ * 工具按钮的「当前选中」样式。
+ * 三个按钮的**基底**统一成透明文字按钮（ghost + h-8），当前工具只用淡紫底表示状态，
+ * 不再出现「一个是灰底、一个是描边」的混搭；hover 也一起压住，免得悬停时变色。
+ */
+const TOOL_ACTIVE = 'bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary';
 
 export function MapModule() {
   const maps = useStore((s) => s.maps);
@@ -94,36 +102,40 @@ export function MapModule() {
               <span className="text-muted-foreground">
                 · 标记 {mapPins.length} · 区域 {mapRegions.length}
               </span>
-              <div className="ml-auto flex items-center gap-1">
-                {/* 编辑模式：绘制入口；预览模式只留一个「选择」（对齐设计稿） */}
+              {/*
+                工具条右组：所有控件统一 h-8（32px）+ items-center + gap-2。
+                三个按钮基底都是透明文字按钮，只有「当前工具」带淡紫底；
+                预览模式只留一个「选择」（对齐设计稿）。
+              */}
+              <div className="ml-auto flex items-center gap-2">
                 {mode === 'edit' ? (
                   <>
                     <Button
-                      variant={tool === 'pin' ? 'secondary' : 'ghost'}
+                      variant="ghost"
                       size="sm"
-                      className="gap-1"
+                      className={cn('h-8 gap-1', tool === 'pin' && TOOL_ACTIVE)}
                       onClick={() => setTool('pin')}
                     >
                       <Crosshair className="size-3.5" /> 打点模式
                     </Button>
                     <Button
-                      variant={tool === 'select' ? 'secondary' : 'ghost'}
+                      variant="ghost"
                       size="sm"
-                      className="gap-1"
+                      className={cn('h-8 gap-1', tool === 'select' && TOOL_ACTIVE)}
                       onClick={() => setTool('select')}
                     >
                       <MousePointer2 className="size-3.5" /> 选择
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => addRegion(map.id)}>
+                    <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={() => addRegion(map.id)}>
                       新建区域
                     </Button>
                   </>
                 ) : (
-                  <Button variant="secondary" size="sm" className="gap-1" onClick={() => setTool('select')}>
+                  <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={() => setTool('select')}>
                     <MousePointer2 className="size-3.5" /> 选择
                   </Button>
                 )}
-                <span aria-hidden className="mx-0.5 h-4 w-px bg-border" />
+                <span aria-hidden className="h-5 w-px bg-border" />
                 <MapModeSwitch mode={mode} onChange={changeMode} />
               </div>
             </div>

@@ -56,10 +56,8 @@ export function MapSidebar({
   const map = maps.find((m) => m.id === selectedMapId) ?? null;
   const mapRegions = regions.filter((r) => r.map_id === map?.id);
 
-  // 侧栏底色只传 class：SidePanel 是所有模块共用的外壳，不改它。
-  // 设计稿要的是「浅灰背景 + 选中项淡紫」，后者列表项与工具按钮自己已经带了。
   return (
-    <SidePanel title="地图" className="bg-muted/40">
+    <SidePanel title="地图">
       <div className="space-y-3 p-2">
         <MapListPanel />
 
