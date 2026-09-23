@@ -96,7 +96,10 @@ export function MapModule() {
           />
         ) : (
           <div className="flex h-full min-h-0 flex-col">
-            <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-1 text-xs">
+            {/* 工具条整条高度 = 36px：min-h-9（含它自己的 border-b）与左右面板标题行的
+                h-9 对齐（方案 B：不动共享外壳）。不用固定 h-9 是因为窄窗口下这一行会
+                flex-wrap，固定高会把第二行裁掉；min-height 则会自然长高。 */}
+            <div className="flex min-h-9 shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 text-xs">
               <span className="font-medium">{map.name}</span>
               {map.period && <span className="text-muted-foreground">· {map.period}</span>}
               <span className="text-muted-foreground">
