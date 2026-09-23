@@ -6,7 +6,7 @@
  * 标记点绑定卡片、区域资源（人口/农业/矿产…）与资源热度着色。
  */
 import { useEffect, useState } from 'react';
-import { Crosshair, Map as MapIcon, MousePointer2 } from 'lucide-react';
+import { Crosshair, Map as MapIcon, MousePointer2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/primitives';
 import { ModuleBody, ModuleLayout } from '@/components/layout/Panel';
@@ -96,7 +96,7 @@ export function MapModule() {
           />
         ) : (
           <div className="flex h-full min-h-0 flex-col">
-            <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-xs">
+            <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-1 text-xs">
               <span className="font-medium">{map.name}</span>
               {map.period && <span className="text-muted-foreground">· {map.period}</span>}
               <span className="text-muted-foreground">
@@ -127,7 +127,7 @@ export function MapModule() {
                       <MousePointer2 className="size-3.5" /> 选择
                     </Button>
                     <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={() => addRegion(map.id)}>
-                      新建区域
+                      <Plus className="size-3.5" /> 新建区域
                     </Button>
                   </>
                 ) : (
