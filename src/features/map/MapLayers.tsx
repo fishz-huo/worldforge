@@ -20,6 +20,10 @@ interface Props {
   pins: MapPin[];
   regions: MapRegion[];
   viewMode: MapViewMode;
+  /** 平移态：图钉与区域都要让路（不选中、不拖动） */
+  panMode: boolean;
+  /** 编辑模式且工具允许：按住区域内部整体移动 */
+  regionMovable: boolean;
   showLabels: boolean;
   regionMode: 'fill' | 'outline' | 'resource';
   resourceKey: keyof NonNullable<MapRegion['resources']>;
@@ -33,12 +37,13 @@ interface Props {
   onPinSelect: (pinId: string | null) => void;
   onPinDragStart: (pinId: string) => void;
   onRegionSelect: (regionId: string | null) => void;
+  onRegionDragStart: (region: MapRegion) => (e: React.PointerEvent) => void;
 }
 
 export function MapLayers({
-  map, world, pins, regions, viewMode, showLabels, regionMode, resourceKey, maxResource,
-  selectedPinId, selectedRegionId, hoveredPinId, hoveredRegionId, spots, onNaturalSize,
-  onPinSelect, onPinDragStart, onRegionSelect,
+  map, world, pins, regions, viewMode, panMode, regionMovable, showLabels, regionMode,
+  resourceKey, maxResource, selectedPinId, selectedRegionId, hoveredPinId, hoveredRegionId,
+  spots, onNaturalSize, onPinSelect, onPinDragStart, onRegionSelect, onRegionDragStart,
 }: Props) {
   return (
     <>
@@ -52,10 +57,13 @@ export function MapLayers({
         selectedRegionId={selectedRegionId}
         hoveredRegionId={hoveredRegionId}
         viewMode={viewMode}
+        panMode={panMode}
+        regionMovable={regionMovable}
         mode={regionMode}
         metric={String(resourceKey)}
         maxValue={maxResource}
         onSelect={onRegionSelect}
+        onDragStart={onRegionDragStart}
         onSpotHover={spots.onSpotHover}
         onSpotLeave={spots.onSpotLeave}
         onSpotTap={spots.onSpotTap}
@@ -66,6 +74,7 @@ export function MapLayers({
         selectedPinId={selectedPinId}
         hoveredPinId={hoveredPinId}
         viewMode={viewMode}
+        panMode={panMode}
         showLabels={showLabels}
         onSelect={onPinSelect}
         onDragStart={onPinDragStart}

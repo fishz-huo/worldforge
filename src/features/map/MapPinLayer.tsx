@@ -15,6 +15,7 @@
 import type { MapPin } from '@/types';
 import { cn } from '@/lib/utils';
 import type { SpotTarget } from './mapOverlay';
+import { isPanPress } from './mapPan';
 import { PinGlyph } from './PinGlyph';
 import type { MapViewMode } from './mapRender';
 
@@ -25,6 +26,8 @@ interface Props {
   hoveredPinId: string | null;
   /** 编辑 / 预览：预览下点击只选中，不启动拖拽；也只有预览弹浮窗 */
   viewMode: MapViewMode;
+  /** 平移态（平移工具 / 空格按住）：这一下让给画布，不选中也不拖动 */
+  panMode: boolean;
   showLabels: boolean;
   onSelect: (pinId: string) => void;
   onDragStart: (pinId: string) => void;
@@ -36,7 +39,7 @@ interface Props {
 }
 
 export function MapPinLayer({
-  pins, selectedPinId, hoveredPinId, viewMode, showLabels, onSelect, onDragStart,
+  pins, selectedPinId, hoveredPinId, viewMode, panMode, showLabels, onSelect, onDragStart,
   onSpotHover, onSpotLeave, onSpotTap,
 }: Props) {
   const interactive = viewMode === 'preview';
@@ -64,6 +67,10 @@ export function MapPinLayer({
             }}
             title={`${pin.label}${pin.note ? `\n${pin.note}` : ''}`}
             onPointerDown={(e) => {
+              // 平移优先（中键任何模式、左键在平移态）：不阻止冒泡、不选中、不拖动，
+              // 让画布根节点收到这一下 —— 否则拖到图钉上就变成拖图钉（第三轮问题一）
+              if (isPanPress(e.button, panMode)) return;
+              if (e.button !== 0) return;
               // 阻止冒泡：否则会被画布当成「空白点击」而新建标记
               e.stopPropagation();
               onSelect(pin.id);
@@ -73,7 +80,11 @@ export function MapPinLayer({
               // 预览模式只选中：不进入拖拽（拖拽的每次 pointermove 都会写坐标）
               if (viewMode === 'edit') onDragStart(pin.id);
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              // 平移态下单击不改选中（与「拖动只平移画布」同一套口径）
+              if (panMode) return;
+              e.stopPropagation();
+            }}
             onPointerEnter={
               interactive
                 ? (e) => onSpotHover?.({ kind: 'pin', id: pin.id, anchor: e.currentTarget.getBoundingClientRect() })

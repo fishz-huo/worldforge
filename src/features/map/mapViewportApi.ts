@@ -26,7 +26,15 @@ export interface MapViewportApi {
     onPointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
     onPointerUp: (e: ReactPointerEvent<HTMLElement>) => void;
     onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void;
+    /**
+     * 只干一件事：中键按下时 preventDefault。
+     * 中键在 Chrome 上是「自动滚动」圆盘，pointerdown 上拦它不一定拦得住
+     * （兼容的 mousedown 才是真正触发点），所以两层都拦一遍。
+     */
+    onMouseDown: (e: ReactPointerEvent<HTMLElement>) => void;
   };
+  /** 正在拖拽平移：光标用 grab / grabbing 区分（第三轮加入） */
+  panning: boolean;
   /** 刚才这一下是拖拽还是点击（平移结束后要吃掉那次 click） */
   didDrag: () => boolean;
   /**

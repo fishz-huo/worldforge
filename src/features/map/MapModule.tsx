@@ -1,15 +1,10 @@
 /**
  * 地图模块
  * ------------------------------------------------------------------
- * 需求 2：可视化地图编辑器。
- * 工具条（见 MapToolbar）+ 画布 + 侧栏 + 检查器；支持多地图（不同时期 /
- * 分支）、标记点绑定卡片、区域资源（人口/农业/矿产…）与资源热度着色。
- *
- * 第二批把两件事接在这里：
- *   - 视口（缩放/平移/适应屏幕）见 useMapViewport；
- *   - 悬浮浮窗与移动端底部抽屉见 useMapSpots。
- * 两者都是**组件内状态**：不进 store、不落盘，换模块或刷新回到「适应屏幕」，
- * 与「编辑/预览不进 store」的既有约定一致（约束不允许动 store 与偏好）。
+ * 需求 2：可视化地图编辑器。工具条（见 MapToolbar）+ 画布 + 侧栏 + 检查器；
+ * 支持多地图（不同时期/分支）、标记点绑定卡片、区域资源与资源热度着色。
+ * 视口（缩放/平移/适应屏幕）见 useMapViewport，浮窗见 useMapSpots：两者都是
+ * **组件内状态**，不进 store、不落盘，换模块或刷新回到「适应屏幕」。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Map as MapIcon } from 'lucide-react';
@@ -24,6 +19,7 @@ import { useMapSpots } from './MapSpotLayer';
 import { MapToolbar } from './MapToolbar';
 import { resolveWorldSize } from './mapViewport';
 import type { Size } from './mapViewport';
+import { useMapKeys } from './useMapKeys';
 import { useMapViewport } from './useMapViewport';
 import type { MapViewMode } from './mapRender';
 
@@ -38,13 +34,12 @@ export function MapModule() {
   const addRegion = useStore((s) => s.addRegion);
   const updatePin = useStore((s) => s.updatePin);
   const moveRegionPoint = useStore((s) => s.moveRegionPoint);
+  const updateRegion = useStore((s) => s.updateRegion);
+  const removeRegionPoint = useStore((s) => s.removeRegionPoint);
   const setInspectorOpen = useStore((s) => s.setInspectorOpen);
 
   const [tool, setTool] = useState<MapTool>('select');
-  /**
-   * 视图模式（编辑 / 预览）。只活在组件里：约束不允许动 store 与偏好文件，
-   * 所以换模块或刷新都会回到「编辑」，不会留下"上次是预览"的隐状态。
-   */
+  /** 视图模式：只活在组件里（不动 store 与偏好），所以刷新后回到「编辑」 */
   const [mode, setMode] = useState<MapViewMode>('edit');
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
@@ -59,11 +54,7 @@ export function MapModule() {
     if (!selectedMapId && maps.length > 0) selectMap(maps[0].id);
   }, [selectedMapId, maps, selectMap]);
 
-  /**
-   * 切模式时把工具复位成「选择」。
-   * 否则从「打点」切到预览、再切回编辑时，tool 还停在打点状态，
-   * 随手点一下画布就多出一个标记 —— 用户看不出因果，只会觉得"它自己乱加东西"。
-   */
+  /** 切模式时把工具复位成「选择」：否则从打点切预览再切回来，随手一点就多一个标记 */
   const changeMode = (next: MapViewMode) => {
     setMode(next);
     if (next === 'preview') setTool('select');
@@ -72,8 +63,7 @@ export function MapModule() {
   const map = maps.find((m) => m.id === selectedMapId) ?? null;
   /**
    * 底图仍然只有一张，就存在 maps.asset_id 上 —— 与 v0.1 完全一致。
-   * v0.2 一度把它改成「多层底图」，但图层既不能分层管理标记、也不参与
-   * 坐标变换，实际只是个更麻烦的贴图入口，已整体撤掉（见 migrate-columns.ts）。
+   * v0.2 的「多层底图」既不参与坐标变换也不能分层管标记，已整体撤掉。
    */
   const mapPins = pins.filter((p) => p.map_id === map?.id);
   const mapRegions = regions.filter((r) => r.map_id === map?.id);
@@ -83,18 +73,22 @@ export function MapModule() {
   const world = useMemo(() => resolveWorldSize(asset, measured), [asset, measured]);
 
   const spots = useMapSpots();
-  // 平移：预览模式拖空白即平移；编辑模式用「平移」工具（其余工具不误触）
-  const viewport = useMapViewport(world, map?.id ?? '', mode === 'preview' || tool === 'pan', spots.hide);
+  /**
+   * 平移的两个量（第三轮）：panLive = 左键能不能平移（预览/平移工具/空格）；
+   * panMode = 元素要不要让路（平移工具/空格）。分开是因为「打点」工具下按
+   * 空格也要能平移画布，而工具本身还是打点；中键不受它们影响（见 useMapViewport）。
+   */
+  const keys = useMapKeys();
+  const panMode = tool === 'pan' || keys.space;
+  const panLive = mode === 'preview' || panMode;
+  const viewport = useMapViewport(world, map?.id ?? '', panLive, spots.hide);
 
   const hoveredPinId = spots.target?.kind === 'pin' ? spots.target.id : null;
   const hoveredRegionId = spots.target?.kind === 'region' ? spots.target.id : null;
 
   /**
-   * 点选标记/区域时的「看得到详情」策略：
-   *   - 桌面预览模式：主动展开右侧检查器（需求：点击打点/区域跳转检查器）；
-   *   - 触屏/窄屏：**不**展开 —— 那里点一下弹的是底部抽屉，同一份只读信息
-   *     没必要在背后再叠一个检查器浮层（两个面板摞在一起很乱）；
-   *   - 编辑模式的桌面端保持原样（检查器本来就在旁边）。
+   * 点选标记/区域时的「看得到详情」策略：桌面预览模式主动展开检查器；
+   * 触屏/窄屏**不**展开（那里弹的是底部抽屉，两个面板摞一起很乱）。
    */
   const revealInspector = (id: string | null) => {
     if (!id || spots.coarse) return;
@@ -153,6 +147,8 @@ export function MapModule() {
               <MapCanvas
                 map={map}
                 viewMode={mode}
+                panMode={panMode}
+                altHeld={keys.alt}
                 pins={mapPins}
                 regions={mapRegions}
                 tool={tool}
@@ -180,6 +176,9 @@ export function MapModule() {
                 onPinSelect={selectPin}
                 onRegionSelect={selectRegion}
                 onRegionPointMove={(regionId, index, x, y) => moveRegionPoint(regionId, index, [x, y])}
+                // 整体移动 / 加顶点：一次写回一串顶点（store 既有 action，不动 store）
+                onRegionPoints={(regionId, points) => updateRegion(regionId, { points })}
+                onRegionRemovePoint={(regionId, index) => removeRegionPoint(regionId, index)}
               />
             </div>
           </div>

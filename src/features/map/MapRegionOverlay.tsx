@@ -10,9 +10,16 @@
  * 换算成屏幕像素 —— 天然是正圆，而且不随缩放变大变小（像 Google 地图：
  * 底图放大，标记与手柄的大小不变）。
  * 整个覆盖层 pointer-events-none，只有手柄自己开事件，免得挡住画布的落点。
+ *
+ * 第三轮的两件事：
+ *   - 平移态下手柄让路（pointer-events: none）：否则按在顶点上就没法平移画布；
+ *   - 按住 Alt 时光标换「−」，点一下删掉这个顶点（只剩 3 个时给禁止光标）。
+ * 拖顶点与删顶点的实现都在 useRegionGestures，这里只管摆放与光标。
  */
 import type { MapRegion } from '@/types';
 import { centroid } from '@/types';
+import { cn } from '@/lib/utils';
+import { CURSOR_REMOVE_BLOCKED, CURSOR_REMOVE_VERTEX } from './mapCursors';
 import type { MapViewMode } from './mapRender';
 
 interface Props {
@@ -21,33 +28,20 @@ interface Props {
   hoveredRegionId: string | null;
   viewMode: MapViewMode;
   showLabels: boolean;
+  /** 平移态：手柄让路给画布 */
+  panMode: boolean;
+  /** 按住 Alt：光标换「−」，点击即删 */
+  altHeld: boolean;
   /** 归一化坐标 → 视口窗口内的像素 */
   toScreen: (nx: number, ny: number) => [number, number];
-  /** 客户端坐标 → 归一化坐标（拖顶点用） */
-  toNorm: (clientX: number, clientY: number) => [number, number];
-  onPointMove: (regionId: string, index: number, x: number, y: number) => void;
+  /** 顶点的指针处理器（拖动改形状 / Alt 删顶点，由画布决定） */
+  onVertexDown: (regionId: string, index: number) => (e: React.PointerEvent) => void;
 }
 
 export function MapRegionOverlay({
-  regions, selectedRegionId, hoveredRegionId, viewMode, showLabels, toScreen, toNorm, onPointMove,
+  regions, selectedRegionId, hoveredRegionId, viewMode, showLabels, panMode, altHeld, toScreen,
+  onVertexDown,
 }: Props) {
-  /** 拖顶点：用 window 级监听，鼠标移出小圆点也不会中断 */
-  const startDrag = (regionId: string, index: number) => (e: React.PointerEvent) => {
-    e.stopPropagation();
-    const move = (ev: PointerEvent) => {
-      // 预览模式不写坐标（手柄本来就不渲染，这里再兜一层）
-      if (viewMode !== 'edit') return;
-      const [x, y] = toNorm(ev.clientX, ev.clientY);
-      onPointMove(regionId, index, x, y);
-    };
-    const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  };
-
   return (
     // overflow-hidden：手柄/名称不跑到底图外面的留白区去
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -56,6 +50,8 @@ export function MapRegionOverlay({
         const hovered = region.id === hoveredRegionId;
         const [cx, cy] = centroid(region.points);
         const [labelX, labelY] = toScreen(cx, cy);
+        /** 至少保留 3 个顶点：到 3 个时 Alt 点不动，光标也换成禁止 */
+        const canDelete = region.points.length > 3;
         return (
           <div key={region.id}>
             {showLabels && (
@@ -81,13 +77,27 @@ export function MapRegionOverlay({
                   <button
                     key={i}
                     type="button"
-                    title="拖动调整区域顶点"
+                    title={
+                      altHeld
+                        ? canDelete
+                          ? '点击删除这个顶点（至少保留 3 个）'
+                          : '至少保留 3 个顶点，不能再删'
+                        : '拖动调整区域顶点 · 按住 Alt 可删除'
+                    }
                     data-wf-map-vertex={`${region.id}:${i}`}
-                    onPointerDown={startDrag(region.id, i)}
+                    onPointerDown={onVertexDown(region.id, i)}
                     // 点手柄不能当成「点空白」把选中取消掉
                     onClick={(e) => e.stopPropagation()}
-                    style={{ left: px, top: py }}
-                    className="pointer-events-auto absolute size-6 -translate-x-1/2 -translate-y-1/2 cursor-move bg-transparent p-0"
+                    style={{
+                      left: px,
+                      top: py,
+                      cursor: altHeld ? (canDelete ? CURSOR_REMOVE_VERTEX : CURSOR_REMOVE_BLOCKED) : undefined,
+                    }}
+                    className={cn(
+                      'pointer-events-auto absolute size-6 -translate-x-1/2 -translate-y-1/2 bg-transparent p-0',
+                      altHeld && !canDelete ? 'cursor-not-allowed' : 'cursor-move',
+                      panMode && 'pointer-events-none',
+                    )}
                   >
                     <span
                       className="pointer-events-none absolute left-1/2 top-1/2 block size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] bg-white"

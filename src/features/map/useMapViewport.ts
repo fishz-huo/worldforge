@@ -25,7 +25,8 @@ const DRAG_THRESHOLD = 4;
 /**
  * @param world 底图的世界尺寸（原始像素）
  * @param resetKey 换地图时归零（一般是 map.id）：换了图就重新「适应屏幕」
- * @param panEnabled 当前是否允许拖拽平移（预览模式 / 编辑模式的平移工具）
+ * @param panEnabled 当前是否允许**左键**拖拽平移（预览模式 / 平移工具 / 按住空格）。
+ *   中键不受它管：任何模式下中键拖动都能平移（第三轮问题一）。
  * @param onInteract 用户开始缩放或平移时通知外部（用来收起悬浮浮窗）
  */
 export function useMapViewport(
@@ -46,6 +47,8 @@ export function useMapViewport(
   const vpRef = useRef(vp);
   const dragRef = useRef<{ x: number; y: number; vp: MapViewport } | null>(null);
   const draggedRef = useRef(false);
+  /** 真的在拖：光标 grab → grabbing（阈值没过不算） */
+  const [panning, setPanning] = useState(false);
   const interactRef = useRef(onInteract);
 
   /** 让事件回调拿到最新视口（只在提交后赋值，不在渲染期写 ref） */
@@ -113,7 +116,11 @@ export function useMapViewport(
   const bind = useMemo(
     () => ({
       onPointerDown: (e: ReactPointerEvent<HTMLElement>) => {
-        if (!panEnabled || e.button !== 0) return;
+        // 中键任何模式都能平移；左键只在「平移态」下平移
+        if (e.button !== 0 && e.button !== 1) return;
+        if (e.button === 0 && !panEnabled) return;
+        // 中键：先把 Chrome 的自动滚动压掉（pointerdown 不一定拦得住，onMouseDown 再兜一层）
+        if (e.button === 1) e.preventDefault();
         draggedRef.current = false;
         dragRef.current = { x: e.clientX, y: e.clientY, vp: vpRef.current };
         // 捕获指针：拖到画布外面（甚至窗口边缘）也能继续收到移动
@@ -128,6 +135,7 @@ export function useMapViewport(
           if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
           draggedRef.current = true;
           touchedRef.current = true;
+          setPanning(true);
           interactRef.current?.();
         }
         // 从「按下时那一帧的视口」算总位移：夹取不会被中途的边界修正吃掉
@@ -135,10 +143,16 @@ export function useMapViewport(
       },
       onPointerUp: (e: ReactPointerEvent<HTMLElement>) => {
         dragRef.current = null;
+        setPanning(false);
         if (e.currentTarget.hasPointerCapture?.(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
       },
       onPointerCancel: () => {
         dragRef.current = null;
+        setPanning(false);
+      },
+      /** 中键的兼容 mousedown：真正触发自动滚动的是它 */
+      onMouseDown: (e: ReactPointerEvent<HTMLElement>) => {
+        if (e.button === 1) e.preventDefault();
       },
     }),
     [panEnabled, box, world],
@@ -172,6 +186,7 @@ export function useMapViewport(
     boxRef,
     worldStyle,
     percent,
+    panning,
     bind,
     didDrag: () => draggedRef.current,
     notePress: () => {

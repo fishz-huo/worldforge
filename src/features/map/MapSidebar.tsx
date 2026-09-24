@@ -4,7 +4,7 @@
  * 管理「多张地图」（见 MapListPanel）、当前地图属性（见 MapSettingsForm）、
  * 绘制工具与图层显示选项。
  */
-import { Crosshair, Layers, MousePointer2, Move, Pentagon } from 'lucide-react';
+import { Crosshair, Layers, MousePointer2, Move, Pentagon, Plus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -25,10 +25,10 @@ import type { MapViewMode } from './mapRender';
  * 已经改成线性图标，侧栏再用 emoji 会明显不是一套。
  */
 const TOOLS: { tool: MapTool; label: string; Icon: LucideIcon; hint: string }[] = [
-  { tool: 'select', label: '选择', Icon: MousePointer2, hint: '点选地图上的标记或区域进行编辑' },
+  { tool: 'select', label: '选择', Icon: MousePointer2, hint: '点选地图上的标记或区域；按住区域内部可整体拖动它' },
   { tool: 'pin', label: '打点', Icon: Crosshair, hint: '在空白处点击即落一个标记点' },
-  { tool: 'region', label: '区域', Icon: Pentagon, hint: '新建区域后拖动白色顶点调整轮廓' },
-  { tool: 'pan', label: '平移', Icon: Move, hint: '拖动整张画布；滚轮随时缩放，预览模式下拖空白也能平移' },
+  { tool: 'region', label: '区域', Icon: Pentagon, hint: '拖动白色顶点改轮廓；Ctrl/⌘ 点边缘加顶点、Alt 点顶点删顶点' },
+  { tool: 'pan', label: '平移', Icon: Move, hint: '拖动整张画布；任何模式下按住空格拖动、或按住鼠标中键拖动，都能平移' },
 ];
 
 interface Props {
@@ -102,13 +102,19 @@ export function MapSidebar({
 
             <SectionTitle
               right={
+                /*
+                  第三轮问题四：原来是一个纯文字 ghost 按钮（h-6、无图标），
+                  看着不像能点。改成「描边 + 加号 + 主色」——左栏的「区域着色」
+                  「热度指标」本来就是这套描边 + 主色的语言；不做主色实心，
+                  是因为左栏已经有一个实心的「新建地图」，两个实心会互相抢。
+                */
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="h-6 gap-1 text-[10px]"
+                  className="h-6 gap-1 border-primary/50 px-2 text-[10px] text-primary hover:bg-primary/10 hover:text-primary"
                   onClick={() => addRegion(map.id)}
                 >
-                  新建区域
+                  <Plus className="size-3" /> 新建区域
                 </Button>
               }
             >
