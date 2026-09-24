@@ -68,7 +68,14 @@ export function MapSidebar({
 
         {map && viewMode === 'edit' && (
           <>
-            <MapSettingsForm map={map} />
+            {/*
+              key={map.id} 是必须的：表单里的名称 / 时期标签 / 对应刻度是**非受控**
+              输入框（defaultValue + onBlur），而换地图时 React 会复用同一个组件实例、
+              忽略新的 defaultValue —— 结果是新建或切换地图后，框里仍显示上一张图的
+              值；此时只要点一下输入框再离开，onBlur 就会把残留值写进**新地图**
+              （静默改名）。换 key 让整块表单随地图重建，显示与落库都跟着当前地图走。
+            */}
+            <MapSettingsForm key={map.id} map={map} />
 
             <SectionTitle>绘制工具</SectionTitle>
             <div className="grid grid-cols-4 gap-1">
