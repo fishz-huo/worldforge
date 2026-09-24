@@ -8,6 +8,8 @@
  *
  * 内容对齐设计稿：区域 = 名称 / 所属时期 / 资源；标记 = 名称。
  * 备注与绑定卡片是用户额外要求保留的，仍然只读。
+ * Field 与 ColorChip 对外导出：第三批的地形只读卡（TerrainReadonly）要复用
+ * 这两个小组件，与其复制一份样式，不如让它们成为地图只读信息层的公共件。
  */
 import { Badge } from '@/components/ui/badge';
 import { SectionTitle } from '@/components/ui/primitives';
@@ -16,7 +18,7 @@ import { useStore } from '@/store';
 import { RegionResourceBars } from './ResourceChart';
 
 /** 「标签 + 值」一行；空值统一显示破折号，免得看起来像漏了数据 */
-function Field({ label, value }: { label: string; value?: string }) {
+export function Field({ label, value }: { label: string; value?: string }) {
   const text = value?.trim();
   return (
     <div className="space-y-0.5">
@@ -27,7 +29,7 @@ function Field({ label, value }: { label: string; value?: string }) {
 }
 
 /** 颜色小方块（区域与标记共用） */
-function ColorChip({ color }: { color: string }) {
+export function ColorChip({ color }: { color: string }) {
   return (
     <span className="inline-block size-3 shrink-0 rounded-sm border border-border" style={{ background: color }} />
   );

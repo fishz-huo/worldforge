@@ -20,8 +20,8 @@ import type { Point } from './mapRegionEdit';
 /** 位移小于它算「点」：免得单击时手抖 1px 就把区域挪走并写一次库 */
 export const DRAG_MIN = 4;
 
-/** 一次拖拽：全局监听指针，松手 / 取消都要摘干净 */
-function trackPointer(onMove: (e: PointerEvent) => void): void {
+/** 一次拖拽：全局监听指针，松手 / 取消都要摘干净（地形手势也用同一份） */
+export function trackPointer(onMove: (e: PointerEvent) => void): void {
   const up = () => {
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', up);
