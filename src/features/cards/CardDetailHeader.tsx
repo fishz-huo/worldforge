@@ -58,7 +58,12 @@ export function CardDetailHeader({
           {branch.name}
         </Badge>
       )}
-      <CardCodeBadge cardId={card.id} />
+      {/*
+        key={card.id}：编号可以就地编辑（点一下变输入框、带红字校验）。换卡片时
+        组件会被复用，编辑态与草稿就留在了新卡片上 —— 新卡片头上顶着一张卡片的编号
+        和错误提示。换 key 让编辑态随卡片重置。
+      */}
+      <CardCodeBadge key={card.id} cardId={card.id} />
 
       {/* 右侧操作：置顶 / 结构面板 / 副本 / 删除 */}
       <span className="ml-auto flex items-center gap-0.5">

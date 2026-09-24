@@ -29,6 +29,7 @@ const HOTKEYS: [string, string][] = [
 
 export function SettingsModule() {
   const worlds = useStore((s) => s.worlds);
+  const currentWorldId = useStore((s) => s.currentWorldId);
   const cards = useStore((s) => s.cards);
   const maps = useStore((s) => s.maps);
   const entries = useStore((s) => s.entries);
@@ -62,7 +63,14 @@ export function SettingsModule() {
             </TabsContent>
 
             <TabsContent value="world" className="mt-3">
-              <WorldSettings />
+              {/*
+                key 必须跟着世界观走：世界观信息与时间轴口径那几栏用的是非受控
+                输入框（defaultValue + onBlur），切世界观时 React 会复用同一个组件
+                实例、忽略新的 defaultValue —— 于是表单还显示上一个世界观的名称 /
+                简介 / 单位 / 零点，此时点一下输入框再离开，就会把残留值写进**新世界观**。
+                换 key 让整块表单随世界观重建（顶栏或左侧栏切换世界观都能立刻刷新）。
+              */}
+              <WorldSettings key={currentWorldId ?? 'none'} />
             </TabsContent>
 
             <TabsContent value="data" className="mt-3">

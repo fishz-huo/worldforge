@@ -49,7 +49,8 @@ export function CardPropsPanel({ cardId }: { cardId: string }) {
     return renderPropsBlock({ card, tags: tagNames, relations: joinRelations(mine, card.id, titleOf) });
   }, [card, cards, tags, cardTags, relations]);
 
-  // 换卡片时无条件重来；同一张卡片在别处被改过、且本地没有未保存草稿时才刷新
+  // 换卡片时无条件重来（调用处挂了 key={card.id}，换卡一定是新实例）；
+  // 同一张卡片在别处被改过、且本地没有未保存草稿时才刷新
   useEffect(() => {
     if (!seeded.current || !dirty) setText(generated);
     if (!seeded.current) seeded.current = true;

@@ -169,7 +169,10 @@ export function CardDetailView({ cardId }: { cardId: string }) {
 
             <TabsContent value="props" className="mt-1 min-h-0 flex-1">
               <div className="flex h-full min-h-0 flex-col">
-                <CardPropsPanel cardId={card.id} />
+                {/* key={card.id}：属性区是本地草稿（text + dirty），换卡片必须重来。
+                    详情页里换卡片不一定重挂本组件（头部「创建副本」、命令面板跳卡片都会
+                    换掉 selectedCardId），没有 key 时草稿留在新卡上、「应用到卡片」仍亮着。 */}
+                <CardPropsPanel key={card.id} cardId={card.id} />
               </div>
             </TabsContent>
           </Tabs>
