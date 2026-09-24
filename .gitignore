@@ -41,3 +41,10 @@ src-tauri/gen/
 samples/*.full.json
 samples/*.settings.json
 samples/*.sqlite
+
+# DSH 工具的本地文件（记忆库 + 会话日志）
+.dsh-meow/
+.dsh-vision-router/
+
+# 临时探测脚本
+scripts/_tmp-*.mjs
