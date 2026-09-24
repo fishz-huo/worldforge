@@ -68,14 +68,19 @@ export const TERRAIN_SIZE_MAX = 3;
 /** 大小粒度：0.05 够用，又不至于拖一下写库几十次 */
 export const TERRAIN_SIZE_STEP = 0.05;
 
-export interface TerrainMeta {
+/**
+ * 地形的 meta 结构。
+ * 写成 type 而不是 interface 是有意的：interface 没有隐式索引签名，
+ * 赋给 `Record<string, unknown>`（MapPin.meta 的类型）会编译不过。
+ */
+export type TerrainMeta = {
   kind: typeof TERRAIN_KIND;
   symbol: TerrainSymbol;
   /** 底图宽的倍数，0.5~3 */
   size: number;
   /** 顺时针角度 0~359（0 = 正上方，与 CSS rotate 同向） */
   rotation: number;
-}
+};
 
 /** 夹到 0.5~3 并对齐到 0.05（顺手抹掉浮点尾数，免得存出 1.1500000000000001） */
 export function clampSize(v: number): number {

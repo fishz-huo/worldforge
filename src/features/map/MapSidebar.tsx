@@ -2,22 +2,23 @@
  * 地图侧栏
  * ------------------------------------------------------------------
  * 管理「多张地图」（见 MapListPanel）、当前地图属性（见 MapSettingsForm）、
- * 绘制工具与图层显示选项。
+ * 绘制工具、地形笔刷（见 TerrainPalette）与显示选项（见 MapDisplayOptions）。
  */
 import { Crosshair, Layers, MousePointer2, Move, Pentagon, Plus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { SectionTitle } from '@/components/ui/primitives';
 import { SidePanel } from '@/components/layout/Panel';
 import type { MapTool, RegionResources } from '@/types';
-import { RESOURCE_METRICS } from '@/types';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
+import { MapDisplayOptions } from './MapDisplayOptions';
 import { MapListPanel } from './MapListPanel';
 import { MapSettingsForm } from './MapSettingsForm';
+import { isTerrainPin } from './mapTerrain';
+import type { TerrainSymbol } from './mapTerrain';
 import type { MapViewMode } from './mapRender';
+import { TerrainPalette } from './TerrainPalette';
 
 /**
  * 绘制工具
@@ -32,7 +33,7 @@ const TOOLS: { tool: MapTool; label: string; Icon: LucideIcon; hint: string }[] 
 ];
 
 interface Props {
-  /** 编辑 / 预览：预览下收起「绘制工具」（画布上的编辑入口） */
+  /** 编辑 / 预览：预览下收起「绘制工具」与「地形」（画布上的编辑入口） */
   viewMode: MapViewMode;
   tool: MapTool;
   setTool: (t: MapTool) => void;
@@ -42,10 +43,14 @@ interface Props {
   setRegionMode: (v: 'fill' | 'outline' | 'resource') => void;
   resourceKey: keyof RegionResources;
   setResourceKey: (k: keyof RegionResources) => void;
+  /** 地形笔刷（null = 没在画地形） */
+  brush: TerrainSymbol | null;
+  setBrush: (s: TerrainSymbol | null) => void;
 }
 
 export function MapSidebar({
-  viewMode, tool, setTool, showLabels, setShowLabels, regionMode, setRegionMode, resourceKey, setResourceKey,
+  viewMode, tool, setTool, showLabels, setShowLabels, regionMode, setRegionMode, resourceKey,
+  setResourceKey, brush, setBrush,
 }: Props) {
   const maps = useStore((s) => s.maps);
   const selectedMapId = useStore((s) => s.selectedMapId);
@@ -55,14 +60,18 @@ export function MapSidebar({
 
   const map = maps.find((m) => m.id === selectedMapId) ?? null;
   const mapRegions = regions.filter((r) => r.map_id === map?.id);
+  /** 地形也是 map_pins 的行，统计时要按 meta.kind 分开数 */
+  const mapPins = pins.filter((p) => p.map_id === map?.id);
+  const terrainCount = mapPins.filter(isTerrainPin).length;
+  const pinCount = mapPins.length - terrainCount;
 
   return (
     <SidePanel title="地图">
       <div className="space-y-3 p-2">
         {/*
           预览模式只留「看地图」要用的两样东西：地图列表（可切换）+ 新建地图输入框。
-          名称 / 时期标签 / 对应刻度 / 底图 / 不透明度 / 绘制工具 / 显示选项 / 区域统计
-          都是编辑用的，留在预览里只会干扰视线；切回编辑模式它们会原样回来。
+          名称 / 时期标签 / 对应刻度 / 底图 / 不透明度 / 绘制工具 / 地形 / 显示选项 /
+          统计行都是编辑用的，留在预览里只会干扰视线；切回编辑模式它们会原样回来。
         */}
         <MapListPanel />
 
@@ -100,6 +109,10 @@ export function MapSidebar({
               {TOOLS.find((t) => t.tool === tool)?.hint}
             </p>
 
+            {/* 地形笔刷紧跟绘制工具之后（用户指定位置） */}
+            <SectionTitle>地形</SectionTitle>
+            <TerrainPalette brush={brush} onPick={setBrush} />
+
             <SectionTitle
               right={
                 /*
@@ -122,56 +135,18 @@ export function MapSidebar({
             </SectionTitle>
 
             <SectionTitle>显示选项</SectionTitle>
-            <div className="space-y-1.5 px-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]">显示名称标签</span>
-                <Switch checked={showLabels} onCheckedChange={setShowLabels} />
-              </div>
-              <div className="space-y-1">
-                <Label>区域着色</Label>
-                <div className="flex gap-1">
-                  {(['fill', 'outline', 'resource'] as const).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setRegionMode(m)}
-                      className={cn(
-                        'flex-1 rounded border px-1 py-1 text-[10px]',
-                        regionMode === m
-                          ? 'border-primary bg-primary/15 text-primary'
-                          : 'border-border bg-card hover:bg-accent',
-                      )}
-                    >
-                      {m === 'fill' ? '填充' : m === 'outline' ? '轮廓' : '资源热度'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {regionMode === 'resource' && (
-                <div className="space-y-1">
-                  <Label>热度指标</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {RESOURCE_METRICS.map((m) => (
-                      <button
-                        key={m.key}
-                        onClick={() => setResourceKey(m.key)}
-                        className={cn(
-                          'rounded border px-1.5 py-0.5 text-[10px]',
-                          resourceKey === m.key
-                            ? 'border-primary bg-primary/15 text-primary'
-                            : 'border-border bg-card hover:bg-accent',
-                        )}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <MapDisplayOptions
+              showLabels={showLabels}
+              setShowLabels={setShowLabels}
+              regionMode={regionMode}
+              setRegionMode={setRegionMode}
+              resourceKey={resourceKey}
+              setResourceKey={setResourceKey}
+            />
 
             <div className="flex items-center gap-2 px-1 text-[10px] text-muted-foreground">
               <Layers className="size-3" />
-              标记 {pins.filter((p) => p.map_id === map.id).length} · 区域 {mapRegions.length}
+              标记 {pinCount} · 区域 {mapRegions.length} · 地形 {terrainCount}
             </div>
           </>
         )}

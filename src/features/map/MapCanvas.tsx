@@ -1,80 +1,46 @@
 /**
- * 地图画布（视口 + 图层）
+ * 地图画布（视口 + 图层 + 浮层）
  * ------------------------------------------------------------------
- * 视口窗口 → 世界层（底图原始像素 + transform）→ 网格/底图/区域/标记；
- * 区域名称与顶点手柄另画在屏幕空间的覆盖层（不随缩放变形）。
- * 指针语义在 useCanvasGestures（含边缘热区）、归一化换算在 useWorldNorm、
- * 区域手势在 useRegionGestures；这个文件只负责结构与摆放。
+ * 视口窗口 → 世界层（底图原始像素 + transform）→ 网格 / 底图 / 区域 / 地形 / 标记；
+ * 区域名称、顶点手柄与地形控制点另画在屏幕空间的覆盖层里（见 MapOverlays）。
+ * 指针语义在 useCanvasGestures（含边缘热区与地形笔刷）、归一化换算在 useWorldNorm、
+ * 区域手势在 useRegionGestures、地形手势在 useTerrainGestures；
+ * 这个文件只负责结构与摆放。
  */
 import { useCallback, useMemo } from 'react';
-import type { MapDef, MapPin, MapRegion, MapTool } from '@/types';
+import type { MapRegion } from '@/types';
 import { cn } from '@/lib/utils';
-import { MapFloat } from './MapFloat';
 import { MapLayers } from './MapLayers';
-import { MapRegionOverlay } from './MapRegionOverlay';
+import { MapOverlays } from './MapOverlays';
 import { CURSOR_ADD_VERTEX, mapCursorClass } from './mapCursors';
+import { TERRAIN_BASE_RATIO } from './mapTerrain';
 import { insertOnEdge } from './mapRegionEdit';
 import type { EdgeHit } from './mapRegionEdit';
-import type { MapViewMode } from './mapRender';
-import type { MapSpotBind } from './MapSpotLayer';
-import type { Size } from './mapViewport';
-import type { MapViewportApi } from './mapViewportApi';
+import type { MapCanvasProps } from './mapStageApi';
 import { useCanvasGestures } from './useCanvasGestures';
 import { useRegionGestures } from './useRegionGestures';
+import { useTerrainGestures } from './useTerrainGestures';
 import { useWorldNorm } from './useWorldNorm';
 
-interface Props {
-  map: MapDef;
-  pins: MapPin[];
-  regions: MapRegion[];
-  tool: MapTool;
-  /** 平移态（选中「平移」工具，或按住空格）：元素让路、光标变手 */
-  panMode: boolean;
-  /** 是否按住 Alt：顶点光标换「−」，点击即删 */
-  altHeld: boolean;
-  /** 编辑 / 预览：预览下不落点、不写坐标、不显示网格与手柄 */
-  viewMode: MapViewMode;
-  /** 底图的世界尺寸（原始像素），视口按它换算 */
-  world: Size;
-  viewport: MapViewportApi;
-  /** 悬停/点击浮窗的事件（见 MapSpotLayer） */
-  spots: MapSpotBind;
-  /** 把底图实测到的真实像素尺寸回报给模块 */
-  onNaturalSize: (size: Size) => void;
-  selectedPinId: string | null;
-  selectedRegionId: string | null;
-  hoveredPinId: string | null;
-  hoveredRegionId: string | null;
-  /** 区域显示模式：填充 / 仅轮廓 / 资源热度 */
-  regionMode: 'fill' | 'outline' | 'resource';
-  resourceKey: keyof NonNullable<MapRegion['resources']>;
-  showLabels: boolean;  onCanvasClick: (x: number, y: number) => void;
-  onPinMove: (pinId: string, x: number, y: number) => void;
-  onPinSelect: (pinId: string | null) => void;
-  onRegionSelect: (regionId: string | null) => void;
-  onRegionPointMove: (regionId: string, index: number, x: number, y: number) => void;
-  /** 整体移动区域 / 边缘加顶点：一次写回一串归一化顶点（一帧一次，不逐点写） */
-  onRegionPoints: (regionId: string, points: [number, number][]) => void;
-  /** 删一个顶点（store 自带「不足 3 个不删」的保护） */
-  onRegionRemovePoint: (regionId: string, index: number) => void;
-  className?: string;
-}
-
 export function MapCanvas({
-  map, pins, regions, tool, panMode, altHeld, viewMode, world, viewport, spots, onNaturalSize,
-  selectedPinId, selectedRegionId, hoveredPinId, hoveredRegionId, regionMode, resourceKey,
-  showLabels, onCanvasClick, onPinMove, onPinSelect, onRegionSelect, onRegionPointMove,
-  onRegionPoints, onRegionRemovePoint, className,
-}: Props) {
+  map, pins, regions, terrain, tool, panMode, altHeld, viewMode, world, viewport, spots,
+  onNaturalSize, selectedPinId, selectedRegionId, selectedTerrainId, hoveredPinId, hoveredRegionId,
+  regionMode, resourceKey, showLabels, onCanvasClick, onPinMove, onPinSelect, onRegionSelect,
+  onRegionPointMove, onRegionPoints, onRegionRemovePoint, terrainBrush, onTerrainPlace,
+  onTerrainSelect, onTerrainMove, onTerrainResize, onTerrainRotate, className,
+}: MapCanvasProps) {
   const hasBackground = Boolean(map.asset_id);
   const worldNorm = useWorldNorm();
 
   const selectedRegion = regions.find((r) => r.id === selectedRegionId) ?? null;
+  const selectedTerrain = terrain.find((p) => p.id === selectedTerrainId) ?? null;
   /**
-   * 区域整体移动的适用面：编辑模式 + 「选择 / 区域」工具 + 非平移态。
-   * 「打点」工具下不动区域（想落点却把区域挪走最招人烦），平移态下让位给画布。
+   * 区域整体移动的适用面：编辑模式 + 「选择 / 区域」工具 + 非平移态 + **没有笔刷**。
+   * 打点工具下不动区域、平移态让位给画布；画地形时同样让位 —— 区域是"大目标"，
+   * 笔刷激活时按在版图里想落符号却把整块区域拖走，是最难受的一种。
    */
-  const regionMovable = viewMode === 'edit' && !panMode && (tool === 'select' || tool === 'region');
+  const regionMovable = viewMode === 'edit' && !panMode && terrainBrush === null
+    && (tool === 'select' || tool === 'region');
   const edgeEnabled = regionMovable && selectedRegion !== null;
 
   /** 边缘加顶点：纯数学，先建好喂给画布手势（热区判定与插入在同一处） */
@@ -83,7 +49,31 @@ export function MapCanvas({
     [onRegionPoints],
   );
 
-  const { worldRef, toNorm, startPinDrag, edgeHot, bind } = useCanvasGestures({
+  const regionGestures = useRegionGestures({
+    toNorm: worldNorm.toNorm,
+    onPoints: onRegionPoints,
+    onPointMove: onRegionPointMove,
+    onRemovePoint: onRegionRemovePoint,
+  });
+
+  const { follow, startMove, startResize, startRotate } = useTerrainGestures({
+    toNorm: worldNorm.toNorm,
+    worldRect: worldNorm.worldRect,
+    onMove: onTerrainMove,
+    onResize: onTerrainResize,
+    onRotate: onTerrainRotate,
+  });
+
+  /** 笔刷落点：落完立刻让它跟手（按住不放可以继续拖着摆位置） */
+  const placeTerrain = useCallback(
+    (x: number, y: number) => {
+      const id = onTerrainPlace(x, y);
+      if (id) follow(id);
+    },
+    [onTerrainPlace, follow],
+  );
+
+  const { startPinDrag, edgeHot, bind } = useCanvasGestures({
     world: worldNorm,
     viewMode,
     tool,
@@ -92,22 +82,29 @@ export function MapCanvas({
     onPinMove,
     onPinSelect,
     onRegionSelect,
+    onTerrainSelect,
     edgeRegion: edgeEnabled ? selectedRegion : null,
     edgeEnabled,
     onEdgeInsert: insertAtEdge,
-  });
-
-  const regionGestures = useRegionGestures({
-    toNorm,
-    onPoints: onRegionPoints,
-    onPointMove: onRegionPointMove,
-    onRemovePoint: onRegionRemovePoint,
+    terrainBrush,
+    panMode,
+    onTerrainPlace: placeTerrain,
   });
 
   /** 资源热度模式的归一化基准 */
   const maxResource = useMemo(
     () => Math.max(1, ...regions.map((r) => Number(r.resources?.[resourceKey] ?? 0))),
     [regions, resourceKey],
+  );
+
+  /**
+   * size=1 的地形符号在屏幕上的边长 = 底图宽的 6%。
+   * 从视口的 toScreen 现算：两个归一化点的屏幕距离就是「世界宽 × 缩放」，
+   * 因此不必再往外暴露一个 scale。
+   */
+  const terrainUnitPx = useMemo(
+    () => (viewport.toScreenPixel(1, 0)[0] - viewport.toScreenPixel(0, 0)[0]) * TERRAIN_BASE_RATIO,
+    [viewport.toScreenPixel],
   );
 
   /**
@@ -146,21 +143,24 @@ export function MapCanvas({
       )}
     >
       {/* 世界层：宽高 = 底图原始像素，靠 transform 平移缩放 */}
-      <div ref={worldRef} data-wf-map-world style={viewport.worldStyle}>
+      <div ref={worldNorm.worldRef} data-wf-map-world style={viewport.worldStyle}>
         <MapLayers
           map={map}
           world={world}
           pins={pins}
           regions={regions}
+          terrain={terrain}
           viewMode={viewMode}
           panMode={panMode}
           regionMovable={regionMovable}
+          brushActive={terrainBrush !== null}
           showLabels={showLabels}
           regionMode={regionMode}
           resourceKey={resourceKey}
           maxResource={maxResource}
           selectedPinId={selectedPinId}
           selectedRegionId={selectedRegionId}
+          selectedTerrainId={selectedTerrainId}
           hoveredPinId={hoveredPinId}
           hoveredRegionId={hoveredRegionId}
           spots={spots}
@@ -169,11 +169,13 @@ export function MapCanvas({
           onPinDragStart={startPinDrag}
           onRegionSelect={onRegionSelect}
           onRegionDragStart={regionGestures.startMove}
+          onTerrainSelect={onTerrainSelect}
+          onTerrainDragStart={startMove}
         />
       </div>
 
-      {/* 区域名称与顶点手柄画在屏幕空间：正圆、大小不随缩放变 */}
-      <MapRegionOverlay
+      {/* 屏幕空间的浮层：区域名称与顶点手柄、地形控制点、缩放胶囊与底图提示 */}
+      <MapOverlays
         regions={regions}
         selectedRegionId={selectedRegionId}
         hoveredRegionId={hoveredRegionId}
@@ -183,11 +185,11 @@ export function MapCanvas({
         altHeld={altHeld}
         toScreen={viewport.toScreenPixel}
         onVertexDown={(regionId, index) => regionGestures.vertexDown(regionId, index, altHeld)}
-      />
-
-      {/* 底部「未设置底图」提示与右下缩放胶囊：摆放与说明都在 MapFloat 里 */}
-      <MapFloat
-        showBackdropHint={!hasBackground}
+        terrainPin={selectedTerrain}
+        unitPx={terrainUnitPx}
+        onTerrainResizeStart={startResize}
+        onTerrainRotateStart={startRotate}
+        hasBackground={hasBackground}
         percent={viewport.percent}
         onZoom={(factor) => viewport.zoomAtAnchor(factor)}
         onFit={viewport.fit}

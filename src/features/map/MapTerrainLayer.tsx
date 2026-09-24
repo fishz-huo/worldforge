@@ -29,7 +29,8 @@ interface Props {
   /** 笔刷激活：让点击穿到画布上落新符号 */
   brushActive: boolean;
   onSelect: (pinId: string) => void;
-  onDragStart: (pin: MapPin) => void;
+  /** 传进来的是"按下即返回处理器"的柯里化函数（与区域整体移动同一套） */
+  onDragStart: (pin: MapPin) => (e: React.PointerEvent) => void;
 }
 
 export function MapTerrainLayer({
@@ -71,7 +72,7 @@ export function MapTerrainLayer({
               e.stopPropagation();
               onSelect(pin.id);
               // 预览只选中（拖动的每次 pointermove 都会写库）
-              if (viewMode === 'edit') onDragStart(pin);
+              if (viewMode === 'edit') onDragStart(pin)(e);
             }}
             onClick={(e) => e.stopPropagation()}
           >

@@ -15,20 +15,21 @@
  *     DOM 跟着重排，那次 click 同样得忽略。
  *   - 边缘热区（第三轮问题三）：编辑模式下选中区域时，光标离它任意一条边
  *     ≤ EDGE_TOLERANCE（屏幕像素）就算「热」，画布据此把光标换成「+」；此时
- *     Ctrl/⌘ + 左键点下去，就在**最近那条边**上加一个顶点。判定与插入在同一处，
- *     光标显示的位置与实际插入的位置不会打架。
+ *     Ctrl/⌘ + 左键点下去，就在**最近那条边**上加一个顶点。判定在 useEdgeHot，
+ *     这里只决定按下之后做什么。
+ *   - 地形笔刷（第三批）：笔刷是**独立状态**（不给 MapTool 加 'terrain'，越界项 C
+ *     未批准）。笔刷激活时，按下的那一瞬就落一个符号并让它跟手（拖到哪跟到哪），
+ *     随后浏览器补的那次 click 要被吃掉，免得顺手把选中取消掉。
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { MapRegion, MapTool } from '@/types';
-import { nearestEdge, pointsToScreen } from './mapRegionEdit';
+import type { TerrainSymbol } from './mapTerrain';
 import type { EdgeHit } from './mapRegionEdit';
 import type { MapViewMode } from './mapRender';
 import type { MapViewportApi } from './mapViewportApi';
+import { useEdgeHot } from './useEdgeHot';
 import type { WorldNorm } from './useWorldNorm';
-
-/** 光标离边多近算「按在边上」（屏幕像素） */
-export const EDGE_TOLERANCE = 8;
 
 interface Options {
   world: WorldNorm;
@@ -39,12 +40,20 @@ interface Options {
   onPinMove: (pinId: string, x: number, y: number) => void;
   onPinSelect: (pinId: string | null) => void;
   onRegionSelect: (regionId: string | null) => void;
+  /** 点空白时三种选中一起清（图钉 / 区域 / 地形） */
+  onTerrainSelect: (pinId: string | null) => void;
   /** 边缘热区针对的区域（编辑模式且已选中时才给） */
   edgeRegion: MapRegion | null;
   /** 边缘热区是否启用（编辑模式 + 非平移态 + 有选中区域） */
   edgeEnabled: boolean;
   /** Ctrl/⌘ + 左键点在热区上：在最近那条边加一个顶点 */
   onEdgeInsert: (region: MapRegion, hit: EdgeHit) => void;
+  /** 地形笔刷（null = 没在画地形） */
+  terrainBrush: TerrainSymbol | null;
+  /** 平移态（平移工具或按住空格）：笔刷也要让路，否则按住空格拖动会顺手落一片符号 */
+  panMode: boolean;
+  /** 笔刷落点：调用方落一个符号并让它跟手 */
+  onTerrainPlace: (x: number, y: number) => void;
 }
 
 export interface CanvasGestures {
@@ -73,14 +82,15 @@ export interface CanvasGestures {
 
 export function useCanvasGestures({
   world, viewMode, tool, viewport, onCanvasClick, onPinMove, onPinSelect, onRegionSelect,
-  edgeRegion, edgeEnabled, onEdgeInsert,
+  onTerrainSelect, edgeRegion, edgeEnabled, onEdgeInsert, terrainBrush, panMode, onTerrainPlace,
 }: Options): CanvasGestures {
   const { worldRef, toNorm, worldRect } = world;
   const [draggingPin, setDraggingPin] = useState<string | null>(null);
-  const [edgeHot, setEdgeHot] = useState(false);
   const pressOnSpotRef = useRef(false);
-  /** 热区命中结果放 ref：鼠标每动一下都会重算，但只有「热/不热」翻转才重渲染 */
-  const edgeHitRef = useRef<EdgeHit | null>(null);
+  /** 这一次按下已经落了地形符号：紧接着的 click 要被吃掉（见文件头） */
+  const brushPlacedRef = useRef(false);
+
+  const edge = useEdgeHot({ worldRect, region: edgeRegion, enabled: edgeEnabled });
 
   /**
    * 切到预览时清掉「正在被拖动」的标记。
@@ -90,42 +100,31 @@ export function useCanvasGestures({
     if (viewMode === 'preview') setDraggingPin(null);
   }, [viewMode]);
 
-  /** 量一次边缘热区：只有热/不热翻转才 setState，避免跟着鼠标每帧重渲染 */
-  const trackEdge = useCallback(
-    (clientX: number, clientY: number) => {
-      const rect = worldRect();
-      const hit =
-        edgeEnabled && edgeRegion && rect && rect.width > 0
-          ? nearestEdge(
-              pointsToScreen(edgeRegion.points, rect.width, rect.height),
-              clientX - rect.left,
-              clientY - rect.top,
-              EDGE_TOLERANCE,
-            )
-          : null;
-      edgeHitRef.current = hit;
-      setEdgeHot(hit !== null);
-    },
-    [edgeEnabled, edgeRegion, worldRect],
-  );
-
-  const clearEdge = () => {
-    edgeHitRef.current = null;
-    setEdgeHot(false);
-  };
-
   const bind = {
     onPointerDownCapture: (e: ReactPointerEvent<HTMLDivElement>) => {
       // 捕获阶段一定先跑，所以图钉/顶点在冒泡里 stopPropagation 也挡不住它
       viewport.notePress();
       pressOnSpotRef.current = Boolean(
-        (e.target as HTMLElement).closest('[data-wf-map-pin],[data-wf-map-region],[data-wf-map-vertex]'),
+        (e.target as HTMLElement).closest(
+          '[data-wf-map-pin],[data-wf-map-region],[data-wf-map-vertex],'
+          + '[data-wf-map-terrain],[data-wf-map-terrain-handle]',
+        ),
       );
     },
-    onPointerDown: viewport.bind.onPointerDown,
+    onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
+      viewport.bind.onPointerDown(e);
+      brushPlacedRef.current = false;
+      // 地形笔刷：按下的那一瞬就落点（这样按住不放能继续拖着摆位置）。
+      // 「打点」工具不受影响 —— 落点后那次 click 被吃掉，不会再落一个图钉。
+      if (!terrainBrush || viewMode !== 'edit' || panMode) return;
+      if (e.button !== 0 || pressOnSpotRef.current) return;
+      brushPlacedRef.current = true;
+      const [x, y] = toNorm(e.clientX, e.clientY);
+      onTerrainPlace(x, y);
+    },
     onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerMove(e);
-      trackEdge(e.clientX, e.clientY);
+      edge.track(e.clientX, e.clientY);
       // 预览模式不写坐标（拖拽本就不该开始，这里再兜一层）
       if (viewMode !== 'edit' || !draggingPin) return;
       const [x, y] = toNorm(e.clientX, e.clientY);
@@ -141,7 +140,7 @@ export function useCanvasGestures({
     },
     onPointerLeave: () => {
       setDraggingPin(null);
-      clearEdge();
+      edge.clear();
     },
     /** 平移结束后浏览器仍会补一个 click：捕获阶段吃掉它 */
     onClickCapture: (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -151,15 +150,20 @@ export function useCanvasGestures({
         return;
       }
       // Ctrl/⌘ + 左键点在边缘热区：加顶点。放在捕获阶段，先于区域自己的选中处理
-      const hit = edgeHitRef.current;
+      const hit = edge.hit.current;
       if (!hit || !edgeRegion || !(e.ctrlKey || e.metaKey)) return;
       e.stopPropagation();
       e.preventDefault();
-      clearEdge();
+      edge.clear();
       onEdgeInsert(edgeRegion, hit);
     },
     onClick: (e: ReactPointerEvent<HTMLDivElement>) => {
-      // 这一下是按在图钉/区域/顶点上的：它们自己已经选中了，别因为重排把选中取消掉
+      // 这一下已经落了地形：别再当成"点空白"把刚落的符号取消选中
+      if (brushPlacedRef.current) {
+        brushPlacedRef.current = false;
+        return;
+      }
+      // 这一下是按在图钉/区域/顶点/地形上的：它们自己已经选中了，别因为重排把选中取消掉
       if (pressOnSpotRef.current) {
         pressOnSpotRef.current = false;
         return;
@@ -173,9 +177,10 @@ export function useCanvasGestures({
         // 点空白（包括底图之外的留白）取消选中；预览模式只允许取消选中
         onPinSelect(null);
         onRegionSelect(null);
+        onTerrainSelect(null);
       }
     },
   };
 
-  return { worldRef, toNorm, draggingPin, startPinDrag: setDraggingPin, edgeHot, bind };
+  return { worldRef, toNorm, draggingPin, startPinDrag: setDraggingPin, edgeHot: edge.hot, bind };
 }

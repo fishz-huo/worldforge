@@ -1,9 +1,12 @@
 /**
  * 地图检查器
  * ------------------------------------------------------------------
- * 选中标记 → PinEditor；选中区域 → RegionEditor；否则显示 MapOverview。
- * 预览模式（viewMode='preview'）一律换成只读信息卡：
+ * 选中地形符号 → TerrainEditor；选中标记 → PinEditor；选中区域 → RegionEditor；
+ * 否则显示 MapOverview。预览模式（viewMode='preview'）一律换成只读信息卡：
  * 不给输入框、不给删除按钮，因此在这个模式下改不动任何数据。
+ *
+ * 地形与图钉分两个选中槽（selectedTerrainId / selectedPinId）：它们是同一张表
+ * 的两种行，混在一个槽里会让"选中图钉"与"选中地形"的判断到处都要再查一次 meta。
  */
 import { Crosshair } from 'lucide-react';
 import { EmptyState } from '@/components/ui/primitives';
@@ -13,22 +16,27 @@ import { PinReadonly, RegionReadonly } from './MapReadonlyInfo';
 import { MapOverview } from './MapOverview';
 import { PinEditor } from './PinEditor';
 import { RegionEditor } from './RegionEditor';
+import { TerrainEditor } from './TerrainEditor';
+import { TerrainReadonly } from './TerrainReadonly';
 import type { MapViewMode } from './mapRender';
 
 export function MapInspector({
   selectedPinId,
   selectedRegionId,
+  selectedTerrainId,
   viewMode,
 }: {
   selectedPinId: string | null;
   selectedRegionId: string | null;
+  selectedTerrainId: string | null;
   viewMode: MapViewMode;
 }) {
   const mapId = useStore((s) => s.selectedMapId);
   const pin = useStore((s) => s.pins.find((p) => p.id === selectedPinId));
   const region = useStore((s) => s.regions.find((r) => r.id === selectedRegionId));
+  const terrain = useStore((s) => s.pins.find((p) => p.id === selectedTerrainId));
 
-  const title = pin ? '标记点' : region ? '区域 / 资源' : '地图概览';
+  const title = terrain ? '地形符号' : pin ? '标记点' : region ? '区域 / 资源' : '地图概览';
   const preview = viewMode === 'preview';
 
   return (
@@ -37,13 +45,17 @@ export function MapInspector({
       {!mapId ? (
         <EmptyState icon={<Crosshair />} title="还没有地图" description="在左侧新建一张地图，然后开始打点。" />
       ) : preview ? (
-        pin ? (
+        terrain ? (
+          <TerrainReadonly pinId={terrain.id} />
+        ) : pin ? (
           <PinReadonly pinId={pin.id} />
         ) : region ? (
           <RegionReadonly regionId={region.id} />
         ) : (
           <MapOverview mapId={mapId} viewMode={viewMode} />
         )
+      ) : terrain ? (
+        <TerrainEditor pinId={terrain.id} />
       ) : pin ? (
         <PinEditor pinId={pin.id} />
       ) : region ? (

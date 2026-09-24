@@ -28,6 +28,7 @@ export function MapToolbar({
   map,
   pinCount,
   regionCount,
+  terrainCount,
   mode,
   onModeChange,
   tool,
@@ -37,6 +38,8 @@ export function MapToolbar({
   map: MapDef;
   pinCount: number;
   regionCount: number;
+  /** 地形符号数（也是 map_pins 的行，按 meta.kind 分开数） */
+  terrainCount: number;
   mode: MapViewMode;
   onModeChange: (next: MapViewMode) => void;
   tool: MapTool;
@@ -48,7 +51,7 @@ export function MapToolbar({
       <span className="font-medium">{map.name}</span>
       {map.period && <span className="text-muted-foreground">· {map.period}</span>}
       <span className="text-muted-foreground">
-        · 标记 {pinCount} · 区域 {regionCount}
+        · 标记 {pinCount} · 区域 {regionCount} · 地形 {terrainCount}
       </span>
 
       <div className="ml-auto flex items-center gap-2">
