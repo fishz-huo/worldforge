@@ -53,6 +53,13 @@ export const COLUMN_MIGRATIONS: ColumnMigration[] = [
     ddl: "TEXT NOT NULL DEFAULT '[]'",
     why: '改编号后保留的旧编号（JSON 数组）：旧文稿里的 [[旧编号]] 仍然能跳转；老数据为空数组',
   },
+  {
+    table: 'map_pins',
+    column: 'meta',
+    ddl: "TEXT NOT NULL DEFAULT '{}'",
+    why: '第三批地形标记：扩展字段列（JSON）。地形 = { kind:"terrain", symbol, size, rotation }，'
+      + '老数据为空对象，因此读写与旧版本完全一致；只加列、不重建表，老备份照旧能导入',
+  },
 ];
 
 /**

@@ -74,6 +74,14 @@ export interface MapPin {
   icon: string;
   color: string;
   note: string;
+  /**
+   * 扩展字段（JSON 列，第三批「地形标记」加的）：
+   * 地形符号存在这里 —— `{ kind:'terrain', symbol, size, rotation }`（见
+   * features/map/mapTerrain.ts）。老数据是空对象 `{}`，普通图钉永远是空对象。
+   * 写成可选是因为这张表的行会在 features/map 之外被字面量构造（seed 等），
+   * 那些地方没有、也不需要关心它；仓储用 jsonColumns 兜底成 `{}`。
+   */
+  meta?: Record<string, unknown>;
 }
 
 /** 地图区域（行政区 / 势力范围 / 资源区） */

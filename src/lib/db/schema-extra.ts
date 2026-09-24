@@ -26,6 +26,14 @@ CREATE INDEX IF NOT EXISTS idx_maps_world ON maps(world_id);
 -- layer_id 是 v0.2 加过、v0.2.1 又停用的列：多图层功能因为"看着像分层其实
 -- 只是叠底图"被撤掉了，但列留着 —— SQLite 删列要重建整张表，而这一列对
 -- 读写完全无害（老备份里也带着它）。新库不再写这一列的值。
+--
+-- meta 是第三批「地形标记」加的扩展字段（JSON 列），老库由 migrate-columns.ts
+-- 的幂等 ALTER 补上，老数据为空对象。地形就存在这一列里：
+-- { kind:'terrain', symbol, size, rotation }，于是备份/快照/清库/版本恢复
+-- 全都不用改（它们搬的是整行）。
+-- 注意：说明只能写在建表语句**外面** —— SQLite 执行 ALTER TABLE ... DROP COLUMN
+-- 时要重新解析 sqlite_master 里存的建表原文，列定义中间夹 SQL 行注释会让它报
+-- "incomplete input"（本轮的迁移自测就是被这一条卡住的）。
 CREATE TABLE IF NOT EXISTS map_pins (
   id TEXT PRIMARY KEY,
   map_id TEXT NOT NULL,
@@ -36,7 +44,8 @@ CREATE TABLE IF NOT EXISTS map_pins (
   label TEXT NOT NULL DEFAULT '',
   icon TEXT NOT NULL DEFAULT '📍',
   color TEXT NOT NULL DEFAULT '#ef4444',
-  note TEXT NOT NULL DEFAULT ''
+  note TEXT NOT NULL DEFAULT '',
+  meta TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS idx_pins_map ON map_pins(map_id);
 

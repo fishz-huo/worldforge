@@ -51,7 +51,7 @@ export const MAP_SPEC = defineTable('maps',
     'opacity', 'meta', 'created_at', 'updated_at'], { meta: {} });
 
 export const PIN_SPEC = defineTable('map_pins',
-  ['map_id', 'layer_id', 'card_id', 'x', 'y', 'label', 'icon', 'color', 'note']);
+  ['map_id', 'layer_id', 'card_id', 'x', 'y', 'label', 'icon', 'color', 'note', 'meta'], { meta: {} });
 
 export const REGION_SPEC = defineTable('map_regions',
   ['map_id', 'layer_id', 'name', 'color', 'points', 'resources', 'period', 'note'], { points: [], resources: {} });
