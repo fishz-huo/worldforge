@@ -11,6 +11,15 @@
  * 因此网页构建里不会把桌面端的 JS 打进主包。
  */
 
+/**
+ * 「另存为」对话框里的类型过滤（Windows / macOS 都认）。
+ * 不传就按扩展名猜一个（见 defaultFilters）—— 老调用方的行为一个字不变。
+ */
+export interface SaveFilter {
+  name: string;
+  extensions: string[];
+}
+
 /** 导出结果：path 为空表示走了浏览器下载 */
 export interface SaveOutcome {
   ok: boolean;
@@ -40,10 +49,25 @@ export function isMobileShell(): boolean {
 }
 
 /**
+ * 按扩展名猜一个过滤器（不给 filters 时的老行为）。
+ * 为什么需要它：对话框的过滤器决定 Windows 会不会替用户补扩展名 ——
+ * 过滤器写「JSON 备份」时保存 `地图.png` 有可能变成 `地图.png.json`。
+ */
+function defaultFilters(filename: string): SaveFilter[] {
+  return filename.endsWith('.sqlite')
+    ? [{ name: 'SQLite 数据库', extensions: ['sqlite', 'db'] }]
+    : [{ name: 'JSON 备份', extensions: ['json'] }];
+}
+
+/**
  * 让用户选择保存位置并写盘（仅在桌面端有效）。
  * 未选路径 / 用户取消 → canceled；写盘失败 → ok:false + error。
  */
-async function saveViaDesktop(filename: string, data: string | Uint8Array): Promise<SaveOutcome> {
+async function saveViaDesktop(
+  filename: string,
+  data: string | Uint8Array,
+  filters?: SaveFilter[],
+): Promise<SaveOutcome> {
   try {
     const [{ save }, { invoke }] = await Promise.all([
       import('@tauri-apps/plugin-dialog'),
@@ -53,9 +77,7 @@ async function saveViaDesktop(filename: string, data: string | Uint8Array): Prom
       title: '选择导出位置',
       defaultPath: filename,
       // 让「另存为」对话框带上正确的类型过滤（Windows / macOS 都认）
-      filters: filename.endsWith('.sqlite')
-        ? [{ name: 'SQLite 数据库', extensions: ['sqlite', 'db'] }]
-        : [{ name: 'JSON 备份', extensions: ['json'] }],
+      filters: filters ?? defaultFilters(filename),
     });
     if (!selected) return { ok: false, canceled: true };
     // Rust 侧写盘：内容以字节数组传输，避免大文件走 JSON 字符串的开销
@@ -82,13 +104,15 @@ function saveViaBrowser(filename: string, data: string | Uint8Array, mime: strin
 /**
  * 导出文本或二进制。
  * @param filename 建议的文件名（桌面端会作为对话框里的默认名）
+ * @param filters 「另存为」对话框的类型过滤；不传就按扩展名猜（sqlite / json）
  */
 export async function saveFile(
   filename: string,
   data: string | Uint8Array,
   mime = 'application/json',
+  filters?: SaveFilter[],
 ): Promise<SaveOutcome> {
-  if (isDesktop()) return saveViaDesktop(filename, data);
+  if (isDesktop()) return saveViaDesktop(filename, data, filters);
   return saveViaBrowser(filename, data, mime);
 }
 

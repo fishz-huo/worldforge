@@ -7,6 +7,7 @@
  * 说明见 mapStageApi.ts；工具栏与画布的细节看 MapToolbar / MapCanvas）。
  */
 import { MapCanvas } from './MapCanvas';
+import { MapExportPanel } from './MapExportPanel';
 import { MapToolbar } from './MapToolbar';
 import type { MapStageProps } from './mapStageApi';
 
@@ -25,6 +26,21 @@ export function MapStage({
         tool={tool}
         onToolChange={actions.onToolChange}
         onAddRegion={actions.onAddRegion}
+        extra={
+          <MapExportPanel
+            mapName={map.name}
+            world={world}
+            assetId={map.asset_id}
+            opacity={map.opacity}
+            viewport={viewport}
+            pins={data.pins}
+            regions={data.regions}
+            terrain={data.terrain}
+            regionMode={view.regionMode}
+            resourceKey={view.resourceKey}
+            showLabels={view.showLabels}
+          />
+        }
       />
 
       <div className="min-h-0 flex-1 p-3">

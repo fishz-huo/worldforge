@@ -14,6 +14,7 @@
  * 这里不再放「平移」入口 —— 左栏本来就有，而且按住空格 / 中键拖动随时能平移；
  * 工具条在 1280 窗口两栏全开时只有约 608px，加第四个按钮会把右侧模式开关挤到第二行。
  */
+import type { ReactNode } from 'react';
 import { Crosshair, MousePointer2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,7 @@ export function MapToolbar({
   tool,
   onToolChange,
   onAddRegion,
+  extra,
 }: {
   map: MapDef;
   pinCount: number;
@@ -45,6 +47,11 @@ export function MapToolbar({
   tool: MapTool;
   onToolChange: (tool: MapTool) => void;
   onAddRegion: () => void;
+  /**
+   * 右侧的额外入口（本轮是「导出图片」）：由 MapStage 注入。
+   * 工具条本身不认识导出，这样它的行数不会因为别处加功能而涨。
+   */
+  extra?: ReactNode;
 }) {
   return (
     <div className="flex min-h-9 shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 text-xs">
@@ -83,6 +90,8 @@ export function MapToolbar({
             <MousePointer2 className="size-3.5" /> 选择
           </Button>
         )}
+
+        {extra}
 
         <span aria-hidden className="h-5 w-px bg-border" />
         <MapModeSwitch mode={mode} onChange={onModeChange} />
