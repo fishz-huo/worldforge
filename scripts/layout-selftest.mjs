@@ -172,4 +172,18 @@ await test('用户实机 1920×1080 @145%：工作区 1326×706，默认窗口�
   assert.deepEqual(computeWindowFit(1280, 800, 1326, 706), { width: 1280, height: 690 });
 });
 
+await test('老屏 800×600：最小宽要小于 784，否则窗口右边会露在屏外', () => {
+  /*
+   * 800×600 屏的工作区约 800×560。最小宽原本是 880 —— 比屏幕还宽，
+   * 窗口必然有一部分在屏外（右边 80px 点不到）。降到 760 之后
+   * 自适应能把它收成 784×544，完整落在屏内；再窄就交给移动布局
+   * （≤767px 换底部标签栏），700 宽、500 宽都实测过不裁切。
+   */
+  const conf = JSON.parse(readFileSync(fileURLToPath(new URL('../src-tauri/tauri.conf.json', import.meta.url)), 'utf8'));
+  const win = conf.app.windows[0];
+  assert.ok(win.minWidth <= 800 - 16, `minWidth=${win.minWidth} 大于 784：800 宽的屏上会有部分露在屏外`);
+  assert.ok(win.minHeight <= 560, `minHeight=${win.minHeight} 大于 560：800×600 屏上收不进去`);
+  assert.deepEqual(computeWindowFit(1280, 680, 800, 560), { width: 784, height: 544 });
+});
+
 finish('界面布局偏好');
