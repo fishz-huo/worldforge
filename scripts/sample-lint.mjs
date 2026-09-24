@@ -66,6 +66,15 @@ export function lintCards(cards, typeMap, { check, warn }) {
 export function lintSnapshot(snap, { check, warn }) {
   const cardIds = new Set(snap.cards.map((c) => c.id));
   const titles = new Set(snap.cards.map((c) => c.title));
+  /**
+   * 能跳转的键除了标题还有编号与旧编号（见 lib/card-code.ts 的 linkKeysOf）：
+   * 少了这一步，[[CHR-009|老哨]] 这种写法会被误报成"指向未创建卡片"。
+   */
+  const codeKeys = new Set();
+  snap.cards.forEach((c) => {
+    [c.code, ...(Array.isArray(c.code_aliases) ? c.code_aliases : [])]
+      .filter(Boolean).forEach((key) => codeKeys.add(String(key).toLowerCase()));
+  });
   const tagIds = new Set(snap.tags.map((t) => t.id));
   const trackIds = new Set(snap.tracks.map((t) => t.id));
   const docIds = new Set(snap.docs.map((d) => d.id));
@@ -114,12 +123,12 @@ export function lintSnapshot(snap, { check, warn }) {
   const scan = (text, at) => {
     [...String(text).matchAll(linkRe)].forEach((m) => {
       const target = m[1].trim();
-      if (!titles.has(target)) missing.push(`${at} → ${target}`);
+      if (!titles.has(target) && !codeKeys.has(target.toLowerCase())) missing.push(`${at} → ${target}`);
     });
   };
   snap.cards.forEach((c) => scan(c.body, `卡片「${c.title}」`));
   snap.docs.forEach((d) => scan(d.content, `文稿「${d.title}」`));
   if (missing.length) warn('有指向未创建卡片的双链（会显示为"尚未创建"样式）', missing.join('；'));
 
-  return { cardIds, titles };
+  return { cardIds, titles, codeKeys, missing };
 }

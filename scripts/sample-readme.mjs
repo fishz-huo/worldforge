@@ -35,6 +35,7 @@ node scripts/sample-check.mjs    # 校验（含字段名、下拉取值、真实
 | 项目 | 数量 |
 | --- | --- |
 | 卡片 | ${stats.cards}（${byType}） |
+| 已编号卡片 | ${stats.coded}（前缀 CHR / LOC / EVT / LOR / FAC / ITM / CON / REF / NOT） |
 | 标签 / 卡片标签 | ${stats.tags} / ${stats.cardTags} |
 | 关联 | ${stats.relations} |
 | 地图 / 标记点 / 区域 | ${stats.maps} / ${stats.pins} / ${stats.regions} |
@@ -53,6 +54,8 @@ node scripts/sample-check.mjs    # 校验（含字段名、下拉取值、真实
     原来的示例世界「示例世界 · 灰烬纪元」不会被碰）
 2. 切到刚建的世界观 → 设置 → 数据 → 导入设定 → 选择这个 JSON 文件
 3. 导入完成后回到总览，应该能看到 ${stats.cards} 张卡片、${stats.relations} 条关联
+4. 到 设置 → 世界观 → 卡片编号，应该显示「${stats.coded} 张已编号 · 0 张未编号」；
+   随便打开一张卡片（如「灰翼」），详情页顶部会显示它自己的编号 CHR-001
 
 > 导入前建议先导出一次当前数据（设置 → 数据 → 导出完整备份）：
 > 导入是不可撤销的，覆盖了就只能靠备份找回。

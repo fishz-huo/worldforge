@@ -52,8 +52,8 @@ function countsIn(text, label) {
   return out;
 }
 
-/** 行内「名称 数字」取数；只在该小节里找，避免命中别处的同名文字 */
-function numberAfter(sectionText, label) {
+/** 行内「名称 数字」取数；只在该小节里找，避免命中别处的同名文字（sample-check 也用它） */
+export function numberAfter(sectionText, label) {
   const hit = new RegExp(`${label}\\s+(\\d+)`).exec(sectionText ?? '');
   return hit ? Number(hit[1]) : null;
 }

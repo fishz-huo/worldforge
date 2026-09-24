@@ -7,6 +7,7 @@
  * 也让两次生成的产物完全一致（不会每次都产生一堆 diff）。
  * 引用写错（比如关联指向一张不存在的卡片）在这里直接抛错。
  */
+import { codeSeqOf } from './sample-cards.mjs';
 
 /** 固定时间戳：让生成结果可复现，不随运行时间变化 */
 export const NOW = 1_700_000_000_000;
@@ -50,7 +51,7 @@ export function buildSnapshot(data) {
 
   const world = {
     id, name: worldInfo.name, description: worldInfo.description,
-    meta: { time: worldInfo.time }, created_at: NOW, updated_at: NOW,
+    meta: { time: worldInfo.time, codeSeq: codeSeqOf(cards) }, created_at: NOW, updated_at: NOW,
   };
 
   const branches = worldInfo.branches.map((b, i) => ({
@@ -67,11 +68,16 @@ export function buildSnapshot(data) {
     updated_at: NOW + i,
   }));
 
-  const outCards = cards.map((c) => ({
-    id: c.id, world_id: id, branch_id: null, type: c.type, title: c.title,
-    subtitle: c.subtitle, summary: c.summary, body: c.body, fields: c.fields,
-    cover_asset: null, pinned: 0, created_at: NOW, updated_at: NOW,
-  }));
+  const outCards = cards.map((c) => {
+    // 编号是手册「● 编号」那一行的必填项：漏写就让生成直接失败，别产出一份没编号的备份
+    if (!c.code) throw new Error(`卡片「${c.title}」没有编号，请补手册里的 ● 编号 行`);
+    return {
+      id: c.id, world_id: id, branch_id: null, type: c.type, title: c.title,
+      subtitle: c.subtitle, summary: c.summary, body: c.body, fields: c.fields,
+      code: c.code, code_aliases: c.code_aliases ?? [],
+      cover_asset: null, pinned: 0, created_at: NOW, updated_at: NOW,
+    };
+  });
 
   const tags = tagDefs.map((t, i) => ({
     id: `tag-${slug(t.name)}`, world_id: id, name: t.name, color: t.color, created_at: NOW + i,

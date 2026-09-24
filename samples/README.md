@@ -24,6 +24,7 @@ node scripts/sample-check.mjs    # 校验（含字段名、下拉取值、真实
 | 项目 | 数量 |
 | --- | --- |
 | 卡片 | 28（character 5、location 6、event 4、lore 2、faction 2、item 2、concept 3、reference 2、note 2） |
+| 已编号卡片 | 28（前缀 CHR / LOC / EVT / LOR / FAC / ITM / CON / REF / NOT） |
 | 标签 / 卡片标签 | 7 / 56 |
 | 关联 | 16 |
 | 地图 / 标记点 / 区域 | 1 / 6 / 2 |
@@ -31,7 +32,7 @@ node scripts/sample-check.mjs    # 校验（含字段名、下拉取值、真实
 | 文稿 / 大纲节点（根节点 3） | 3 / 12 |
 | 平行世界分支 | 2 |
 
-<!-- sample-source-sha256: 10c7d029f30f97f2 -->
+<!-- sample-source-sha256: 76bdccb6d209eb64 -->
 上一行的注释是手册的指纹：`scripts/sample-check.mjs` 用它判断备份是否已经过期 ——
 改了手册但忘了重新生成时，自测会直接报错提醒。
 
@@ -42,6 +43,8 @@ node scripts/sample-check.mjs    # 校验（含字段名、下拉取值、真实
     原来的示例世界「示例世界 · 灰烬纪元」不会被碰）
 2. 切到刚建的世界观 → 设置 → 数据 → 导入设定 → 选择这个 JSON 文件
 3. 导入完成后回到总览，应该能看到 28 张卡片、16 条关联
+4. 到 设置 → 世界观 → 卡片编号，应该显示「28 张已编号 · 0 张未编号」；
+   随便打开一张卡片（如「灰翼」），详情页顶部会显示它自己的编号 CHR-001
 
 > 导入前建议先导出一次当前数据（设置 → 数据 → 导出完整备份）：
 > 导入是不可撤销的，覆盖了就只能靠备份找回。

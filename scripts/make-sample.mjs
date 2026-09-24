@@ -67,6 +67,7 @@ writeFileSync(OUT_JSON, `${JSON.stringify(backup, null, 2)}\n`, 'utf8');
 
 const stats = {
   cards: snapshot.cards.length,
+  coded: snapshot.cards.filter((c) => c.code).length,
   byType: countBy(snapshot.cards, 'type'),
   tags: snapshot.tags.length,
   cardTags: snapshot.cardTags.length,
@@ -81,6 +82,7 @@ const stats = {
   outlineNodes: snapshot.outlineNodes.length,
   branches: snapshot.branches.length,
   outlineRoots: snapshot.outlineNodes.filter((n) => !n.parent_id).length,
+  codeSeq: snapshot.world.meta.codeSeq,
 };
 
 /** 手册指纹：写进 samples/README.md，自测用它判断备份是不是已经过期 */

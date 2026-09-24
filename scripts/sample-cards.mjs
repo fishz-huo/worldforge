@@ -85,9 +85,14 @@ function parseFields(block) {
 /** 解析一张卡片块 */
 function parseCard(type, block, index) {
   const { fields, problems } = parseFields(block);
+  const code = pick(block, '●编号');
+  const oldCode = pick(block, '●旧编号');
   return {
     index,
     type,
+    code,
+    // 改过编号的卡片把旧号留成别名：正文里旧的 [[旧编号]] 仍要能跳到它
+    code_aliases: oldCode ? [oldCode] : [],
     title: pick(block, '●标题'),
     subtitle: pick(block, '●副标题'),
     summary: pick(block, '●摘要'),
@@ -109,6 +114,19 @@ export function parseCards(sectionText) {
     blocks.forEach((block, bi) => cards.push(parseCard(m[2], `● 类型：${block}`, bi)));
   });
   return cards;
+}
+
+/**
+ * 发号记录：每个前缀已发到几号（写进 world.meta.codeSeq）。
+ * 有它，导入后再新建卡片就不会复用已删编号（见 lib/card-code.ts「序号不复用」）。
+ */
+export function codeSeqOf(cards) {
+  const seq = {};
+  cards.forEach((c) => {
+    const hit = /^([A-Za-z][A-Za-z0-9_]*)-(\d+)$/.exec(String(c.code ?? '').trim());
+    if (hit) seq[hit[1].toUpperCase()] = Math.max(seq[hit[1].toUpperCase()] ?? 0, Number(hit[2]));
+  });
+  return seq;
 }
 
 /** 解析「四、标签」：标签定义行 + 挂标签清单 */

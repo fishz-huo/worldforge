@@ -19,7 +19,7 @@ import { splitTopSections } from './sample-text.mjs';
 import { parseCards, parseTags, parseRelations } from './sample-cards.mjs';
 import { parseTimeline } from './sample-scene.mjs';
 import { createReporter, lintCards, lintSnapshot } from './sample-lint.mjs';
-import { checkManual } from './sample-manual.mjs';
+import { checkManual, numberAfter } from './sample-manual.mjs';
 import { state } from './db-harness.mjs';
 
 const ROOT = process.cwd();
@@ -40,12 +40,41 @@ lintCards(cards, BUILTIN_CARD_TYPE_MAP, { check, warn });
 const backup = parseBackup(readFileSync(JSON_FILE, 'utf8'));
 check('备份能被 parseBackup 解析', backup !== null);
 const snap = backup.snapshot;
-lintSnapshot(snap, { check, warn });
+const lint = lintSnapshot(snap, { check, warn });
 
 /* ---------------------- 2. 手册与备份一致性 ---------------------- */
 checkManual(TEXT, texts, snap, check, BUILTIN_CARD_TYPE_MAP, {
   parseTags, parseRelations, parseTimeline,
 });
+
+/* ------------------ 2.5 卡片编号（口径直接取自 card-code.ts） ------------------ */
+const { codePrefix, codePrefixOf, findCodeConflict, linkKeysOf, validateCode } =
+  await import('@/lib/card-code.ts');
+
+const noCode = snap.cards.filter((c) => !String(c.code ?? '').trim());
+check('每张卡片都有编号', noCode.length === 0, `没编号：${noCode.map((c) => c.title).join('、')}`);
+const badCode = snap.cards.filter((c) => validateCode(c.code) !== null);
+check('编号格式全部合法', badCode.length === 0,
+  badCode.map((c) => `${c.title}「${c.code}」${validateCode(c.code)}`).join('；'));
+const badPrefix = snap.cards.filter((c) => codePrefix(c.code) !== codePrefixOf(c.type));
+check('编号前缀与卡片类型一致', badPrefix.length === 0,
+  badPrefix.map((c) => `${c.title}（${c.type}）却是 ${c.code}`).join('；'));
+const clash = snap.cards.filter((c) => findCodeConflict(snap.cards, c.code, c.id)
+  || (c.code_aliases ?? []).some((alias) => findCodeConflict(snap.cards, alias, c.id)));
+check('编号与旧编号全库不重复', clash.length === 0, clash.map((c) => c.title).join('、'));
+check('手册里的编号与备份逐张一致',
+  cards.length === snap.cards.length
+  && cards.every((c, i) => c.code === snap.cards[i].code
+    && JSON.stringify(c.code_aliases) === JSON.stringify(snap.cards[i].code_aliases)),
+  `手册 ${cards.filter((c) => c.code).length} 个编号，备份 ${snap.cards.filter((c) => c.code).length} 个`);
+check('改过编号的卡片保留旧编号（老哨 CHR-003 + 旧号 CHR-009）', (() => {
+  const card = snap.cards.find((c) => c.title === '老哨');
+  return !!card && card.code === 'CHR-003' && linkKeysOf(card).includes('CHR-009');
+})());
+const declaredGaps = numberAfter(texts['（开头）'], '正文里有');
+check('落空的双链正好是手册声明的处数',
+  lint.missing.length === declaredGaps,
+  `手册写 ${declaredGaps} 处，实际 ${lint.missing.length} 处：${lint.missing.join('；')}`);
 
 /* --------------------------- 3. 真实导入 --------------------------- */
 await state().bootstrap();
@@ -85,6 +114,11 @@ check('数值型泳道才有数值（定居水平）', (() => {
   const track = s.tracks.find((t) => t.name === '定居水平');
   const valued = s.entries.filter((e) => e.track_id === track?.id && e.value !== null);
   return track?.valued === 1 && valued.length === 3;
+})());
+check('导入后编号读得回来，发号记录也写进去了（灰翼 CHR-001 + CHR 发到 5）', (() => {
+  const card = s.cards.find((c) => c.title === '灰翼');
+  const world = s.worlds.find((w) => w.id === worldId);
+  return card?.code === 'CHR-001' && world?.meta?.codeSeq?.CHR === 5;
 })());
 
 /* --------------------------- 4. 过期检查 --------------------------- */
