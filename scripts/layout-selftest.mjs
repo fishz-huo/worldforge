@@ -156,4 +156,20 @@ await test('tauri.conf.json 的默认与最小尺寸能放进 1024×700（用户
   assert.ok(win.width <= 1536 && win.height <= 816, `默认 ${win.width}×${win.height} 放不进 1536×816`);
 });
 
+await test('用户实机 1920×1080 @145%：工作区 1326×706，默认窗口要一次放得下', () => {
+  /*
+   * 这台机器的真实数字（用 DPI-unaware 的 PowerShell 量到）：
+   *   Bounds 1326×746、WorkingArea 1326×706（任务栏 40px）。
+   * 旧的默认 1360×880 两个方向都超屏 —— 这正是「有些按钮点不到」的根因。
+   */
+  const conf = JSON.parse(readFileSync(fileURLToPath(new URL('../src-tauri/tauri.conf.json', import.meta.url)), 'utf8'));
+  const win = conf.app.windows[0];
+  assert.ok(win.width <= 1326 - 16, `默认宽 ${win.width} 超过工作区 1326 减留白`);
+  assert.ok(win.height <= 706 - 16, `默认高 ${win.height} 超过工作区 706 减留白`);
+  assert.equal(computeWindowFit(win.width, win.height, 1326, 706), null, '默认尺寸应当不需要自适应去收');
+  // 万一默认值被改大，自适应也要能收进屏幕
+  assert.deepEqual(computeWindowFit(1360, 880, 1326, 706), { width: 1310, height: 690 });
+  assert.deepEqual(computeWindowFit(1280, 800, 1326, 706), { width: 1280, height: 690 });
+});
+
 finish('界面布局偏好');
