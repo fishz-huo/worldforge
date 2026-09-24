@@ -28,7 +28,7 @@ const TOOLS: { tool: MapTool; label: string; Icon: LucideIcon; hint: string }[] 
   { tool: 'select', label: '选择', Icon: MousePointer2, hint: '点选地图上的标记或区域进行编辑' },
   { tool: 'pin', label: '打点', Icon: Crosshair, hint: '在空白处点击即落一个标记点' },
   { tool: 'region', label: '区域', Icon: Pentagon, hint: '新建区域后拖动白色顶点调整轮廓' },
-  { tool: 'pan', label: '平移', Icon: Move, hint: '预留：拖动整张画布' },
+  { tool: 'pan', label: '平移', Icon: Move, hint: '拖动整张画布；滚轮随时缩放，预览模式下拖空白也能平移' },
 ];
 
 interface Props {

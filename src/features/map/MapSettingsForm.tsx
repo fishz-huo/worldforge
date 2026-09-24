@@ -27,6 +27,11 @@ export function MapSettingsForm({ map }: { map: MapDef }) {
     const asset = await importImage(file, worldId);
     updateMap(map.id, { asset_id: asset.id });
     toast('底图已更新', 'success');
+    // 超大图会拖慢缩放渲染（整张图靠 CSS transform 缩放，没有瓦片化）：
+    // 只提醒一次，不阻止上传 —— 数据是用户的，别替他做决定
+    if (Math.max(asset.width, asset.height) > 8192) {
+      toast('底图长边超过 8192px，缩放时可能卡顿；建议压到 4096 左右', 'warn');
+    }
   };
 
   return (
@@ -78,7 +83,7 @@ export function MapSettingsForm({ map }: { map: MapDef }) {
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/svg+xml"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
@@ -88,6 +93,10 @@ export function MapSettingsForm({ map }: { map: MapDef }) {
         />
         <p className="text-[10px] leading-relaxed text-muted-foreground">
           没有底图也能用：标记点用归一化坐标，之后补图不会错位。
+        </p>
+        <p className="text-[10px] leading-relaxed text-muted-foreground">
+          建议 4096×4096（支持 JPG / PNG / WebP / SVG）。底图按原始长宽比显示，
+          不会被拉变形；画布可滚轮缩放、拖动平移，「适应屏幕」一键回到全图。
         </p>
       </div>
 

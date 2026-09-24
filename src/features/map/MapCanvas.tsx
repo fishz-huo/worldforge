@@ -1,33 +1,48 @@
 /**
- * 地图画布
+ * 地图画布（视口 + 图层）
  * ------------------------------------------------------------------
- * 需求 2：可视化地图编辑器。
- * 设计取舍：不做精细的边界绘制（那会变成 GIS 工具），
- * 而是「底图 + 归一化标记点 + 粗略多边形区域」，
- * 让作者能快速表达「谁在哪、资源怎么分布、疆域怎么变」。
+ * 需求 2：可视化地图编辑器。第二批加入「像 Google 地图」的缩放与平移。
  *
- * 坐标系统：0~1 归一化，渲染时乘以画布尺寸，
- * 因此底图换分辨率、窗口缩放都不会错位。
+ * 三层结构：
+ *   视口窗口（外层 div：绑滚轮与拖拽平移，overflow-hidden）
+ *     ├─ 世界层（宽高 = 底图原始像素，transform: translate + scale）
+ *     │    ├─ 网格（仅编辑模式，画在底图之下）
+ *     │    ├─ 底图 / 区域多边形（SVG）/ 标记点（见 MapLayers）
+ *     └─ 区域覆盖层（屏幕空间：名称标签 + 顶点手柄，不随缩放变形）
+ *
+ * 指针与点击怎么解释在 useCanvasGestures（含归一化换算）；
+ * 这个文件只负责结构与摆放。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import type { MapDef, MapPin, MapRegion, MapTool } from '@/types';
 import { cn } from '@/lib/utils';
-import { MapBackground } from './MapBackground';
-import { MapGridLayer } from './MapGridLayer';
-import { MapPinLayer } from './MapPinLayer';
-import { MapRegionLayer } from './MapRegionLayer';
-import { clampNorm } from './mapRender';
+import { MapLayers } from './MapLayers';
+import { MapRegionOverlay } from './MapRegionOverlay';
+import { MapZoomControls } from './MapZoomControls';
 import type { MapViewMode } from './mapRender';
+import type { MapSpotBind } from './MapSpotLayer';
+import type { Size } from './mapViewport';
+import type { MapViewportApi } from './mapViewportApi';
+import { useCanvasGestures } from './useCanvasGestures';
 
 interface Props {
   map: MapDef;
   pins: MapPin[];
   regions: MapRegion[];
   tool: MapTool;
-  /** 编辑 / 预览：预览下不落点、不写坐标 */
+  /** 编辑 / 预览：预览下不落点、不写坐标、不显示网格与手柄 */
   viewMode: MapViewMode;
+  /** 底图的世界尺寸（原始像素），视口按它换算 */
+  world: Size;
+  viewport: MapViewportApi;
+  /** 悬停/点击浮窗的事件（见 MapSpotLayer） */
+  spots: MapSpotBind;
+  /** 把底图实测到的真实像素尺寸回报给模块 */
+  onNaturalSize: (size: Size) => void;
   selectedPinId: string | null;
   selectedRegionId: string | null;
+  hoveredPinId: string | null;
+  hoveredRegionId: string | null;
   /** 区域显示模式：填充 / 仅轮廓 / 资源热度 */
   regionMode: 'fill' | 'outline' | 'resource';
   resourceKey: keyof NonNullable<MapRegion['resources']>;
@@ -41,22 +56,14 @@ interface Props {
 }
 
 export function MapCanvas({
-  map, pins, regions, tool, viewMode, selectedPinId, selectedRegionId, regionMode, resourceKey,
+  map, pins, regions, tool, viewMode, world, viewport, spots, onNaturalSize,
+  selectedPinId, selectedRegionId, hoveredPinId, hoveredRegionId, regionMode, resourceKey,
   showLabels, onCanvasClick, onPinMove, onPinSelect, onRegionSelect, onRegionPointMove, className,
 }: Props) {
-  const surfaceRef = useRef<HTMLDivElement>(null);
-  const [draggingPin, setDraggingPin] = useState<string | null>(null);
   const hasBackground = Boolean(map.asset_id);
-
-  /** 换算：鼠标事件 → 归一化坐标 */
-  const toNorm = useCallback((clientX: number, clientY: number): [number, number] => {
-    const rect = surfaceRef.current?.getBoundingClientRect();
-    if (!rect) return [0.5, 0.5];
-    return [
-      clampNorm((clientX - rect.left) / rect.width),
-      clampNorm((clientY - rect.top) / rect.height),
-    ];
-  }, []);
+  const { worldRef, toNorm, startPinDrag, bind } = useCanvasGestures({
+    viewMode, tool, viewport, onCanvasClick, onPinMove, onPinSelect, onRegionSelect,
+  });
 
   /** 资源热度模式的归一化基准 */
   const maxResource = useMemo(
@@ -64,18 +71,10 @@ export function MapCanvas({
     [regions, resourceKey],
   );
 
-  /**
-   * 切到预览时清掉「正在被拖动」的标记。
-   * 否则拖到一半切模式，松手前那几次 pointermove 还在往库里写坐标。
-   */
-  useEffect(() => {
-    if (viewMode === 'preview') setDraggingPin(null);
-  }, [viewMode]);
-
-  /** 光标：预览模式不需要「可以画」的提示，编辑模式按当前工具给 */
+  /** 光标：预览模式拖拽=平移，编辑模式按当前工具给 */
   const cursorClass =
     viewMode === 'preview'
-      ? 'cursor-default'
+      ? 'cursor-grab'
       : tool === 'pan'
         ? 'cursor-grab'
         : tool === 'pin'
@@ -84,7 +83,8 @@ export function MapCanvas({
 
   return (
     <div
-      ref={surfaceRef}
+      ref={viewport.boxRef}
+      {...bind}
       className={cn(
         // 画布底色：浅暖灰（设计稿要求不要纯白）；暗色换一档更深的蓝灰
         'relative h-full w-full overflow-hidden rounded-lg border border-border',
@@ -92,62 +92,65 @@ export function MapCanvas({
         cursorClass,
         className,
       )}
-      onPointerMove={(e) => {
-        // 预览模式不写坐标（拖拽本就不该开始，这里再兜一层）
-        if (viewMode !== 'edit' || !draggingPin) return;
-        const [x, y] = toNorm(e.clientX, e.clientY);
-        onPinMove(draggingPin, x, y);
-      }}
-      onPointerUp={() => setDraggingPin(null)}
-      onPointerLeave={() => setDraggingPin(null)}
-      onClick={(e) => {
-        // 只有点在「空白画布」上才算：标记与区域内部会 stopPropagation
-        if ((e.target as HTMLElement).dataset.surface !== 'true') return;
-        // 预览模式只允许「点空白取消选中」，绝不落点（写入回调在这里就返回）
-        if (viewMode === 'edit' && tool === 'pin') {
-          const [x, y] = toNorm(e.clientX, e.clientY);
-          onCanvasClick(x, y);
-        } else {
-          onPinSelect(null);
-          onRegionSelect(null);
-        }
-      }}
     >
-      {/* 网格只在编辑模式出现，且画在底图之下：底图不透明时它自然被盖住 */}
-      {viewMode === 'edit' && <MapGridLayer />}
-
-      {/* 底图 */}
-      <MapBackground map={map} />
+      {/* 世界层：宽高 = 底图原始像素，靠 transform 平移缩放 */}
+      <div ref={worldRef} data-wf-map-world style={viewport.worldStyle}>
+        <MapLayers
+          map={map}
+          world={world}
+          pins={pins}
+          regions={regions}
+          viewMode={viewMode}
+          showLabels={showLabels}
+          regionMode={regionMode}
+          resourceKey={resourceKey}
+          maxResource={maxResource}
+          selectedPinId={selectedPinId}
+          selectedRegionId={selectedRegionId}
+          hoveredPinId={hoveredPinId}
+          hoveredRegionId={hoveredRegionId}
+          spots={spots}
+          onNaturalSize={onNaturalSize}
+          onPinSelect={onPinSelect}
+          onPinDragStart={startPinDrag}
+          onRegionSelect={onRegionSelect}
+        />
+      </div>
 
       {!hasBackground && (
         <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">
           <span className="rounded bg-background/75 px-2 py-1 text-[11px] text-muted-foreground">
-            未设置底图 —— 可直接摆放标记点，之后补图不会错位
+            未设置底图 —— 可直接摆放标记点，之后补图不会错位（可滚轮缩放、拖动平移）
           </span>
         </div>
       )}
 
-      <MapRegionLayer
+      {/* 区域名称与顶点手柄画在屏幕空间：正圆、大小不随缩放变 */}
+      <MapRegionOverlay
         regions={regions}
         selectedRegionId={selectedRegionId}
+        hoveredRegionId={hoveredRegionId}
         viewMode={viewMode}
-        mode={regionMode}
-        metric={String(resourceKey)}
-        maxValue={maxResource}
         showLabels={showLabels}
-        onSelect={onRegionSelect}
-        onPointMove={onRegionPointMove}
+        toScreen={viewport.toScreenPixel}
         toNorm={toNorm}
+        onPointMove={onRegionPointMove}
       />
 
-      <MapPinLayer
-        pins={pins}
-        selectedPinId={selectedPinId}
-        viewMode={viewMode}
-        showLabels={showLabels}
-        onSelect={onPinSelect}
-        onDragStart={setDraggingPin}
-      />
+      {/*
+        缩放控件浮在画布右下角（像 Google 地图）。
+        起初放在工具条上，实测 1280 宽、两栏都开着时工具条只有 608px 可用，
+        加了这个胶囊会把整条挤成两行（57px），破坏「工具条底边与面板标题行齐平」
+        的约定 —— 所以改成浮层。
+        stopPropagation：拖这个胶囊不该带动整张地图平移。
+      */}
+      <div className="absolute bottom-3 right-3 z-30" onPointerDown={(e) => e.stopPropagation()}>
+        <MapZoomControls
+          percent={viewport.percent}
+          onZoom={(factor) => viewport.zoomAtAnchor(factor)}
+          onFit={viewport.fit}
+        />
+      </div>
     </div>
   );
 }

@@ -2,29 +2,30 @@
  * 地图模块
  * ------------------------------------------------------------------
  * 需求 2：可视化地图编辑器。
- * 工具条 + 画布 + 侧栏 + 检查器；支持多地图（不同时期 / 分支）、
- * 标记点绑定卡片、区域资源（人口/农业/矿产…）与资源热度着色。
+ * 工具条（见 MapToolbar）+ 画布 + 侧栏 + 检查器；支持多地图（不同时期 /
+ * 分支）、标记点绑定卡片、区域资源（人口/农业/矿产…）与资源热度着色。
+ *
+ * 第二批把两件事接在这里：
+ *   - 视口（缩放/平移/适应屏幕）见 useMapViewport；
+ *   - 悬浮浮窗与移动端底部抽屉见 useMapSpots。
+ * 两者都是**组件内状态**：不进 store、不落盘，换模块或刷新回到「适应屏幕」，
+ * 与「编辑/预览不进 store」的既有约定一致（约束不允许动 store 与偏好）。
  */
-import { useEffect, useState } from 'react';
-import { Crosshair, Map as MapIcon, MousePointer2, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useMemo, useState } from 'react';
+import { Map as MapIcon } from 'lucide-react';
 import { EmptyState } from '@/components/ui/primitives';
 import { ModuleBody, ModuleLayout } from '@/components/layout/Panel';
-import { cn } from '@/lib/utils';
 import type { MapTool, RegionResources } from '@/types';
 import { useStore } from '@/store';
 import { MapCanvas } from './MapCanvas';
 import { MapInspector } from './MapInspector';
-import { MapModeSwitch } from './MapModeSwitch';
 import { MapSidebar } from './MapSidebar';
+import { useMapSpots } from './MapSpotLayer';
+import { MapToolbar } from './MapToolbar';
+import { resolveWorldSize } from './mapViewport';
+import type { Size } from './mapViewport';
+import { useMapViewport } from './useMapViewport';
 import type { MapViewMode } from './mapRender';
-
-/**
- * 工具按钮的「当前选中」样式。
- * 三个按钮的**基底**统一成透明文字按钮（ghost + h-8），当前工具只用淡紫底表示状态，
- * 不再出现「一个是灰底、一个是描边」的混搭；hover 也一起压住，免得悬停时变色。
- */
-const TOOL_ACTIVE = 'bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary';
 
 export function MapModule() {
   const maps = useStore((s) => s.maps);
@@ -32,10 +33,12 @@ export function MapModule() {
   const selectMap = useStore((s) => s.selectMap);
   const pins = useStore((s) => s.pins);
   const regions = useStore((s) => s.regions);
+  const assets = useStore((s) => s.assets);
   const addPin = useStore((s) => s.addPin);
   const addRegion = useStore((s) => s.addRegion);
   const updatePin = useStore((s) => s.updatePin);
   const moveRegionPoint = useStore((s) => s.moveRegionPoint);
+  const setInspectorOpen = useStore((s) => s.setInspectorOpen);
 
   const [tool, setTool] = useState<MapTool>('select');
   /**
@@ -48,6 +51,8 @@ export function MapModule() {
   const [showLabels, setShowLabels] = useState(true);
   const [regionMode, setRegionMode] = useState<'fill' | 'outline' | 'resource'>('fill');
   const [resourceKey, setResourceKey] = useState<keyof RegionResources>('population');
+  /** <img> 实测到的底图像素尺寸（老底图没记 width/height 时用） */
+  const [measured, setMeasured] = useState<Size | null>(null);
 
   // 没有选中地图时自动选第一张，避免打开模块是空白
   useEffect(() => {
@@ -73,6 +78,43 @@ export function MapModule() {
   const mapPins = pins.filter((p) => p.map_id === map?.id);
   const mapRegions = regions.filter((r) => r.map_id === map?.id);
 
+  /** 世界盒尺寸：资源表里记的像素 > <img> 实测 > 4:3 默认 */
+  const asset = useMemo(() => assets.find((a) => a.id === map?.asset_id) ?? null, [assets, map?.asset_id]);
+  const world = useMemo(() => resolveWorldSize(asset, measured), [asset, measured]);
+
+  const spots = useMapSpots();
+  // 平移：预览模式拖空白即平移；编辑模式用「平移」工具（其余工具不误触）
+  const viewport = useMapViewport(world, map?.id ?? '', mode === 'preview' || tool === 'pan', spots.hide);
+
+  const hoveredPinId = spots.target?.kind === 'pin' ? spots.target.id : null;
+  const hoveredRegionId = spots.target?.kind === 'region' ? spots.target.id : null;
+
+  /**
+   * 点选标记/区域时的「看得到详情」策略：
+   *   - 桌面预览模式：主动展开右侧检查器（需求：点击打点/区域跳转检查器）；
+   *   - 触屏/窄屏：**不**展开 —— 那里点一下弹的是底部抽屉，同一份只读信息
+   *     没必要在背后再叠一个检查器浮层（两个面板摞在一起很乱）；
+   *   - 编辑模式的桌面端保持原样（检查器本来就在旁边）。
+   */
+  const revealInspector = (id: string | null) => {
+    if (!id || spots.coarse) return;
+    if (mode === 'preview') setInspectorOpen(true);
+  };
+
+  const selectPin = (id: string | null) => {
+    setSelectedPinId(id);
+    setSelectedRegionId(null);
+    spots.hide();
+    revealInspector(id);
+  };
+
+  const selectRegion = (id: string | null) => {
+    setSelectedRegionId(id);
+    setSelectedPinId(null);
+    spots.hide();
+    revealInspector(id);
+  };
+
   return (
     <ModuleLayout>
       <MapSidebar
@@ -96,52 +138,16 @@ export function MapModule() {
           />
         ) : (
           <div className="flex h-full min-h-0 flex-col">
-            {/* 工具条整条高度 = 36px：min-h-9（含它自己的 border-b）与左右面板标题行的
-                h-9 对齐（方案 B：不动共享外壳）。不用固定 h-9 是因为窄窗口下这一行会
-                flex-wrap，固定高会把第二行裁掉；min-height 则会自然长高。 */}
-            <div className="flex min-h-9 shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 text-xs">
-              <span className="font-medium">{map.name}</span>
-              {map.period && <span className="text-muted-foreground">· {map.period}</span>}
-              <span className="text-muted-foreground">
-                · 标记 {mapPins.length} · 区域 {mapRegions.length}
-              </span>
-              {/*
-                工具条右组：所有控件统一 h-8（32px）+ items-center + gap-2。
-                三个按钮基底都是透明文字按钮，只有「当前工具」带淡紫底；
-                预览模式只留一个「选择」（对齐设计稿）。
-              */}
-              <div className="ml-auto flex items-center gap-2">
-                {mode === 'edit' ? (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn('h-8 gap-1', tool === 'pin' && TOOL_ACTIVE)}
-                      onClick={() => setTool('pin')}
-                    >
-                      <Crosshair className="size-3.5" /> 打点模式
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn('h-8 gap-1', tool === 'select' && TOOL_ACTIVE)}
-                      onClick={() => setTool('select')}
-                    >
-                      <MousePointer2 className="size-3.5" /> 选择
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={() => addRegion(map.id)}>
-                      <Plus className="size-3.5" /> 新建区域
-                    </Button>
-                  </>
-                ) : (
-                  <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={() => setTool('select')}>
-                    <MousePointer2 className="size-3.5" /> 选择
-                  </Button>
-                )}
-                <span aria-hidden className="h-5 w-px bg-border" />
-                <MapModeSwitch mode={mode} onChange={changeMode} />
-              </div>
-            </div>
+            <MapToolbar
+              map={map}
+              pinCount={mapPins.length}
+              regionCount={mapRegions.length}
+              mode={mode}
+              onModeChange={changeMode}
+              tool={tool}
+              onToolChange={setTool}
+              onAddRegion={() => addRegion(map.id)}
+            />
 
             <div className="min-h-0 flex-1 p-3">
               <MapCanvas
@@ -150,8 +156,14 @@ export function MapModule() {
                 pins={mapPins}
                 regions={mapRegions}
                 tool={tool}
+                world={world}
+                viewport={viewport}
+                spots={spots.bind}
+                onNaturalSize={setMeasured}
                 selectedPinId={selectedPinId}
                 selectedRegionId={selectedRegionId}
+                hoveredPinId={hoveredPinId}
+                hoveredRegionId={hoveredRegionId}
                 regionMode={regionMode}
                 resourceKey={resourceKey}
                 showLabels={showLabels}
@@ -165,14 +177,8 @@ export function MapModule() {
                   setTool('select');
                 }}
                 onPinMove={(id, x, y) => updatePin(id, { x, y })}
-                onPinSelect={(id) => {
-                  setSelectedPinId(id);
-                  setSelectedRegionId(null);
-                }}
-                onRegionSelect={(id) => {
-                  setSelectedRegionId(id);
-                  setSelectedPinId(null);
-                }}
+                onPinSelect={selectPin}
+                onRegionSelect={selectRegion}
                 onRegionPointMove={(regionId, index, x, y) => moveRegionPoint(regionId, index, [x, y])}
               />
             </div>
@@ -181,6 +187,7 @@ export function MapModule() {
       </ModuleBody>
 
       <MapInspector selectedPinId={selectedPinId} selectedRegionId={selectedRegionId} viewMode={mode} />
+      {spots.overlay}
     </ModuleLayout>
   );
 }
