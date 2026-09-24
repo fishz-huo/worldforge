@@ -10,15 +10,20 @@
  * 所以底部只留 4 个高频模块 + 一个「更多」，其余模块从「更多」里进。
  * 取舍依据是移动端的使用场景：查设定、看地图、翻时间轴、写两笔；
  * 版本/插件/设置属于低频配置，放进「更多」不损失可达性。
+ *
+ * 世界观切换器原本只挂在桌面图标栏底部（SideRail 里那段 `hidden md:flex`），
+ * 窄屏下整条图标栏不渲染 —— 于是「切换 / 新建世界观」在手机上彻底没有入口。
+ * 这里把 WorldSwitcher 原样搬进「更多」抽屉的顶部：桌面端一个像素都不动。
  */
 import { useState } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { Globe2, MoreHorizontal } from 'lucide-react';
 import { Icon } from '@/components/Icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import { MODULES, type ModuleDef } from './modules';
+import { WorldSwitcher } from './WorldSwitcher';
 
 /** 底部常驻的四个模块（顺序即显示顺序） */
 const PRIMARY: string[] = ['board', 'cards', 'map', 'timeline'];
@@ -66,8 +71,18 @@ export function MobileNav() {
       <Dialog open={moreOpen} onOpenChange={setMoreOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>更多模块</DialogTitle>
+            <DialogTitle>更多</DialogTitle>
           </DialogHeader>
+
+          {/* 世界观入口：窄屏没有左侧图标栏，切换/新建世界观只能从这里进 */}
+          <div className="space-y-1 rounded-md border border-border bg-card p-2">
+            <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              <Globe2 className="size-3" />
+              世界观 / 平行世界
+            </div>
+            <WorldSwitcher />
+          </div>
+
           <div className="grid grid-cols-2 gap-2">
             {rest.map((m) => (
               <Button
@@ -90,7 +105,8 @@ export function MobileNav() {
             ))}
           </div>
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            桌面端用数字键 1~9 直接跳模块，手机上这里只保留 4 个常用的，其余收在这里。
+            桌面端用数字键 1~9 直接跳模块，手机上这里只保留 4 个常用的，其余收在这里；
+            世界观切换器在桌面端位于左侧图标栏底部，手机上没有图标栏，所以放在这一格里。
           </p>
         </DialogContent>
       </Dialog>
