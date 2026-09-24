@@ -14,6 +14,7 @@
  */
 import { savePrefs, WIDTH_LIMITS } from '@/store/prefs';
 import { useStore } from '@/store';
+import { fitWindowToScreen } from './window-fit';
 
 /**
  * 面板宽度用 CSS 变量表达，单位为 rem（=16px）。
@@ -89,6 +90,9 @@ function saveWidthsSoon(sidebar: number, inspector: number): void {
 /**
  * 订阅布局状态并同步到 DOM。
  * 注册时立即执行一次 —— 这就是「首帧不闪」的保证。
+ *
+ * 顺带把窗口收进屏幕（见 lib/window-fit.ts）：它和布局变量一样必须在
+ * 首次绘制前后立刻生效，而且只跑一次，放在这里就不必再动 main.tsx。
  */
 export function watchLayout(): void {
   const push = (state: { uiScale: number; sidebarWidth: number; inspectorWidth: number }) => {
@@ -97,6 +101,7 @@ export function watchLayout(): void {
   };
   // 注册时立即跑一次：这一步保证首帧就是用户设定的缩放与宽度
   push(useStore.getState());
+  void fitWindowToScreen();
 
   let prevSidebar = useStore.getState().sidebarWidth;
   let prevInspector = useStore.getState().inspectorWidth;

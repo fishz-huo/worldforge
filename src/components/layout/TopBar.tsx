@@ -33,8 +33,15 @@ export function TopBar() {
   const showSearch = !['board', 'plugins', 'settings'].includes(module);
 
   return (
-    <header className="flex h-11 shrink-0 items-center gap-2 border-b border-border bg-card/40 px-2">
-      <div className="flex items-center gap-2 pl-1">
+    /*
+      窄窗口下这行允许**换行**而不是把右边的按钮挤出可视区：
+      固定 h-11 时，宽度不够的最后几个图标会被裁掉（用户看到的是"按钮不见了"），
+      改 min-h-11 + flex-wrap 后，挤不下就多占一行，功能一个不少。
+      搜索框是这行里唯一可被压缩的元素（其余控件都 shrink-0）：先缩它，
+      缩不动了才换行。
+    */
+    <header className="flex min-h-11 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-card/40 px-2">
+      <div className="flex shrink-0 items-center gap-2 pl-1">
         <span className="text-sm font-semibold tracking-wide">WorldForge</span>
         <span className="hidden text-[11px] text-muted-foreground sm:inline">v0.1</span>
         <span className="mx-1 hidden h-4 w-px bg-border sm:block" />
@@ -45,7 +52,7 @@ export function TopBar() {
       </div>
 
       {showSearch && (
-        <div className="relative ml-auto w-full max-w-xs">
+        <div className="relative ml-auto w-full min-w-[7rem] max-w-xs">
           <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
@@ -64,7 +71,7 @@ export function TopBar() {
         </div>
       )}
 
-      <div className={cn('flex items-center gap-0.5', !showSearch && 'ml-auto')}>
+      <div className={cn('flex shrink-0 items-center gap-0.5', !showSearch && 'ml-auto')}>
         <Hint label={branchScope === 'current' ? '当前分支视图（点击查看全部平行世界）' : '全部平行世界视图'}>
           <Button
             variant={branchScope === 'all' ? 'secondary' : 'ghost'}

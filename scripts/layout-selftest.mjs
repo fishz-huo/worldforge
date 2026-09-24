@@ -119,4 +119,41 @@ await test('layout-sync 转发的是 prefs 里的同一份极限值', () => {
   assert.deepEqual(INSPECTOR_LIMITS, WIDTH_LIMITS.inspector);
 });
 
+group('窗口收进屏幕的计算（1080p 缩放问题）');
+
+const { computeWindowFit, fitWindowToScreen } = await import('@/lib/window-fit.ts');
+
+await test('1080p 125% 缩放：1360×880 的窗口被收进 1536×816 的工作区', () => {
+  // 宽 1360 <= 1536-16=1520 → 宽度不动；高 880 > 816-16=800 → 高度收到 800
+  assert.deepEqual(computeWindowFit(1360, 880, 1536, 816), { width: 1360, height: 800 });
+});
+
+await test('1080p 150% 缩放：1280×800 收到 1264×656（两侧都要让出 16px）', () => {
+  assert.deepEqual(computeWindowFit(1280, 800, 1280, 672), { width: 1264, height: 656 });
+});
+
+await test('屏幕够大就一个字都不动（默认窗口不放大、不改用户尺寸）', () => {
+  assert.equal(computeWindowFit(1280, 800, 1920, 1040), null);
+  assert.equal(computeWindowFit(900, 600, 1920, 1040), null);
+  assert.equal(computeWindowFit(1280, 784, 1920, 800), null, '正好等于工作区减留白时不该动');
+});
+
+await test('屏幕小到离谱时也算不出 0 或负数（不能把窗口设没）', () => {
+  const fit = computeWindowFit(1280, 800, 10, 10);
+  assert.ok(fit && fit.width >= 1 && fit.height >= 1, `算出来是 ${JSON.stringify(fit)}`);
+});
+
+await test('浏览器/Node 环境里什么都不做（没有窗口可调）', async () => {
+  assert.equal(await fitWindowToScreen(), false);
+});
+
+await test('tauri.conf.json 的默认与最小尺寸能放进 1024×700（用户点不到按钮的根因）', () => {
+  const conf = JSON.parse(readFileSync(fileURLToPath(new URL('../src-tauri/tauri.conf.json', import.meta.url)), 'utf8'));
+  const win = conf.app.windows[0];
+  assert.ok(win.minWidth <= 1024, `minWidth=${win.minWidth} 大于 1024：小屏上缩不下去`);
+  assert.ok(win.minHeight <= 700, `minHeight=${win.minHeight} 大于 700：小屏上缩不下去`);
+  // 1080p@125% 的工作区约 1536×816：默认窗口必须放得下，否则启动就露不出底边
+  assert.ok(win.width <= 1536 && win.height <= 816, `默认 ${win.width}×${win.height} 放不进 1536×816`);
+});
+
 finish('界面布局偏好');

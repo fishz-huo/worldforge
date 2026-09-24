@@ -29,21 +29,43 @@ export function useExclusiveDrawer(self: 'sidebar' | 'inspector', open: boolean)
 }
 
 /**
+ * 「三栏别挤在一起」的宽度阈值。
+ *
+ * 两栏并排时的固定开销：图标栏 56 + 侧栏 256 + 检查器 320 + 两条分隔条 16
+ * = 648px。窗口宽 1024 时主内容区只剩 376px —— 地图画布、时间轴、分栏写作
+ * 都是横向内容，376px 下虽然"都点得到"，但已经没法用了；1080p 缩放后
+ * 常见的 1250~1280px 逻辑宽度也落在"该收一栏"的区间里。
+ * 所以跨过这个宽度就往回收：收起来的栏随时能从顶栏两个按钮 / Ctrl+B / Ctrl+I 调出来。
+ */
+export const DRAWER_COLLAPSE_WIDTH = 1280;
+
+/**
  * 进入窄屏时自动收起左右两栏。
  *
- * 为什么需要：960px 以上的窗口里侧栏/检查器是**并排**的两个正常栏，
- * 用户不会特意去关它们；一旦把窗口拖窄（或手机横竖屏切换），同一个
- * `sidebarOpen` 就变成"两个浮层同时盖在内容上"—— 用户看到的是
- * 左边一层卡片列表、右边一层检查器、底下还有内容，像排版坏了。
+ * 为什么需要：1280px 以上的窗口里侧栏/检查器是**并排**的两个正常栏，
+ * 用户不会特意去关它们；一旦把窗口拖窄（或手机横竖屏切换、或 1080p 开了
+ * 125% 缩放），同一个 `sidebarOpen` 就变成"两个浮层同时盖在内容上"，
+ * 或者"三栏把主内容压到 400px"—— 用户看到的是左边一层卡片列表、右边一层
+ * 检查器、底下还有内容，像排版坏了。
  * 这里在跨过断点的那一刻把两栏都收起来，让用户自己决定要哪个；
  * 只在**跨越断点**时触发，所以之后手动打开的面板不会被立刻关掉。
+ *
+ * 补一条启动时的例外：打开就是窄窗口（缩放后的 1080p 很常见）时不会有
+ * "跨越断点"这个动作，于是三栏会一直挤着。这时收掉检查器、留下侧栏
+ * —— 侧栏是导航主力，检查器按需再开。
  */
 export function useAutoCollapseDrawers(): void {
   const setSidebarOpen = useStore((s) => s.setSidebarOpen);
   const setInspectorOpen = useStore((s) => s.setInspectorOpen);
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 1023px)');
+    const mq = window.matchMedia(`(max-width: ${DRAWER_COLLAPSE_WIDTH - 1}px)`);
+    if (mq.matches) {
+      const s = useStore.getState();
+      // 只在"窗口宽到两栏是并排的"区间里做这件事：再窄下去两栏本来就是浮层，
+      // 浮层不占内容区宽度，交给 useExclusiveDrawer 管。
+      if (window.innerWidth >= 1024 && s.sidebarOpen && s.inspectorOpen && !s.focusMode) setInspectorOpen(false);
+    }
     const onChange = (e: MediaQueryListEvent) => {
       if (!e.matches) return;
       setSidebarOpen(false);
