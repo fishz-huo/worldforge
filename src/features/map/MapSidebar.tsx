@@ -59,53 +59,50 @@ export function MapSidebar({
   return (
     <SidePanel title="地图">
       <div className="space-y-3 p-2">
+        {/*
+          预览模式只留「看地图」要用的两样东西：地图列表（可切换）+ 新建地图输入框。
+          名称 / 时期标签 / 对应刻度 / 底图 / 不透明度 / 绘制工具 / 显示选项 / 区域统计
+          都是编辑用的，留在预览里只会干扰视线；切回编辑模式它们会原样回来。
+        */}
         <MapListPanel />
 
-        {map && (
+        {map && viewMode === 'edit' && (
           <>
             <MapSettingsForm map={map} />
 
-            {/* 绘制工具只在编辑模式出现：预览模式是纯查看，不该有画笔 */}
-            {viewMode === 'edit' && (
-              <>
-                <SectionTitle>绘制工具</SectionTitle>
-                <div className="grid grid-cols-4 gap-1">
-                  {TOOLS.map(({ tool: value, label, Icon: ToolIcon, hint }) => (
-                    <button
-                      key={value}
-                      onClick={() => setTool(value)}
-                      title={hint}
-                      className={cn(
-                        'flex flex-col items-center gap-0.5 rounded-md border py-1.5 text-[10px] transition-colors',
-                        value === tool
-                          ? 'border-primary bg-primary/15 text-primary'
-                          : 'border-border bg-card hover:bg-accent',
-                      )}
-                    >
-                      <ToolIcon className="size-3.5" />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[10px] leading-relaxed text-muted-foreground">
-                  {TOOLS.find((t) => t.tool === tool)?.hint}
-                </p>
-              </>
-            )}
+            <SectionTitle>绘制工具</SectionTitle>
+            <div className="grid grid-cols-4 gap-1">
+              {TOOLS.map(({ tool: value, label, Icon: ToolIcon, hint }) => (
+                <button
+                  key={value}
+                  onClick={() => setTool(value)}
+                  title={hint}
+                  className={cn(
+                    'flex flex-col items-center gap-0.5 rounded-md border py-1.5 text-[10px] transition-colors',
+                    value === tool
+                      ? 'border-primary bg-primary/15 text-primary'
+                      : 'border-border bg-card hover:bg-accent',
+                  )}
+                >
+                  <ToolIcon className="size-3.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] leading-relaxed text-muted-foreground">
+              {TOOLS.find((t) => t.tool === tool)?.hint}
+            </p>
 
             <SectionTitle
               right={
-                // 预览模式不给「新建区域」：它是画布编辑入口，建出来的区域在预览下也拖不动
-                viewMode === 'edit' ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 gap-1 text-[10px]"
-                    onClick={() => addRegion(map.id)}
-                  >
-                    新建区域
-                  </Button>
-                ) : undefined
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 gap-1 text-[10px]"
+                  onClick={() => addRegion(map.id)}
+                >
+                  新建区域
+                </Button>
               }
             >
               区域（{mapRegions.length}）
