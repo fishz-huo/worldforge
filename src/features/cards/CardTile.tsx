@@ -39,24 +39,36 @@ export function CardTile({ cardId }: { cardId: string }) {
       {/* 类型色条：一眼分辨卡片性质 */}
       <span className="absolute inset-y-0 left-0 w-0.5" style={{ background: def.color }} />
 
+      {/*
+        第三轮问题六：置顶徽标固定在卡片右上角。
+        原来是塞在标题那一行的文本流里（类型图标 → 标题 → 星标 → 悬停才现的
+        Pin 开关），位置会跟着内容重排浮动。改成绝对定位后与摘要几行、有没有
+        封面都无关（有封面时它就压在图右上角，与常见卡片 UI 一致）；
+        悬停出现的 Pin 开关并进同一个基准点（排在星标左边），免得跟标题抢位。
+        data-wf-card-flag 是给浏览器实测用的锚点（量四类卡片的坐标是否一致）。
+      */}
+      <span data-wf-card-flag="pinned" className="absolute right-2 top-2 z-10 flex items-center gap-0.5">
+        {card.pinned === 1 && <Star className="size-3 fill-amber-400 text-amber-400" />}
+        <span
+          role="button"
+          tabIndex={-1}
+          title={card.pinned === 1 ? '取消置顶' : '置顶'}
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePin(card.id);
+          }}
+          className="rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-amber-400 group-hover:opacity-100"
+        >
+          <Pin className="size-3" />
+        </span>
+      </span>
+
       {card.cover_asset && <CoverThumb assetId={card.cover_asset} className="h-24 w-full" />}
 
       <div className="flex min-w-0 flex-1 flex-col gap-1 p-2.5 pl-3">
-        <div className="flex items-center gap-1.5">
+        <div className={cn('flex items-center gap-1.5', !card.cover_asset && 'pr-9')}>
           <Icon name={def.icon} className="size-3.5 shrink-0" style={{ color: def.color }} />
           <span className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">{card.title}</span>
-          {card.pinned === 1 && <Star className="size-3 shrink-0 fill-amber-400 text-amber-400" />}
-          <span
-            role="button"
-            tabIndex={-1}
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePin(card.id);
-            }}
-            className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-amber-400 group-hover:opacity-100"
-          >
-            <Pin className="size-3" />
-          </span>
         </div>
 
         {card.subtitle && <div className="truncate text-[11px] text-muted-foreground">{card.subtitle}</div>}
