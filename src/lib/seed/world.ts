@@ -35,7 +35,7 @@ export function buildSeedScene(worldId: string, now: number, seed: SeedCards): S
   /* ------------------------------ 地图 ------------------------------ */
   const mapId = newMapId();
   maps.push({
-    id: mapId, world_id: worldId, branch_id: null, name: '大陆全图 · 焚天历 245 年',
+    id: mapId, world_id: worldId, branch_id: null, name: '大陆全图',
     description: '灰烬王国与北境联盟对峙时期的疆域与资源分布。',
     asset_id: null, period: '焚天历 245 年', period_t: 245, opacity: 0.9, meta: {},
     created_at: now, updated_at: now,

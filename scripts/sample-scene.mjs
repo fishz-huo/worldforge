@@ -85,11 +85,14 @@ export function parseDocs(sectionText) {
     const rest = lines.slice(1).join('\n');
     const start = rest.indexOf('内容开始');
     const end = rest.indexOf('内容结束');
+    // 手册里的标记写成 `[内容开始]`：起点要再跳过后面的 `]`，
+    // 否则每篇正文的第一行都会多出一个残留的 `]`（sample-check 有断言守着）。
+    const from = start < 0 ? -1 : start + '内容开始'.length + (rest[start + 4] === ']' ? 1 : 0);
     return {
       kind: KIND[kindLabel] ?? 'manuscript',
       title: pick(rest, '标题'),
       summary: pick(rest, '摘要'),
-      content: start >= 0 && end > start ? rest.slice(start + 4, end).trim() : '',
+      content: from >= 0 && end > from ? rest.slice(from, end).trim() : '',
     };
   });
 }

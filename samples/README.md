@@ -32,7 +32,7 @@ node scripts/sample-check.mjs    # 校验（含字段名、下拉取值、真实
 | 文稿 / 大纲节点（根节点 3） | 3 / 12 |
 | 平行世界分支 | 2 |
 
-<!-- sample-source-sha256: 76bdccb6d209eb64 -->
+<!-- sample-source-sha256: c2b7248582da8475 -->
 上一行的注释是手册的指纹：`scripts/sample-check.mjs` 用它判断备份是否已经过期 ——
 改了手册但忘了重新生成时，自测会直接报错提醒。
 

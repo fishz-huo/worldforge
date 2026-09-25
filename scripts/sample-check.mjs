@@ -76,6 +76,11 @@ check('落空的双链正好是手册声明的处数',
   lint.missing.length === declaredGaps,
   `手册写 ${declaredGaps} 处，实际 ${lint.missing.length} 处：${lint.missing.join('；')}`);
 
+/* ---------------- 2.6 生成器的切片没把 [内容开始] 的 ] 带进正文 ---------------- */
+const dirtyDocs = snap.docs.filter((d) => d.content.startsWith(']'));
+check('文稿正文不以多余的 ] 开头', dirtyDocs.length === 0,
+  dirtyDocs.map((d) => d.title).join('、'));
+
 /* --------------------------- 3. 真实导入 --------------------------- */
 await state().bootstrap();
 const worldId = state().createWorld('潮线之外（自测导入）');
