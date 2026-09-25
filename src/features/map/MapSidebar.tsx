@@ -13,11 +13,14 @@ import type { MapTool, RegionResources } from '@/types';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import { MapDisplayOptions } from './MapDisplayOptions';
+import { MapExportPanel } from './MapExportPanel';
 import { MapListPanel } from './MapListPanel';
 import { MapSettingsForm } from './MapSettingsForm';
 import { isTerrainPin } from './mapTerrain';
 import type { TerrainSymbol } from './mapTerrain';
 import type { MapViewMode } from './mapRender';
+import type { Size } from './mapViewport';
+import type { MapViewportApi } from './mapViewportApi';
 import { TerrainPalette } from './TerrainPalette';
 
 /**
@@ -46,11 +49,19 @@ interface Props {
   /** 地形笔刷（null = 没在画地形） */
   brush: TerrainSymbol | null;
   setBrush: (s: TerrainSymbol | null) => void;
+  /**
+   * 底图的世界尺寸与视口 API：左栏的「导出图片」要用。
+   * 只加这两个（不给左栏透传导出面板那 11 个入参）：其余 9 个左栏自己就有 ——
+   * map / pins / regions 是它自己读的 store，regionMode / resourceKey /
+   * showLabels 本来就是它的 props（2026-09-25 入口从工具条搬来时定下）。
+   */
+  world: Size;
+  viewport: MapViewportApi;
 }
 
 export function MapSidebar({
   viewMode, tool, setTool, showLabels, setShowLabels, regionMode, setRegionMode, resourceKey,
-  setResourceKey, brush, setBrush,
+  setResourceKey, brush, setBrush, world, viewport,
 }: Props) {
   const maps = useStore((s) => s.maps);
   const selectedMapId = useStore((s) => s.selectedMapId);
@@ -60,10 +71,12 @@ export function MapSidebar({
 
   const map = maps.find((m) => m.id === selectedMapId) ?? null;
   const mapRegions = regions.filter((r) => r.map_id === map?.id);
-  /** 地形也是 map_pins 的行，统计时要按 meta.kind 分开数 */
+  /** 地形也是 map_pins 的行，统计时要按 meta.kind 分开数（导出的两张清单也要分开） */
   const mapPins = pins.filter((p) => p.map_id === map?.id);
-  const terrainCount = mapPins.filter(isTerrainPin).length;
-  const pinCount = mapPins.length - terrainCount;
+  const terrainPins = mapPins.filter(isTerrainPin);
+  const plainPins = mapPins.filter((p) => !isTerrainPin(p));
+  const terrainCount = terrainPins.length;
+  const pinCount = plainPins.length;
 
   return (
     <SidePanel title="地图">
@@ -148,6 +161,31 @@ export function MapSidebar({
               <Layers className="size-3" />
               标记 {pinCount} · 区域 {mapRegions.length} · 地形 {terrainCount}
             </div>
+          </>
+        )}
+
+        {/*
+          「导出图片」入口（2026-09-25 从工具条搬到左栏）：渲染在
+          `viewMode === 'edit'` 分支**之外**，所以**编辑与预览都在** ——
+          预览是最常导出的场景，而预览模式下左栏只剩地图列表，放进分支里就没了。
+          编辑模式下它排在统计小字行之后（左栏真正的底部）。
+        */}
+        {map && (
+          <>
+            <SectionTitle>导出</SectionTitle>
+            <MapExportPanel
+              mapName={map.name}
+              world={world}
+              assetId={map.asset_id}
+              opacity={map.opacity}
+              viewport={viewport}
+              pins={plainPins}
+              regions={mapRegions}
+              terrain={terrainPins}
+              regionMode={regionMode}
+              resourceKey={resourceKey}
+              showLabels={showLabels}
+            />
           </>
         )}
       </div>

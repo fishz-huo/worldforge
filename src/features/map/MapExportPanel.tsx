@@ -1,8 +1,10 @@
 /**
- * 工具条上的「导出图片」入口（按钮 + 选项弹层）
+ * 「导出图片」入口（左栏按钮 + 选项弹层）
  * ==================================================================
- * 位置在工具条右侧、模式开关左边（用户拍板）：**编辑与预览都能用** ——
- * 预览是最常导出的场景，放左栏就导不了（预览时左栏只剩地图列表）。
+ * 位置在左栏最底部的常驻分组（见 MapSidebar），2026-09-25 从工具条搬来：
+ * 原先挂在工具条右侧会把工具条挤成两行。搬到左栏还多了一层保障 —— 它渲染在
+ * `viewMode === 'edit'` 分支**之外**，所以**编辑与预览都能用**（预览是最常
+ * 导出的场景，而预览模式下左栏只剩地图列表，放分支里就没了）。
  * 面板里三组选项 + 一行实时尺寸 + 一行状态；导出是异步的，期间按钮转圈并禁用。
  * 选项口径见 useMapExport 与 mapExportRect（默认 当前视口 / PNG / 2×）。
  */
@@ -45,22 +47,18 @@ export function MapExportPanel(args: MapExportArgs) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        {/*
-          纯图标 + title：实测带文字的按钮（84px）会把工具条在 1440 宽就挤成两行，
-          而工具条的 36px 高度是与左右面板标题行对齐的（用户 2026-09-24 定的）。
-          图标按钮占 32px，实测 1440 恢复单行；文案在弹层里，不丢信息。
-        */}
+        {/* 左栏按钮的语言：全宽 h-8 + 图标 + 文字（与「新建区域」那排同族，但不占主色） */}
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="h-8 w-8 p-0"
+          className="h-8 w-full gap-1.5 text-xs"
           title="把当前地图导出成一张图片"
-          aria-label="导出图片"
         >
-          <Download className="size-3.5" />
+          <Download className="size-3.5" /> 导出图片
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 space-y-3 p-3">
+      {/* 左栏 256px 装不下 288px 的面板：从头对齐，让它往右浮到画布上（Radix 自己避让边缘） */}
+      <PopoverContent align="start" className="w-72 space-y-3 p-3">
         <Row label="格式">
           <Select value={ex.format} onValueChange={(v) => ex.setFormat(v as ExportFormat)}>
             <SelectTrigger className="h-8 w-40 text-xs">

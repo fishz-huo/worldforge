@@ -22,6 +22,7 @@ import { useMapSpots } from './MapSpotLayer';
 import { isTerrainPin } from './mapTerrain';
 import { resolveWorldSize } from './mapViewport';
 import type { Size } from './mapViewport';
+import { useMapDelete } from './useMapDelete';
 import { useMapKeys } from './useMapKeys';
 import { useMapSelection } from './useMapSelection';
 import { useMapStore } from './useMapStore';
@@ -70,6 +71,8 @@ export function MapModule() {
 
   const spots = useMapSpots();
   const sel = useMapSelection(spots, mode, setInspectorOpen);
+  // Delete / Backspace：编辑模式下删掉选中的对象（规则与边界见 useMapDelete）
+  useMapDelete(mode, sel);
   const terrain = useTerrainStage({
     map,
     pins: mapAllPins,
@@ -117,6 +120,9 @@ export function MapModule() {
         resourceKey={resourceKey}
         setResourceKey={setResourceKey}
         brush={terrain.brush}
+        // 导出面板搬进左栏后要的两样（其余入参左栏自己有，见 MapSidebar 的 Props）
+        world={world}
+        viewport={viewport}
         // 选了笔刷就把工具切回「选择」（直接 setTool，别走 changeTool：那会顺手放下笔刷）
         setBrush={(symbol) => {
           terrain.pick(symbol);
