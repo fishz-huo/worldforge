@@ -90,8 +90,7 @@ export interface MapStageView {
 /** 舞台的动作（全部由 MapModule 提供实现，这里只声明） */
 export interface MapStageActions {
   onModeChange: (next: MapViewMode) => void;
-  onToolChange: (tool: MapTool) => void;
-  onAddRegion: () => void;
+  /** 换工具与「新建区域」的入口都在左栏（工具条那份重复的已于 2026-09-25 删掉） */
   onNaturalSize: (size: Size) => void;
   onCanvasClick: (x: number, y: number) => void;
   onPinMove: (pinId: string, x: number, y: number) => void;

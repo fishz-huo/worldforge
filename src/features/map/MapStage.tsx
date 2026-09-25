@@ -22,9 +22,6 @@ export function MapStage({
         terrainCount={data.terrainCount}
         mode={mode}
         onModeChange={actions.onModeChange}
-        tool={tool}
-        onToolChange={actions.onToolChange}
-        onAddRegion={actions.onAddRegion}
       />
 
       <div className="min-h-0 flex-1 p-3">

@@ -33,7 +33,7 @@ import type { MapViewMode } from './mapRender';
 
 export function MapModule() {
   const {
-    maps, selectedMapId, pins, regions, assets, selectMap, addPin, updatePin, addRegion,
+    maps, selectedMapId, pins, regions, assets, selectMap, addPin, updatePin,
     updateRegion, moveRegionPoint, removeRegionPoint, setInspectorOpen,
   } = useMapStore();
   const { place, patch } = useMapTerrain();
@@ -161,8 +161,6 @@ export function MapModule() {
             }}
             actions={{
               onModeChange: changeMode,
-              onToolChange: changeTool,
-              onAddRegion: () => addRegion(map.id),
               onNaturalSize: setMeasured,
               onCanvasClick: (x, y) => {
                 const id = addPin(map.id, x, y, { label: `标记 ${mapPins.length + 1}`, color: '#ef4444' });
