@@ -100,14 +100,17 @@ export function buildSeedScene(worldId: string, now: number, seed: SeedCards): S
   entry(tMentor, 178, null, '出生', byKey.mentor.id, '', '北境流亡贵族之女');
   entry(tMentor, 230, null, '接任团长', byKey.mentor.id, '以灵械战术重整骑士团', '灰烬骑士团团长');
   entry(tGeo, 245.3, null, '烬关以西灰化', byKey.warEvent.id, '约 300 平方公里土地变成灰原', '不可耕种，灵息外溢');
-  entry(tTech, 0, 100, '灵息浓度 100%', null, '地脉充盈', '超凡者稀缺但强大', 100);
-  entry(tTech, 300, null, '灵息浓度 70%', null, '预测值：枯竭倒计时', '', 70);
+  entry(tTech, 0, 100, '地脉充盈期', null, '灵息浓度 100%', '超凡者稀缺但强大', 100);
+  entry(tTech, 300, null, '枯竭倒计时', null, '预测值：灵息浓度 70%', '', 70);
 
   const era = (name: string, start: number, end: number, color: string, note: string) => {
     eras.push({ id: newEraId(), world_id: worldId, name, start_t: start, end_t: end, color, note });
   };
   era('余烬时代', 0, 120, '#334155', '焚天陨落后的混乱期');
-  era('灵息战争', 180, 232, '#7f1d1d', '百年灵脉争夺');
+  // 纪元与条目在示例里都叫「灵息战争」会分不清谁是谁；纪元名改成时代命名法
+  // （与「余烬时代」「灰烬纪元」一致），事件名保持「灵息战争」——卡片
+  // 「烬关之战」的副标题「灵息战争 转折点」引用的正是这个事件名。
+  era('混战时代', 180, 232, '#7f1d1d', '百年灵脉争夺');
   era('灰烬纪元', 232, 330, '#78350f', '王国并立与灵械崛起');
 
   /* ------------------------------ 文稿与大纲 ------------------------------ */
@@ -116,9 +119,9 @@ export function buildSeedScene(worldId: string, now: number, seed: SeedCards): S
     title: '第一章 · 竖井之下',
     summary: '阿舒尔在矿难中第一次听见灵息的低语。',
     order_index: 0, card_id: null, created_at: now, updated_at: now,
+    // 正文里不再重复写一遍标题：文稿标题由 doc.title 提供（写作模块顶栏标题框、
+    // 导出的文件名与属性区都读它），正文再从 `# 标题` 起头会让标题同屏出现两遍。
     content: [
-      '# 第一章 · 竖井之下',
-      '',
       '井底的空气有铁锈味。阿舒尔数着提升机的钢缆声，第十七下时，声音停了。',
       '',
       '他后来才知道，那一下停顿，是[[灵息]]第一次向他开口。',
@@ -141,7 +144,20 @@ export function buildSeedScene(worldId: string, now: number, seed: SeedCards): S
     id: newDocId(), world_id: worldId, branch_id: null, kind: 'outline',
     title: '主线大纲', summary: '三幕结构总览', order_index: 1, card_id: null,
     created_at: now, updated_at: now,
-    content: '# 主线大纲\n\n## 第一幕 · 被使用\n- 矿难与觉醒\n- 被收编进灰烬骑士团\n\n## 第二幕 · 学会使用\n- 烬关之战\n- 身份暴露\n\n## 第三幕 · 拒绝使用\n- 反叛薇拉\n- 关闭灵脉',
+    // 正文与大纲树逐一对齐：`#` 是幕（树的根节点），`##` 是节点，紧跟节点的一行
+    // `- 摘要` 就是它的摘要（解析规则见 lib/outline-text.ts）。标题与树里的节点
+    // 一字不差，所以点「用文本标题重建大纲树」时状态与卡片挂接都能按标题保留。
+    content: [
+      '# 第一幕 · 被使用', '- 建立「人是工具」的世界规则', '',
+      '## 矿难与觉醒', '- 竖井之下第一次听见灵息', '',
+      '## 被收编', '- 薇拉把他带走，成为末席', '',
+      '# 第二幕 · 学会使用', '- 主角开始反过来使用体系', '',
+      '## 烬关之战', '- 被强制点燃灵脉', '',
+      '## 身份暴露', '- 各国开始争夺人形息匣', '',
+      '# 第三幕 · 拒绝使用', '- 代价与选择的兑现', '',
+      '## 反叛', '- 与薇拉的正面冲突', '',
+      '## 关闭灵脉', '- 以自身灰化为代价终结体系',
+    ].join('\n'),
   };
   docs.push(manuscript, outline);
 

@@ -68,7 +68,9 @@ export function buildSeedCards(worldId: string, now: number): SeedCards {
     '## 阶段\n- 第一代：息匣粗笨，仅用于矿场起重\n- 第二代：小型化，可装配于弩机与车驾\n- 第三代（进行中）：军用化，威胁到燃血者垄断',
     { category: 'tech', scope: '全局', rule: '息匣容量决定输出上限', impact: '平民武装化，燃血贵族恐慌' });
 
-  const protagonist = card('character', '烬·阿舒尔', '灰烬骑士团 末席',
+  // 副标题不要复述属性区已经有的值（势力 / 身份 / 控制势力），换成属性区里
+  // 没有、但正文讲过的一句定位语。
+  const protagonist = card('character', '烬·阿舒尔', '矿难幸存者',
     '能听见灵息低语的前矿工，被迫成为「人形息匣」的少年。',
     '## 生平\n出生于灰港矿镇，十四岁那年矿难夺走全家，唯有他被灵息「选中」。\n\n## 矛盾\n他越强，就越接近灰化——而他的敌人正需要一枚可弃的息匣。',
     {
@@ -80,7 +82,7 @@ export function buildSeedCards(worldId: string, now: number): SeedCards {
       weakness: '灰化已蔓延至心肺，剧烈战斗会加速',
     });
 
-  const mentor = card('character', '薇拉·索恩', '灰烬骑士团 团长',
+  const mentor = card('character', '薇拉·索恩', '北境流亡贵族之女',
     '把阿舒尔从矿难里挖出来的人，也是最想把他当兵器用的人。',
     '她相信「少数人的灰化能换多数人的活」，并愿意亲手执行这笔账。',
     {
@@ -91,7 +93,7 @@ export function buildSeedCards(worldId: string, now: number): SeedCards {
       weakness: '没有任何超凡感知，情报永远慢半拍',
     });
 
-  const capital = card('location', '焚天城', '灰烬王国 首都',
+  const capital = card('location', '焚天城', '三重环墙的都城',
     '建在陨落星体之上的环形都城，城墙内即是最大的灵脉节点。',
     '## 结构\n三重环墙：外环矿工与灵械工坊，中环商贾与神殿，内环燃血贵族。\n\n## 隐患\n城基的灵脉已被抽取三百年，地陷每年扩大。',
     {
