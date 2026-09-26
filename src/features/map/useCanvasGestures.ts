@@ -102,14 +102,16 @@ export function useCanvasGestures({
     onPointerDownCapture: (e: ReactPointerEvent<HTMLDivElement>) => {
       // 捕获阶段一定先跑，所以图钉/顶点在冒泡里 stopPropagation 也挡不住它
       viewport.notePress();
-      pressOnSpotRef.current = Boolean(
-        (e.target as HTMLElement).closest(
-          '[data-wf-map-pin],[data-wf-map-region],[data-wf-map-vertex],'
-          + '[data-wf-map-terrain],[data-wf-map-terrain-handle]',
-        ),
-      );
-      // 起框判定：编辑模式 + 选择/区域工具 + 空白 + 没按修饰键（条件见 mapMarquee）
-      marquee.press(e, pressOnSpotRef.current);
+      const target = e.target as HTMLElement;
+      // 顶点与地形手柄是"改形状"的入口，和对象本体分开算：Shift 在它们身上不起框
+      const onHandle = Boolean(target.closest('[data-wf-map-vertex],[data-wf-map-terrain-handle]'));
+      pressOnSpotRef.current = Boolean(target.closest(
+        '[data-wf-map-pin],[data-wf-map-region],[data-wf-map-vertex],'
+        + '[data-wf-map-terrain],[data-wf-map-terrain-handle]',
+      ));
+      // 起框：编辑模式 + 选择工具 + 空白（或 Shift+按在对象本体上）+ 没按别的修饰键
+      marquee.press(e, onHandle ? 'handle'
+        : (target.closest('[data-wf-map-pin],[data-wf-map-region],[data-wf-map-terrain]') ? 'body' : 'none'));
       // 区域工具下的空白拖动＝拉出一个新区域（两个工具互斥，不会同时起手）
       regionDraw.press(e, pressOnSpotRef.current);
     },

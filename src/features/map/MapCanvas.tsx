@@ -85,7 +85,7 @@ export function MapCanvas({
   const worldActions = useWorldActions({
     world: worldNorm, pins, onNaturalSize, onCanvasClick, onPinSelect, onPinDragStart: pinDrag.start,
     onRegionSelect, onRegionDragStart: regionGestures.startMove, onTerrainSelect,
-    onTerrainDragStart: startMove,
+    onTerrainDragStart: startMove, marquee,
   });
   /** 打点工具下区域内的点击要穿到画布上落点（问题三 F：区域里点半天落不下标记） */
   const regionClickThrough = viewMode === 'edit' && !panMode && tool === 'pin';

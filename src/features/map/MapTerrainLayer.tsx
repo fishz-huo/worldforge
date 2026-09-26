@@ -75,7 +75,11 @@ export function MapTerrainLayer({
               // 预览只选中（拖动的每次 pointermove 都会写库）
               if (viewMode === 'edit') onDragStart(pin)(e);
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              // 同 MapPinLayer：按下那一瞬的选中可能被"Shift+拖动＝框选"让掉了，这里补一次
+              onSelect(pin.id);
+            }}
           >
             <TerrainGlyph symbol={meta.symbol} className="h-full w-full" />
 

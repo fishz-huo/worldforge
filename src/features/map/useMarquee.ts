@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { MapPin, MapRegion, MapTool } from '@/types';
 import { MARQUEE_THRESHOLD, boxOf, hitsOf, marqueeEligible, marqueeMode } from './mapMarquee';
-import type { MarqueeBox, MarqueeMode } from './mapMarquee';
+import type { MarqueeBox, MarqueeMode, MarqueePressSpot } from './mapMarquee';
 import { buildCandidates } from './mapMarqueeTargets';
 import type { MapSelectionItem } from './mapSelection';
 import type { MapViewMode } from './mapRender';
@@ -47,8 +47,8 @@ export interface MarqueeControls {
   box: MarqueeBox | null;
   /** 这一次框的语义：左→右窗选、右→左交叉选 */
   mode: MarqueeMode;
-  /** 按下（画布捕获阶段；onSpot = 这一下按在对象 / 顶点 / 手柄上） */
-  press: (e: ReactPointerEvent<HTMLDivElement>, onSpot: boolean) => void;
+  /** 按下（画布捕获阶段；fromSpot = 这一下按在空白 / 对象本体 / 顶点或手柄上） */
+  press: (e: ReactPointerEvent<HTMLDivElement>, fromSpot: MarqueePressSpot) => void;
   /** 移动：过阈值才成框并捕获指针 */
   track: (e: ReactPointerEvent<HTMLDivElement>) => void;
   /** 松手：成过框就提交选中 */
@@ -57,6 +57,11 @@ export interface MarqueeControls {
   cancel: () => void;
   /** 这一下 click 是不是"框选的余波"（是就吃掉，免得顺手把选中取消掉） */
   consumeClick: () => boolean;
+  /**
+   * 这一次按下是否已被框选接管（Shift+拖动可以从对象上起手）——
+   * 图层据此让路：不要同时再选中 / 拖动那个对象，等松手由框选统一提交。
+   */
+  owns: () => boolean;
 }
 
 /** 一次拖拽的现场：起点、画布原点、是否追加、是否已经成框 */
@@ -78,6 +83,8 @@ export function useMarquee({
   const liveRef = useRef<Live | null>(null);
   /** 这一次按下已经成过框：紧接着的 click 要吃掉（不然会立刻把选中清掉） */
   const consumedRef = useRef(false);
+  /** 这一次按下已被框选接管（Shift+从对象上起手）：图层要据此让路，见 MarqueeControls.owns */
+  const ownsRef = useRef(false);
   /** 松手那一刻要读的最新数据（effect 只装一次，处理时从这里取） */
   const latest = useRef({ world, pins, terrain, regions, onSelect, onClear, viewMode, brushActive, suppressEsc });
   useEffect(() => {
@@ -89,13 +96,15 @@ export function useMarquee({
     setDrag(null);
   };
 
-  const press = (e: ReactPointerEvent<HTMLDivElement>, onSpot: boolean) => {
+  const press = (e: ReactPointerEvent<HTMLDivElement>, fromSpot: MarqueePressSpot) => {
     consumedRef.current = false;
     liveRef.current = null;
-    if (!marqueeEligible({
-      viewMode, tool, panMode, brushActive, onSpot,
-      button: e.button, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey,
-    })) return;
+    ownsRef.current = marqueeEligible({
+      viewMode, tool, panMode, brushActive, fromSpot,
+      button: e.button, shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey,
+    });
+    if (!ownsRef.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     liveRef.current = {
       x0: e.clientX, y0: e.clientY, ox: rect.left, oy: rect.top,
@@ -167,5 +176,6 @@ export function useMarquee({
     release,
     cancel,
     consumeClick,
+    owns: () => ownsRef.current,
   };
 }

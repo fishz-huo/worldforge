@@ -29,7 +29,7 @@ import { TerrainPalette } from './TerrainPalette';
  * 已经改成线性图标，侧栏再用 emoji 会明显不是一套。
  */
 const TOOLS: { tool: MapTool; label: string; Icon: LucideIcon; hint: string }[] = [
-  { tool: 'select', label: '选择', Icon: MousePointer2, hint: '点选地图上的标记或区域；按住区域内部可整体拖动它' },
+  { tool: 'select', label: '选择', Icon: MousePointer2, hint: '点选标记或区域，按住区域内部可整体拖动它；在空白处按住拖动＝框选，Shift+拖动＝追加框选（可以从区域内部起手）' },
   { tool: 'pin', label: '打点', Icon: Crosshair, hint: '在空白处点击即落一个标记点，可连续落；Esc 或再点一次本按钮退出' },
   { tool: 'region', label: '区域', Icon: Pentagon, hint: '在空白处按住拖动即新建一个矩形区域（松手生效）；拖动白色顶点改轮廓；Ctrl/⌘ 点边缘加顶点、Alt 点顶点删顶点' },
   { tool: 'pan', label: '平移', Icon: Move, hint: '拖动整张画布；任何模式下按住空格拖动、或按住鼠标中键拖动，都能平移' },

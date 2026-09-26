@@ -85,6 +85,9 @@ export function MapPinLayer({
               // 平移态下单击不改选中（与「拖动只平移画布」同一套口径）
               if (panMode) return;
               e.stopPropagation();
+              // 按下那一瞬的选中可能被"Shift+拖动＝框选"让掉了（见 useWorldActions），
+              // 这里补一次：Shift 单击仍然只是选中它
+              onSelect(pin.id);
             }}
             onPointerEnter={
               interactive

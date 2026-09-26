@@ -17,7 +17,6 @@ import type { MapTool } from '@/types';
 import type { MarqueeCandidate } from './mapMarqueeTargets';
 import type { MapSelectionItem } from './mapSelection';
 import type { MapViewMode } from './mapRender';
-
 /** 位移超过它才算框选（与 useMapViewport 的平移阈值同值）：以下原样留给点击语义 */
 export const MARQUEE_THRESHOLD = 4;
 
@@ -142,6 +141,9 @@ export function hitsOf(
   return out;
 }
 
+/** 这一下按在哪里：空白 / 对象本体（图钉·区域·地形）/ 顶点或手柄 */
+export type MarqueePressSpot = 'none' | 'body' | 'handle';
+
 /** 这一下按下能不能起框（策略，见文件头；useMarquee 在捕获阶段调用它） */
 export interface MarqueeEligibility {
   viewMode: MapViewMode;
@@ -150,9 +152,11 @@ export interface MarqueeEligibility {
   panMode: boolean;
   /** 地形笔刷激活中 */
   brushActive: boolean;
-  /** 这一下是不是按在图钉 / 区域 / 顶点 / 地形手柄上 */
-  onSpot: boolean;
+  /** 这一下按在哪里（见 MarqueePressSpot） */
+  fromSpot: MarqueePressSpot;
   button: number;
+  /** Shift：在对象本体上按下时，Shift 把这一下让给"追加框选" */
+  shiftKey: boolean;
   ctrlKey: boolean;
   metaKey: boolean;
   altKey: boolean;
@@ -166,8 +170,13 @@ export function marqueeEligible(o: MarqueeEligibility): boolean {
   // 只有「选择」工具起框：打点工具下拖空白＝落标记，区域工具下拖空白＝拉出一个新区域
   // （2026-09-26 问题二）—— 一个工具的空白拖动只能有一个含义
   if (o.tool !== 'select') return false;
-  // 按在对象上是选中 / 拖动（会写库），中键右键也不是框选
-  if (o.onSpot || o.button !== 0) return false;
+  // 顶点 / 地形手柄是"改形状"的入口：Shift 在它们身上仍然归它们，不起框
+  if (o.fromSpot === 'handle') return false;
+  // 按在对象本体上是选中 / 拖动（会写库）；**按住 Shift 例外** —— Shift+拖动＝追加框选，
+  // 可以从任何地方起手（区域铺满、找不到空白时这是唯一的起手点，用户 2026-09-26 问题四）
+  if (o.fromSpot === 'body' && !o.shiftKey) return false;
+  // 中键右键不是框选
+  if (o.button !== 0) return false;
   // Ctrl/⌘ 加顶点、Alt 删顶点：都不参与框选
   return !o.ctrlKey && !o.metaKey && !o.altKey;
 }

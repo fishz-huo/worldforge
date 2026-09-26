@@ -48,8 +48,8 @@ await test('往反方向拖也得到 left ≤ right、top ≤ bottom 的正矩�
 group('起手判定');
 /** 能起框的基准：编辑模式 + 选择工具 + 空白 + 左键 + 无修饰键 */
 const OK = {
-  viewMode: 'edit', tool: 'select', panMode: false, brushActive: false, onSpot: false,
-  button: 0, ctrlKey: false, metaKey: false, altKey: false,
+  viewMode: 'edit', tool: 'select', panMode: false, brushActive: false, fromSpot: 'none',
+  button: 0, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
 };
 await test('编辑模式 + 选择工具 + 空白左键 → 能起框', () => {
   assert.equal(M.marqueeEligible(OK), true);
@@ -68,8 +68,17 @@ await test('平移态（按住空格）与画笔刷时让路', () => {
   assert.equal(M.marqueeEligible({ ...OK, panMode: true }), false);
   assert.equal(M.marqueeEligible({ ...OK, brushActive: true }), false);
 });
-await test('按在对象 / 顶点 / 手柄上不起框（那是选中或拖动，会写库）', () => {
-  assert.equal(M.marqueeEligible({ ...OK, onSpot: true }), false);
+await test('按在对象本体上不起框（那是选中或拖动）—— 但按住 Shift 例外', () => {
+  assert.equal(M.marqueeEligible({ ...OK, fromSpot: 'body' }), false);
+  assert.equal(M.marqueeEligible({ ...OK, fromSpot: 'body', shiftKey: true }), true, 'Shift+拖动＝追加框选');
+  assert.equal(M.marqueeEligible({ ...OK, fromSpot: 'none', shiftKey: true }), true, 'Shift 不影响空白起手');
+});
+await test('Shift 也救不了：别的工具 / 顶点手柄 / 中键右键 / 别的修饰键 / 平移 / 笔刷 / 预览', () => {
+  const shift = { ...OK, fromSpot: 'body', shiftKey: true };
+  const blocked = [{ tool: 'region' }, { tool: 'pin' }, { button: 1 }, { ctrlKey: true }, { altKey: true },
+    { panMode: true }, { brushActive: true }, { viewMode: 'preview' }];
+  for (const patch of blocked) assert.equal(M.marqueeEligible({ ...shift, ...patch }), false, JSON.stringify(patch));
+  assert.equal(M.marqueeEligible({ ...OK, fromSpot: 'handle', shiftKey: true }), false, '顶点手柄归"改形状"');
 });
 await test('中键右键与鼠标其它键都不起框', () => {
   for (const button of [1, 2, 3, -1]) assert.equal(M.marqueeEligible({ ...OK, button }), false, `button=${button}`);

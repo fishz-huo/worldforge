@@ -22,6 +22,8 @@ interface Options {
   world: WorldNorm;
   /** 当前地图的普通标记（不含地形，模块已经分过） */
   pins: MapPin[];
+  /** 框选：Shift+拖动可以从对象本体上起手，那一下图层要让路（见 useMarquee.owns） */
+  marquee: { owns: () => boolean };
   onNaturalSize: (size: Size) => void;
   onCanvasClick: (x: number, y: number) => void;
   onPinSelect: (pinId: string | null) => void;
@@ -40,7 +42,7 @@ export interface WorldActions {
 }
 
 export function useWorldActions({
-  world, pins, onNaturalSize, onCanvasClick, onPinSelect, onPinDragStart, onRegionSelect,
+  world, pins, marquee, onNaturalSize, onCanvasClick, onPinSelect, onPinDragStart, onRegionSelect,
   onRegionDragStart, onTerrainSelect, onTerrainDragStart,
 }: Options): WorldActions {
   const onSurfaceClick = useCallback(
@@ -56,14 +58,20 @@ export function useWorldActions({
     [world, pins, onCanvasClick, onPinSelect],
   );
 
+  /**
+   * 框选接管了这一下（Shift+从对象本体上起手）：图层的选中与拖动都要让路 ——
+   * 否则按下那一瞬就会先把选中换成它、区域也跟着动，松手再由框选提交就对不上了。
+   */
+  const give = () => !marquee.owns();
+
   const actions: MapWorldLayerProps['actions'] = {
     onNaturalSize,
-    onPinSelect,
-    onPinDragStart,
-    onRegionSelect,
-    onRegionDragStart,
-    onTerrainSelect,
-    onTerrainDragStart,
+    onPinSelect: (id) => { if (give()) onPinSelect(id); },
+    onPinDragStart: (pinId) => { if (give()) onPinDragStart(pinId); },
+    onRegionSelect: (id) => { if (give()) onRegionSelect(id); },
+    onRegionDragStart: (region) => (e) => { if (give()) onRegionDragStart(region)(e); },
+    onTerrainSelect: (id) => { if (give()) onTerrainSelect(id); },
+    onTerrainDragStart: (pin) => (e) => { if (give()) onTerrainDragStart(pin)(e); },
   };
 
   return { actions, onSurfaceClick };
