@@ -21,8 +21,12 @@
  *     按下那一瞬就落一个符号并让它跟手；松手补的那次 click 要吃掉，免得多选/取消。
  *   - 框选（2026-09-26）：判定与几何在 useMarquee，这里只把指针事件转给它，
  *     并在它成过框时吃掉补的那次 click（否则刚框好的选中会被立刻取消）。
+ *   - 图钉拖拽（2026-09-26）搬去了 usePinDrag：它必须走 window 级监听，
+ *     挂在画布元素上时指针一离开画布这次拖拽就永久结束（见那个文件的文件头）。
+ *     这里因此不再持有「正在拖谁」的状态。
+ *   - 区域拉框建区域（2026-09-26）：与框选同构，在 useRegionDraw。
  */
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { MapRegion, MapTool } from '@/types';
 import type { TerrainSymbol } from './mapTerrain';
@@ -39,7 +43,6 @@ interface Options {
   tool: MapTool;
   viewport: MapViewportApi;
   onCanvasClick: (x: number, y: number) => void;
-  onPinMove: (pinId: string, x: number, y: number) => void;
   onPinSelect: (pinId: string | null) => void;
   onRegionSelect: (regionId: string | null) => void;
   /** 点空白时三种选中一起清（图钉 / 区域 / 地形） */
@@ -65,10 +68,6 @@ export interface CanvasGestures {
   worldRef: WorldNorm['worldRef'];
   /** 鼠标事件 → 归一化坐标（区域覆盖层拖顶点也要用） */
   toNorm: (clientX: number, clientY: number) => [number, number];
-  /** 正在被拖动的标记（编辑模式才可能非空） */
-  draggingPin: string | null;
-  /** 图钉开始拖拽（MapPinLayer 的 onDragStart） */
-  startPinDrag: (pinId: string) => void;
   /** 光标此刻是否落在选中区域的边缘热区上（画布据它换成「+」） */
   edgeHot: boolean;
   /** 直接摊到画布外层 div 上的事件（onPointerDown / onClickCapture / …） */
@@ -85,25 +84,16 @@ export interface CanvasGestures {
 }
 
 export function useCanvasGestures({
-  world, viewMode, tool, viewport, onCanvasClick, onPinMove, onPinSelect, onRegionSelect,
+  world, viewMode, tool, viewport, onCanvasClick, onPinSelect, onRegionSelect,
   onTerrainSelect, edgeRegion, edgeEnabled, onEdgeInsert, terrainBrush, panMode, onTerrainPlace,
   marquee,
 }: Options): CanvasGestures {
   const { worldRef, toNorm, worldRect } = world;
-  const [draggingPin, setDraggingPin] = useState<string | null>(null);
   const pressOnSpotRef = useRef(false);
   /** 这一次按下已经落了地形符号：紧接着的 click 要被吃掉（见文件头） */
   const brushPlacedRef = useRef(false);
 
   const edge = useEdgeHot({ worldRect, region: edgeRegion, enabled: edgeEnabled });
-
-  /**
-   * 切到预览时清掉「正在被拖动」的标记。
-   * 否则拖到一半切模式，松手前那几次 pointermove 还在往库里写坐标。
-   */
-  useEffect(() => {
-    if (viewMode === 'preview') setDraggingPin(null);
-  }, [viewMode]);
 
   const bind = {
     onPointerDownCapture: (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -133,23 +123,16 @@ export function useCanvasGestures({
       viewport.bind.onPointerMove(e);
       edge.track(e.clientX, e.clientY);
       marquee.track(e);
-      // 预览模式不写坐标（拖拽本就不该开始，这里再兜一层）
-      if (viewMode !== 'edit' || !draggingPin) return;
-      const [x, y] = toNorm(e.clientX, e.clientY);
-      onPinMove(draggingPin, x, y);
     },
     onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerUp(e);
-      setDraggingPin(null);
       marquee.release(e);
     },
     onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerCancel(e);
-      setDraggingPin(null);
       marquee.cancel();
     },
     onPointerLeave: () => {
-      setDraggingPin(null);
       edge.clear();
     },
     /** 平移结束后浏览器仍会补一个 click：捕获阶段吃掉它 */
@@ -194,5 +177,5 @@ export function useCanvasGestures({
     },
   };
 
-  return { worldRef, toNorm, draggingPin, startPinDrag: setDraggingPin, edgeHot: edge.hot, bind };
+  return { worldRef, toNorm, edgeHot: edge.hot, bind };
 }

@@ -20,6 +20,7 @@ import type { EdgeHit } from './mapRegionEdit';
 import type { MapCanvasProps } from './mapStageApi';
 import { useCanvasGestures } from './useCanvasGestures';
 import { useMarquee } from './useMarquee';
+import { usePinDrag } from './usePinDrag';
 import { useRegionGestures } from './useRegionGestures';
 import { useTerrainGestures } from './useTerrainGestures';
 import { useWorldNorm } from './useWorldNorm';
@@ -87,13 +88,14 @@ export function MapCanvas({
     pins, terrain, regions, onSelect: onMarqueeSelect, onClear: onSelectionClear,
   });
 
-  const { startPinDrag, edgeHot, bind } = useCanvasGestures({
+  const pinDrag = usePinDrag({ toNorm: worldNorm.toNorm, onMove: onPinMove, enabled: viewMode === 'edit' });
+
+  const { edgeHot, bind } = useCanvasGestures({
     world: worldNorm,
     viewMode,
     tool,
     viewport,
     onCanvasClick,
-    onPinMove,
     onPinSelect,
     onRegionSelect,
     onTerrainSelect,
@@ -146,6 +148,8 @@ export function MapCanvas({
       className={cn(
         // 画布底色：浅暖灰（设计稿要求不要纯白）；暗色换一档更深的蓝灰
         'relative h-full w-full overflow-hidden rounded-lg border border-border',
+        // touch-none：关掉原生触摸手势，否则触屏拖动会被判成滚动、发 pointercancel 掐掉
+        'touch-none',
         'bg-[#F5F4F0] dark:bg-[#121722]',
         cursorClass,
         className,
@@ -163,7 +167,7 @@ export function MapCanvas({
           selectedTerrainIds, hoveredPinId, hoveredRegionId,
         }}
         actions={{
-          onNaturalSize, onPinSelect, onPinDragStart: startPinDrag, onRegionSelect,
+          onNaturalSize, onPinSelect, onPinDragStart: pinDrag.start, onRegionSelect,
           onRegionDragStart: regionGestures.startMove, onTerrainSelect, onTerrainDragStart: startMove,
         }}
       />
