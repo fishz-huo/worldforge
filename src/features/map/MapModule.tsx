@@ -5,10 +5,8 @@
  * 支持多地图（不同时期/分支）、标记点绑定卡片、区域资源与资源热度着色，
  * 第三批起还有**地形符号**（复用 map_pins 的行，meta.kind='terrain'）。
  *
- * 视口（缩放/平移/适应屏幕）见 useMapViewport、浮窗见 useMapSpots：两者都是
- * **组件内状态**，不进 store、不落盘，换模块或刷新回到「适应屏幕」。
- * 这一层只负责「把谁接到谁身上」：数据与动作在 useMapStore，选中在 useMapSelection，
- * 地形笔刷在 useTerrainStage，笔刷的落点写入在 useMapTerrain。
+ * 视口（缩放/平移/适应屏幕）见 useMapViewport、浮窗见 useMapSpots：两者都是**组件内状态**，不进 store、不落盘，换模块或刷新回到「适应屏幕」。
+ * 这一层只负责「把谁接到谁身上」：数据与动作在 useMapStore，选中在 useMapSelection，地形笔刷在 useTerrainStage，笔刷的落点写入在 useMapTerrain。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Map as MapIcon } from 'lucide-react';
@@ -20,6 +18,7 @@ import { MapSidebar } from './MapSidebar';
 import { MapStage } from './MapStage';
 import { useMapSpots } from './MapSpotLayer';
 import { isTerrainPin } from './mapTerrain';
+import { rectPolygon } from './mapRegionEdit';
 import { resolveWorldSize } from './mapViewport';
 import type { Size } from './mapViewport';
 import { useMapDelete } from './useMapDelete';
@@ -34,7 +33,7 @@ import type { MapViewMode } from './mapRender';
 export function MapModule() {
   const {
     maps, selectedMapId, pins, regions, assets, selectMap, addPin, updatePin,
-    updateRegion, moveRegionPoint, removeRegionPoint, setInspectorOpen,
+    addRegion, updateRegion, moveRegionPoint, removeRegionPoint, setInspectorOpen,
   } = useMapStore();
   const { place, patch } = useMapTerrain();
 
@@ -174,6 +173,13 @@ export function MapModule() {
               // 整体移动 / 加顶点：一次写回一串顶点（store 既有 action，不动 store）
               onRegionPoints: (regionId, points) => updateRegion(regionId, { points }),
               onRegionRemovePoint: (regionId, index) => removeRegionPoint(regionId, index),
+              // 区域工具在空白处拖出矩形：先按 store 的默认形状建，再立刻改成本次拖出的矩形
+              // （两次写库在同一个事件里，React 只渲染一次，界面上看不到中间态）
+              onRegionCreate: (a, b) => {
+                const id = addRegion(map.id);
+                updateRegion(id, { points: rectPolygon(a, b) });
+                sel.selectRegion(id);
+              },
               onTerrainPlace: terrain.placeAt,
               onTerrainSelect: sel.selectTerrain,
               onTerrainMove: (id, x, y) => updatePin(id, { x, y }),

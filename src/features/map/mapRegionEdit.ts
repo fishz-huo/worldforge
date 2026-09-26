@@ -101,3 +101,26 @@ export function insertVertex(points: Point[], hit: EdgeHit, point: Point): Point
 export function insertOnEdge(points: Point[], hit: EdgeHit): Point[] {
   return insertVertex(points, hit, hitPoint(points, hit));
 }
+
+/* ------------------- 拉框建区域（2026-09-26 问题二） ------------------- */
+
+/** 拉框建区域的最小边长（归一化）：小于它不建，免得留下一根线 */
+export const MIN_DRAW_SIZE = 0.01;
+
+/**
+ * 拖出来的两个对角点 → 四个顶点。
+ * 顺序固定为「左上 → 右上 → 右下 → 左下」，与拖动方向无关：从右下往左上拖，
+ * 得到的顶点序列与反向拖完全一样（下游只关心形状，方向不影响填充与命中）。
+ */
+export function rectPolygon(a: Point, b: Point): Point[] {
+  const x0 = Math.min(a[0], b[0]);
+  const x1 = Math.max(a[0], b[0]);
+  const y0 = Math.min(a[1], b[1]);
+  const y1 = Math.max(a[1], b[1]);
+  return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+}
+
+/** 这个矩形够不够大（两条边都要过 MIN_DRAW_SIZE，等于阈值算够） */
+export function rectDrawable(a: Point, b: Point): boolean {
+  return Math.abs(a[0] - b[0]) >= MIN_DRAW_SIZE && Math.abs(a[1] - b[1]) >= MIN_DRAW_SIZE;
+}

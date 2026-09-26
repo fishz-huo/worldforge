@@ -34,6 +34,7 @@ import type { EdgeHit } from './mapRegionEdit';
 import type { MapViewMode } from './mapRender';
 import type { MapViewportApi } from './mapViewportApi';
 import type { MarqueeControls } from './useMarquee';
+import type { RegionDrawControls } from './useRegionDraw';
 import { useEdgeHot } from './useEdgeHot';
 import type { WorldNorm } from './useWorldNorm';
 
@@ -61,6 +62,8 @@ interface Options {
   onTerrainPlace: (x: number, y: number) => void;
   /** 框选（见 useMarquee）：按下/移动/松手/取消，以及"这一下已被框选吃掉" */
   marquee: MarqueeControls;
+  /** 区域工具拉框建区域（见 useRegionDraw）：同一套指针事件，只是松手干什么不同 */
+  regionDraw: RegionDrawControls;
 }
 
 export interface CanvasGestures {
@@ -86,7 +89,7 @@ export interface CanvasGestures {
 export function useCanvasGestures({
   world, viewMode, tool, viewport, onCanvasClick, onPinSelect, onRegionSelect,
   onTerrainSelect, edgeRegion, edgeEnabled, onEdgeInsert, terrainBrush, panMode, onTerrainPlace,
-  marquee,
+  marquee, regionDraw,
 }: Options): CanvasGestures {
   const { worldRef, toNorm, worldRect } = world;
   const pressOnSpotRef = useRef(false);
@@ -107,6 +110,8 @@ export function useCanvasGestures({
       );
       // 起框判定：编辑模式 + 选择/区域工具 + 空白 + 没按修饰键（条件见 mapMarquee）
       marquee.press(e, pressOnSpotRef.current);
+      // 区域工具下的空白拖动＝拉出一个新区域（两个工具互斥，不会同时起手）
+      regionDraw.press(e, pressOnSpotRef.current);
     },
     onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerDown(e);
@@ -123,14 +128,17 @@ export function useCanvasGestures({
       viewport.bind.onPointerMove(e);
       edge.track(e.clientX, e.clientY);
       marquee.track(e);
+      regionDraw.track(e);
     },
     onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerUp(e);
       marquee.release(e);
+      regionDraw.release(e);
     },
     onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerCancel(e);
       marquee.cancel();
+      regionDraw.cancel();
     },
     onPointerLeave: () => {
       edge.clear();
@@ -151,8 +159,8 @@ export function useCanvasGestures({
       onEdgeInsert(edgeRegion, hit);
     },
     onClick: (e: ReactPointerEvent<HTMLDivElement>) => {
-      // 这一下是框选的余波（松手后浏览器补的 click）：别当成"点空白"把选中取消掉
-      if (marquee.consumeClick()) return;
+      // 这一下是框选 / 拉框建区域的余波（松手后浏览器补的 click）：别当成"点空白"把选中取消掉
+      if (marquee.consumeClick() || regionDraw.consumeClick()) return;
       // 这一下已经落了地形：别再当成"点空白"把刚落的符号取消选中
       if (brushPlacedRef.current) {
         brushPlacedRef.current = false;

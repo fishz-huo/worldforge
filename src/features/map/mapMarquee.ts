@@ -163,9 +163,10 @@ export function marqueeEligible(o: MarqueeEligibility): boolean {
   if (o.viewMode !== 'edit') return false;
   // 平移与笔刷优先：左键在它们手里
   if (o.panMode || o.brushActive) return false;
-  // 打点工具下拖空白＝落标记；平移工具已由 panMode 拦住
-  if (o.tool !== 'select' && o.tool !== 'region') return false;
-  // 按在对象上是选中/拖动（会写库），中键右键也不是框选
+  // 只有「选择」工具起框：打点工具下拖空白＝落标记，区域工具下拖空白＝拉出一个新区域
+  // （2026-09-26 问题二）—— 一个工具的空白拖动只能有一个含义
+  if (o.tool !== 'select') return false;
+  // 按在对象上是选中 / 拖动（会写库），中键右键也不是框选
   if (o.onSpot || o.button !== 0) return false;
   // Ctrl/⌘ 加顶点、Alt 删顶点：都不参与框选
   return !o.ctrlKey && !o.metaKey && !o.altKey;

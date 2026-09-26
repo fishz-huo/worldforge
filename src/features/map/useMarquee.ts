@@ -38,6 +38,8 @@ interface Options {
   onSelect: (items: MapSelectionItem[], additive: boolean) => void;
   /** Esc 清空选中（没在画笔刷时） */
   onClear: () => void;
+  /** 别处正在拉框建区域时返回 true：那一下 Esc 归它撤框，不在这里清选中 */
+  suppressEsc?: () => boolean;
 }
 
 export interface MarqueeControls {
@@ -70,15 +72,16 @@ interface Live {
 
 export function useMarquee({
   world, viewMode, tool, panMode, brushActive, pins, terrain, regions, onSelect, onClear,
+  suppressEsc,
 }: Options): MarqueeControls {
   const [drag, setDrag] = useState<{ box: MarqueeBox; mode: MarqueeMode } | null>(null);
   const liveRef = useRef<Live | null>(null);
   /** 这一次按下已经成过框：紧接着的 click 要吃掉（不然会立刻把选中清掉） */
   const consumedRef = useRef(false);
   /** 松手那一刻要读的最新数据（effect 只装一次，处理时从这里取） */
-  const latest = useRef({ world, pins, terrain, regions, onSelect, onClear, viewMode, brushActive });
+  const latest = useRef({ world, pins, terrain, regions, onSelect, onClear, viewMode, brushActive, suppressEsc });
   useEffect(() => {
-    latest.current = { world, pins, terrain, regions, onSelect, onClear, viewMode, brushActive };
+    latest.current = { world, pins, terrain, regions, onSelect, onClear, viewMode, brushActive, suppressEsc };
   });
 
   const cancel = () => {
@@ -148,6 +151,8 @@ export function useMarquee({
       }
       const now = latest.current;
       if (now.viewMode !== 'edit' || now.brushActive) return;
+      // 正在拉框建区域：Esc 归它撤框（见 useRegionDraw），这里别顺手把选中也清了
+      if (now.suppressEsc?.()) return;
       now.onClear();
     };
     window.addEventListener('keydown', onKey);

@@ -8,19 +8,19 @@
  * 这个文件只负责结构与摆放。
  */
 import { useCallback, useMemo } from 'react';
-import type { MapRegion } from '@/types';
 import { cn } from '@/lib/utils';
 import { MapMarqueeLayer } from './MapMarqueeLayer';
 import { MapOverlays } from './MapOverlays';
+import { MapRegionDrawLayer } from './MapRegionDrawLayer';
 import { MapWorldLayer } from './MapWorldLayer';
 import { CURSOR_ADD_VERTEX, mapCursorClass } from './mapCursors';
 import { TERRAIN_BASE_RATIO } from './mapTerrain';
-import { insertOnEdge } from './mapRegionEdit';
-import type { EdgeHit } from './mapRegionEdit';
 import type { MapCanvasProps } from './mapStageApi';
 import { useCanvasGestures } from './useCanvasGestures';
+import { useMapTargets } from './useMapTargets';
 import { useMarquee } from './useMarquee';
 import { usePinDrag } from './usePinDrag';
+import { useRegionDraw } from './useRegionDraw';
 import { useRegionGestures } from './useRegionGestures';
 import { useTerrainGestures } from './useTerrainGestures';
 import { useWorldNorm } from './useWorldNorm';
@@ -31,32 +31,15 @@ export function MapCanvas({
   hoveredRegionId, regionMode, resourceKey, showLabels, onCanvasClick, onPinMove, onPinSelect,
   onRegionSelect, onRegionPointMove, onRegionPoints, onRegionRemovePoint, terrainBrush,
   onTerrainPlace, onTerrainSelect, onTerrainMove, onTerrainResize, onTerrainRotate,
-  onMarqueeSelect, onSelectionClear, className,
+  onMarqueeSelect, onSelectionClear, onRegionCreate, className,
 }: MapCanvasProps) {
   const hasBackground = Boolean(map.asset_id);
   const worldNorm = useWorldNorm();
-
-  /** 「那一个」单选对象：边缘热区与顶点手柄只对唯一选中的区域/地形有意义 */
-  const selectedRegion = selectedRegionIds.length === 1
-    ? regions.find((r) => r.id === selectedRegionIds[0]) ?? null
-    : null;
-  const selectedTerrain = selectedTerrainIds.length === 1
-    ? terrain.find((p) => p.id === selectedTerrainIds[0]) ?? null
-    : null;
-  /**
-   * 区域整体移动的适用面：编辑模式 + 「选择 / 区域」工具 + 非平移态 + **没有笔刷**。
-   * 打点工具下不动区域、平移态让位给画布；画地形时同样让位 —— 区域是"大目标"，
-   * 笔刷激活时按在版图里想落符号却把整块区域拖走，是最难受的一种。
-   */
-  const regionMovable = viewMode === 'edit' && !panMode && terrainBrush === null
-    && (tool === 'select' || tool === 'region');
-  const edgeEnabled = regionMovable && selectedRegion !== null;
-
-  /** 边缘加顶点：纯数学，先建好喂给画布手势（热区判定与插入在同一处） */
-  const insertAtEdge = useCallback(
-    (region: MapRegion, hit: EdgeHit) => onRegionPoints(region.id, insertOnEdge(region.points, hit)),
-    [onRegionPoints],
-  );
+  /** 唯一选中的对象与由它派生的判定：见 useMapTargets（纯搬家） */
+  const { selectedRegion, selectedTerrain, regionMovable, edgeEnabled, insertAtEdge } = useMapTargets({
+    tool, viewMode, panMode, brushActive: terrainBrush !== null, regions, terrain,
+    selectedRegionIds, selectedTerrainIds, onRegionPoints,
+  });
 
   const regionGestures = useRegionGestures({
     toNorm: worldNorm.toNorm,
@@ -82,10 +65,17 @@ export function MapCanvas({
     [onTerrainPlace, follow],
   );
 
+  /** 区域工具：空白处拖出一个矩形就新建区域（先建它，好把 Esc 让给它） */
+  const regionDraw = useRegionDraw({
+    viewMode, tool, panMode, brushActive: terrainBrush !== null, toNorm: worldNorm.toNorm,
+    onCreate: onRegionCreate,
+  });
+
   /** 框选：起手条件、4px 阈值与"吃掉余波 click"都在 useMarquee 里 */
   const marquee = useMarquee({
     world: worldNorm, viewMode, tool, panMode, brushActive: terrainBrush !== null,
     pins, terrain, regions, onSelect: onMarqueeSelect, onClear: onSelectionClear,
+    suppressEsc: regionDraw.active,
   });
 
   const pinDrag = usePinDrag({ toNorm: worldNorm.toNorm, onMove: onPinMove, enabled: viewMode === 'edit' });
@@ -105,7 +95,7 @@ export function MapCanvas({
     terrainBrush,
     panMode,
     onTerrainPlace: placeTerrain,
-    marquee,
+    marquee, regionDraw,
   });
 
   /** 资源热度模式的归一化基准 */
@@ -195,6 +185,9 @@ export function MapCanvas({
 
       {/* 框选的虚框：拖到一半时跟着鼠标走（屏幕空间、不吃指针事件） */}
       <MapMarqueeLayer box={marquee.box} mode={marquee.mode} />
+
+      {/* 区域工具的拉框：松手即按这个矩形建一个区域（同层、同样不吃指针事件） */}
+      <MapRegionDrawLayer box={regionDraw.box} />
     </div>
   );
 }

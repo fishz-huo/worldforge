@@ -51,9 +51,11 @@ const OK = {
   viewMode: 'edit', tool: 'select', panMode: false, brushActive: false, onSpot: false,
   button: 0, ctrlKey: false, metaKey: false, altKey: false,
 };
-await test('编辑模式 + 选择 / 区域工具 + 空白左键 → 能起框', () => {
+await test('编辑模式 + 选择工具 + 空白左键 → 能起框', () => {
   assert.equal(M.marqueeEligible(OK), true);
-  assert.equal(M.marqueeEligible({ ...OK, tool: 'region' }), true);
+});
+await test('区域工具不再起框（空白拖动改成拉出一个新区域了，2026-09-26 问题二）', () => {
+  assert.equal(M.marqueeEligible({ ...OK, tool: 'region' }), false);
 });
 await test('预览模式不起框（那里左键拖空白是平移画布）', () => {
   assert.equal(M.marqueeEligible({ ...OK, viewMode: 'preview' }), false);

@@ -57,6 +57,8 @@ export interface MapCanvasProps {
   onRegionPoints: (regionId: string, points: [number, number][]) => void;
   /** 删一个顶点（store 自带「不足 3 个不删」的保护） */
   onRegionRemovePoint: (regionId: string, index: number) => void;
+  /** 区域工具在空白处拖出一个矩形：按这两个归一化对角点新建一个区域 */
+  onRegionCreate: (a: [number, number], b: [number, number]) => void;
   /** 地形笔刷（null = 没在画地形）；落点后返回新行 id，好让它立刻跟手 */
   terrainBrush: TerrainSymbol | null;
   onTerrainPlace: (x: number, y: number) => string | null;
@@ -105,6 +107,7 @@ export interface MapStageActions {
   onRegionPointMove: (regionId: string, index: number, x: number, y: number) => void;
   onRegionPoints: (regionId: string, points: [number, number][]) => void;
   onRegionRemovePoint: (regionId: string, index: number) => void;
+  onRegionCreate: (a: [number, number], b: [number, number]) => void;
   onTerrainPlace: (x: number, y: number) => string | null;
   onTerrainSelect: (pinId: string | null) => void;
   onTerrainMove: (pinId: string, x: number, y: number) => void;

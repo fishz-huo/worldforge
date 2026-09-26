@@ -53,6 +53,7 @@ export function MapStage({
           onRegionPointMove={actions.onRegionPointMove}
           onRegionPoints={actions.onRegionPoints}
           onRegionRemovePoint={actions.onRegionRemovePoint}
+          onRegionCreate={actions.onRegionCreate}
           terrainBrush={brush}
           onTerrainPlace={actions.onTerrainPlace}
           onTerrainSelect={actions.onTerrainSelect}
