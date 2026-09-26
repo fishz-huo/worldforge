@@ -10,8 +10,8 @@
 import { useCallback, useMemo } from 'react';
 import type { MapRegion } from '@/types';
 import { cn } from '@/lib/utils';
-import { MapLayers } from './MapLayers';
 import { MapOverlays } from './MapOverlays';
+import { MapWorldLayer } from './MapWorldLayer';
 import { CURSOR_ADD_VERTEX, mapCursorClass } from './mapCursors';
 import { TERRAIN_BASE_RATIO } from './mapTerrain';
 import { insertOnEdge } from './mapRegionEdit';
@@ -142,37 +142,22 @@ export function MapCanvas({
         className,
       )}
     >
-      {/* 世界层：宽高 = 底图原始像素，靠 transform 平移缩放 */}
-      <div ref={worldNorm.worldRef} data-wf-map-world style={viewport.worldStyle}>
-        <MapLayers
-          map={map}
-          world={world}
-          pins={pins}
-          regions={regions}
-          terrain={terrain}
-          viewMode={viewMode}
-          panMode={panMode}
-          regionMovable={regionMovable}
-          brushActive={terrainBrush !== null}
-          showLabels={showLabels}
-          regionMode={regionMode}
-          resourceKey={resourceKey}
-          maxResource={maxResource}
-          selectedPinId={selectedPinId}
-          selectedRegionId={selectedRegionId}
-          selectedTerrainId={selectedTerrainId}
-          hoveredPinId={hoveredPinId}
-          hoveredRegionId={hoveredRegionId}
-          spots={spots}
-          onNaturalSize={onNaturalSize}
-          onPinSelect={onPinSelect}
-          onPinDragStart={startPinDrag}
-          onRegionSelect={onRegionSelect}
-          onRegionDragStart={regionGestures.startMove}
-          onTerrainSelect={onTerrainSelect}
-          onTerrainDragStart={startMove}
-        />
-      </div>
+      {/* 世界层：宽高 = 底图原始像素，靠 transform 平移缩放（摆放见 MapWorldLayer） */}
+      <MapWorldLayer
+        worldRef={worldNorm.worldRef}
+        style={viewport.worldStyle}
+        spots={spots}
+        data={{ map, world, pins, regions, terrain }}
+        view={{
+          viewMode, panMode, regionMovable, brushActive: terrainBrush !== null, showLabels,
+          regionMode, resourceKey, maxResource, selectedPinId, selectedRegionId, selectedTerrainId,
+          hoveredPinId, hoveredRegionId,
+        }}
+        actions={{
+          onNaturalSize, onPinSelect, onPinDragStart: startPinDrag, onRegionSelect,
+          onRegionDragStart: regionGestures.startMove, onTerrainSelect, onTerrainDragStart: startMove,
+        }}
+      />
 
       {/* 屏幕空间的浮层：区域名称与顶点手柄、地形控制点、缩放胶囊与底图提示 */}
       <MapOverlays
