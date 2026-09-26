@@ -12,6 +12,7 @@
 import type { MapDef, MapPin, MapRegion, MapTool } from '@/types';
 import type { TerrainSymbol } from './mapTerrain';
 import type { MapViewMode } from './mapRender';
+import type { MapSelectionItem } from './mapSelection';
 import type { MapSpotBind, MapSpots } from './MapSpotLayer';
 import type { Size } from './mapViewport';
 import type { MapViewportApi } from './mapViewportApi';
@@ -37,9 +38,10 @@ export interface MapCanvasProps {
   spots: MapSpotBind;
   /** 把底图实测到的真实像素尺寸回报给模块 */
   onNaturalSize: (size: Size) => void;
-  selectedPinId: string | null;
-  selectedRegionId: string | null;
-  selectedTerrainId: string | null;
+  /** 三种对象各自的选中 id 清单（点选 0~1 个、框选可以好几个，见 useMapSelection） */
+  selectedPinIds: string[];
+  selectedRegionIds: string[];
+  selectedTerrainIds: string[];
   hoveredPinId: string | null;
   hoveredRegionId: string | null;
   /** 区域显示模式：填充 / 仅轮廓 / 资源热度 */
@@ -62,6 +64,10 @@ export interface MapCanvasProps {
   onTerrainMove: (pinId: string, x: number, y: number) => void;
   onTerrainResize: (pinId: string, size: number) => void;
   onTerrainRotate: (pinId: string, rotation: number) => void;
+  /** 框选提交（items 为空 = 没框到；additive = 按住 Shift 追加） */
+  onMarqueeSelect: (items: MapSelectionItem[], additive: boolean) => void;
+  /** Esc 清空选中（没在画笔刷时，见 useMarquee） */
+  onSelectionClear: () => void;
   className?: string;
 }
 
@@ -77,9 +83,9 @@ export interface MapStageData {
 
 /** 舞台的选中与显示状态 */
 export interface MapStageView {
-  selectedPinId: string | null;
-  selectedRegionId: string | null;
-  selectedTerrainId: string | null;
+  selectedPinIds: string[];
+  selectedRegionIds: string[];
+  selectedTerrainIds: string[];
   hoveredPinId: string | null;
   hoveredRegionId: string | null;
   regionMode: 'fill' | 'outline' | 'resource';
@@ -104,6 +110,9 @@ export interface MapStageActions {
   onTerrainMove: (pinId: string, x: number, y: number) => void;
   onTerrainResize: (pinId: string, size: number) => void;
   onTerrainRotate: (pinId: string, rotation: number) => void;
+  /** 框选的提交与 Esc 清空（都落到 useMapSelection 的选择集上） */
+  onMarqueeSelect: (items: MapSelectionItem[], additive: boolean) => void;
+  onSelectionClear: () => void;
 }
 
 /** MapStage 的全部入参 */

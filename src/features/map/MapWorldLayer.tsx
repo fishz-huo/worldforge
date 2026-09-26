@@ -25,7 +25,7 @@ export interface MapWorldLayerProps {
   data: Pick<Canvas, 'map' | 'world' | 'pins' | 'regions' | 'terrain'>;
   /** 视图与选中（regionMovable / brushActive / maxResource 是画布现算出来的） */
   view: Pick<Canvas, 'viewMode' | 'panMode' | 'showLabels' | 'regionMode' | 'resourceKey'
-    | 'selectedPinId' | 'selectedRegionId' | 'selectedTerrainId' | 'hoveredPinId' | 'hoveredRegionId'>
+    | 'selectedPinIds' | 'selectedRegionIds' | 'selectedTerrainIds' | 'hoveredPinId' | 'hoveredRegionId'>
     & { regionMovable: boolean; brushActive: boolean; maxResource: number };
   /** 悬停/点击浮窗的三个上报（见 MapSpotLayer） */
   spots: Canvas['spots'];
@@ -54,9 +54,9 @@ export function MapWorldLayer({ worldRef, style, data, view, spots, actions }: M
         regionMode={view.regionMode}
         resourceKey={view.resourceKey}
         maxResource={view.maxResource}
-        selectedPinId={view.selectedPinId}
-        selectedRegionId={view.selectedRegionId}
-        selectedTerrainId={view.selectedTerrainId}
+        selectedPinIds={view.selectedPinIds}
+        selectedRegionIds={view.selectedRegionIds}
+        selectedTerrainIds={view.selectedTerrainIds}
         hoveredPinId={view.hoveredPinId}
         hoveredRegionId={view.hoveredRegionId}
         spots={spots}

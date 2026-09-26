@@ -10,8 +10,10 @@
  *   2 只有「正在打字的地方」才豁免（input / textarea / select / contenteditable，
  *     判定复用 mapPan 的 isEditableTarget）—— 焦点在按钮、下拉上时仍然算数，
  *     因为用户常常刚点过工具条就想删掉选中的东西；
- *   3 三个选中槽互斥（今天最多 1 个），将来支持框选后这里会自然变成多个。
+ *   3 待删清单来自**选中集**（2026-09-26 起框选可以一次选中多个），
+ *     一个对象一条；区域走 deleteRegion，标记与地形都是 map_pins 的行。
  */
+import type { MapSelectionItem, MapSelectionKind } from './mapSelection';
 
 /** 这两个键都表示「删掉选中的东西」 */
 export function isMapDeleteKey(key: string): boolean {
@@ -24,17 +26,21 @@ export interface MapDeleteTarget {
   id: string;
 }
 
-/** 三个选中槽 → 待删除清单（槽互斥：今天长度为 0 或 1） */
-export function mapDeleteTargets(slots: {
-  pin: string | null;
-  region: string | null;
-  terrain: string | null;
-}): MapDeleteTarget[] {
-  const targets: MapDeleteTarget[] = [];
-  if (slots.pin) targets.push({ kind: 'pin', id: slots.pin });
-  if (slots.region) targets.push({ kind: 'region', id: slots.region });
-  if (slots.terrain) targets.push({ kind: 'terrain', id: slots.terrain });
-  return targets;
+/**
+ * 选中集 → 待删除清单：按「标记 → 区域 → 地形」排好并去重。
+ * 删除本身与顺序无关，但顺序固定下来才能把「一条不多、一条不少」钉在自测里。
+ */
+export function mapDeleteTargets(items: MapSelectionItem[]): MapDeleteTarget[] {
+  const rank: MapSelectionKind[] = ['pin', 'region', 'terrain'];
+  const out: MapDeleteTarget[] = [];
+  for (const kind of rank) {
+    for (const item of items) {
+      if (item.kind === kind && !out.some((t) => t.kind === kind && t.id === item.id)) {
+        out.push({ kind, id: item.id });
+      }
+    }
+  }
+  return out;
 }
 
 /** 只选中 1 个时直接删（与检查器的删除按钮一致）；多个才弹这一句 */

@@ -19,7 +19,8 @@ import type { SpotTarget } from './mapOverlay';
 
 interface Props {
   regions: MapRegion[];
-  selectedRegionId: string | null;
+  /** 选中的区域 id 清单：框选会一次选中好几个 */
+  selectedRegionIds: string[];
   /** 正在悬停（或触屏下点开）的区域：高亮它 */
   hoveredRegionId: string | null;
   /** 编辑 / 预览：预览下只读，也只有预览弹浮窗 */
@@ -40,7 +41,7 @@ interface Props {
 }
 
 export function MapRegionLayer({
-  regions, selectedRegionId, hoveredRegionId, viewMode, panMode, regionMovable, mode, metric,
+  regions, selectedRegionIds, hoveredRegionId, viewMode, panMode, regionMovable, mode, metric,
   maxValue, onSelect, onDragStart, onSpotHover, onSpotLeave, onSpotTap,
 }: Props) {
   const interactive = viewMode === 'preview';
@@ -49,7 +50,7 @@ export function MapRegionLayer({
     // data-surface：点到这个 SVG 上才算「点在底图上」，画布据此决定落点还是取消选中
     <svg data-surface="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
       {regions.map((region) => {
-        const active = region.id === selectedRegionId;
+        const active = selectedRegionIds.includes(region.id);
         const hovered = region.id === hoveredRegionId;
         const stroke = regionStroke(region, active || hovered);
         return (

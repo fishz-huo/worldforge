@@ -35,9 +35,9 @@ interface Props {
   regionMode: 'fill' | 'outline' | 'resource';
   resourceKey: keyof NonNullable<MapRegion['resources']>;
   maxResource: number;
-  selectedPinId: string | null;
-  selectedRegionId: string | null;
-  selectedTerrainId: string | null;
+  selectedPinIds: string[];
+  selectedRegionIds: string[];
+  selectedTerrainIds: string[];
   hoveredPinId: string | null;
   hoveredRegionId: string | null;
   spots: MapSpotBind;
@@ -52,7 +52,7 @@ interface Props {
 
 export function MapLayers({
   map, world, pins, regions, terrain, viewMode, panMode, regionMovable, brushActive, showLabels,
-  regionMode, resourceKey, maxResource, selectedPinId, selectedRegionId, selectedTerrainId,
+  regionMode, resourceKey, maxResource, selectedPinIds, selectedRegionIds, selectedTerrainIds,
   hoveredPinId, hoveredRegionId, spots, onNaturalSize, onPinSelect, onPinDragStart,
   onRegionSelect, onRegionDragStart, onTerrainSelect, onTerrainDragStart,
 }: Props) {
@@ -65,7 +65,7 @@ export function MapLayers({
 
       <MapRegionLayer
         regions={regions}
-        selectedRegionId={selectedRegionId}
+        selectedRegionIds={selectedRegionIds}
         hoveredRegionId={hoveredRegionId}
         viewMode={viewMode}
         panMode={panMode}
@@ -83,7 +83,7 @@ export function MapLayers({
       {/* 地形符号：随底图缩放（见 MapTerrainLayer 的说明） */}
       <MapTerrainLayer
         terrain={terrain}
-        selectedTerrainId={selectedTerrainId}
+        selectedTerrainIds={selectedTerrainIds}
         viewMode={viewMode}
         panMode={panMode}
         brushActive={brushActive}
@@ -93,7 +93,7 @@ export function MapLayers({
 
       <MapPinLayer
         pins={pins}
-        selectedPinId={selectedPinId}
+        selectedPinIds={selectedPinIds}
         hoveredPinId={hoveredPinId}
         viewMode={viewMode}
         panMode={panMode}

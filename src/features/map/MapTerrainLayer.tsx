@@ -22,7 +22,8 @@ import { TerrainGlyph } from './TerrainGlyph';
 
 interface Props {
   terrain: MapPin[];
-  selectedTerrainId: string | null;
+  /** 选中的地形 id 清单：框选会一次选中好几个 */
+  selectedTerrainIds: string[];
   viewMode: MapViewMode;
   /** 平移态：这一层让路给画布 */
   panMode: boolean;
@@ -34,7 +35,7 @@ interface Props {
 }
 
 export function MapTerrainLayer({
-  terrain, selectedTerrainId, viewMode, panMode, brushActive, onSelect, onDragStart,
+  terrain, selectedTerrainIds, viewMode, panMode, brushActive, onSelect, onDragStart,
 }: Props) {
   const yields = panMode || brushActive;
 
@@ -44,7 +45,7 @@ export function MapTerrainLayer({
         const meta = readTerrain(pin);
         // 不是地形（手改过的 JSON）就不画：宁可少一个符号，也别画成奇怪的东西
         if (!meta) return null;
-        const active = pin.id === selectedTerrainId;
+        const active = selectedTerrainIds.includes(pin.id);
         return (
           <button
             key={pin.id}

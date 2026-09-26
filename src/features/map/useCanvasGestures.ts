@@ -17,9 +17,10 @@
  *     ≤ EDGE_TOLERANCE（屏幕像素）就算「热」，画布据此把光标换成「+」；此时
  *     Ctrl/⌘ + 左键点下去，就在**最近那条边**上加一个顶点。判定在 useEdgeHot，
  *     这里只决定按下之后做什么。
- *   - 地形笔刷（第三批）：笔刷是**独立状态**（不给 MapTool 加 'terrain'，越界项 C
- *     未批准）。笔刷激活时，按下的那一瞬就落一个符号并让它跟手（拖到哪跟到哪），
- *     随后浏览器补的那次 click 要被吃掉，免得顺手把选中取消掉。
+ *   - 地形笔刷（第三批）：独立状态（不给 MapTool 加 'terrain'，越界项 C 未批准）。
+ *     按下那一瞬就落一个符号并让它跟手；松手补的那次 click 要吃掉，免得多选/取消。
+ *   - 框选（2026-09-26）：判定与几何在 useMarquee，这里只把指针事件转给它，
+ *     并在它成过框时吃掉补的那次 click（否则刚框好的选中会被立刻取消）。
  */
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
@@ -28,6 +29,7 @@ import type { TerrainSymbol } from './mapTerrain';
 import type { EdgeHit } from './mapRegionEdit';
 import type { MapViewMode } from './mapRender';
 import type { MapViewportApi } from './mapViewportApi';
+import type { MarqueeControls } from './useMarquee';
 import { useEdgeHot } from './useEdgeHot';
 import type { WorldNorm } from './useWorldNorm';
 
@@ -54,6 +56,8 @@ interface Options {
   panMode: boolean;
   /** 笔刷落点：调用方落一个符号并让它跟手 */
   onTerrainPlace: (x: number, y: number) => void;
+  /** 框选（见 useMarquee）：按下/移动/松手/取消，以及"这一下已被框选吃掉" */
+  marquee: MarqueeControls;
 }
 
 export interface CanvasGestures {
@@ -83,6 +87,7 @@ export interface CanvasGestures {
 export function useCanvasGestures({
   world, viewMode, tool, viewport, onCanvasClick, onPinMove, onPinSelect, onRegionSelect,
   onTerrainSelect, edgeRegion, edgeEnabled, onEdgeInsert, terrainBrush, panMode, onTerrainPlace,
+  marquee,
 }: Options): CanvasGestures {
   const { worldRef, toNorm, worldRect } = world;
   const [draggingPin, setDraggingPin] = useState<string | null>(null);
@@ -110,6 +115,8 @@ export function useCanvasGestures({
           + '[data-wf-map-terrain],[data-wf-map-terrain-handle]',
         ),
       );
+      // 起框判定：编辑模式 + 选择/区域工具 + 空白 + 没按修饰键（条件见 mapMarquee）
+      marquee.press(e, pressOnSpotRef.current);
     },
     onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerDown(e);
@@ -125,6 +132,7 @@ export function useCanvasGestures({
     onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerMove(e);
       edge.track(e.clientX, e.clientY);
+      marquee.track(e);
       // 预览模式不写坐标（拖拽本就不该开始，这里再兜一层）
       if (viewMode !== 'edit' || !draggingPin) return;
       const [x, y] = toNorm(e.clientX, e.clientY);
@@ -133,10 +141,12 @@ export function useCanvasGestures({
     onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerUp(e);
       setDraggingPin(null);
+      marquee.release(e);
     },
     onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => {
       viewport.bind.onPointerCancel(e);
       setDraggingPin(null);
+      marquee.cancel();
     },
     onPointerLeave: () => {
       setDraggingPin(null);
@@ -158,6 +168,8 @@ export function useCanvasGestures({
       onEdgeInsert(edgeRegion, hit);
     },
     onClick: (e: ReactPointerEvent<HTMLDivElement>) => {
+      // 这一下是框选的余波（松手后浏览器补的 click）：别当成"点空白"把选中取消掉
+      if (marquee.consumeClick()) return;
       // 这一下已经落了地形：别再当成"点空白"把刚落的符号取消选中
       if (brushPlacedRef.current) {
         brushPlacedRef.current = false;

@@ -21,7 +21,8 @@ import type { MapViewMode } from './mapRender';
 
 interface Props {
   pins: MapPin[];
-  selectedPinId: string | null;
+  /** 选中的标记 id 清单：框选会一次选中好几个（见 useMapSelection） */
+  selectedPinIds: string[];
   /** 正在悬停（或触屏下点开）的标记：高亮它 */
   hoveredPinId: string | null;
   /** 编辑 / 预览：预览下点击只选中，不启动拖拽；也只有预览弹浮窗 */
@@ -39,7 +40,7 @@ interface Props {
 }
 
 export function MapPinLayer({
-  pins, selectedPinId, hoveredPinId, viewMode, panMode, showLabels, onSelect, onDragStart,
+  pins, selectedPinIds, hoveredPinId, viewMode, panMode, showLabels, onSelect, onDragStart,
   onSpotHover, onSpotLeave, onSpotTap,
 }: Props) {
   const interactive = viewMode === 'preview';
@@ -47,7 +48,7 @@ export function MapPinLayer({
   return (
     <>
       {pins.map((pin) => {
-        const active = pin.id === selectedPinId;
+        const active = selectedPinIds.includes(pin.id);
         const hovered = pin.id === hoveredPinId;
         return (
           <button

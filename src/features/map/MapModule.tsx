@@ -72,7 +72,7 @@ export function MapModule() {
   const spots = useMapSpots();
   const sel = useMapSelection(spots, mode, setInspectorOpen);
   // Delete / Backspace：编辑模式下删掉选中的对象（规则与边界见 useMapDelete）
-  useMapDelete(mode, sel);
+  const { request: requestDelete } = useMapDelete(mode, sel);
   const terrain = useTerrainStage({
     map,
     pins: mapAllPins,
@@ -150,9 +150,9 @@ export function MapModule() {
             altHeld={keys.alt}
             data={{ pins: mapPins, regions: mapRegions, terrain: mapTerrain, pinCount: mapPins.length, terrainCount: mapTerrain.length }}
             view={{
-              selectedPinId: sel.selectedPinId,
-              selectedRegionId: sel.selectedRegionId,
-              selectedTerrainId: sel.selectedTerrainId,
+              selectedPinIds: sel.selectedPinIds,
+              selectedRegionIds: sel.selectedRegionIds,
+              selectedTerrainIds: sel.selectedTerrainIds,
               hoveredPinId: sel.hoveredPinId,
               hoveredRegionId: sel.hoveredRegionId,
               regionMode,
@@ -179,17 +179,15 @@ export function MapModule() {
               onTerrainMove: (id, x, y) => updatePin(id, { x, y }),
               onTerrainResize: (id, size) => terrain.patchMeta(id, { size }),
               onTerrainRotate: (id, rotation) => terrain.patchMeta(id, { rotation }),
+              // 框选提交（Shift 追加）与 Esc 清空：都落在同一个选择集上
+              onMarqueeSelect: sel.selectMany,
+              onSelectionClear: sel.clear,
             }}
           />
         )}
       </ModuleBody>
 
-      <MapInspector
-        selectedPinId={sel.selectedPinId}
-        selectedRegionId={sel.selectedRegionId}
-        selectedTerrainId={sel.selectedTerrainId}
-        viewMode={mode}
-      />
+      <MapInspector selection={sel} viewMode={mode} onDelete={requestDelete} />
       {spots.overlay}
     </ModuleLayout>
   );

@@ -38,9 +38,9 @@ export function MapStage({
           viewport={viewport}
           spots={spots.bind}
           onNaturalSize={actions.onNaturalSize}
-          selectedPinId={view.selectedPinId}
-          selectedRegionId={view.selectedRegionId}
-          selectedTerrainId={view.selectedTerrainId}
+          selectedPinIds={view.selectedPinIds}
+          selectedRegionIds={view.selectedRegionIds}
+          selectedTerrainIds={view.selectedTerrainIds}
           hoveredPinId={view.hoveredPinId}
           hoveredRegionId={view.hoveredRegionId}
           regionMode={view.regionMode}
@@ -59,6 +59,8 @@ export function MapStage({
           onTerrainMove={actions.onTerrainMove}
           onTerrainResize={actions.onTerrainResize}
           onTerrainRotate={actions.onTerrainRotate}
+          onMarqueeSelect={actions.onMarqueeSelect}
+          onSelectionClear={actions.onSelectionClear}
         />
       </div>
     </div>

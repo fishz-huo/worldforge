@@ -10,6 +10,7 @@
 import { useCallback, useMemo } from 'react';
 import type { MapRegion } from '@/types';
 import { cn } from '@/lib/utils';
+import { MapMarqueeLayer } from './MapMarqueeLayer';
 import { MapOverlays } from './MapOverlays';
 import { MapWorldLayer } from './MapWorldLayer';
 import { CURSOR_ADD_VERTEX, mapCursorClass } from './mapCursors';
@@ -18,22 +19,29 @@ import { insertOnEdge } from './mapRegionEdit';
 import type { EdgeHit } from './mapRegionEdit';
 import type { MapCanvasProps } from './mapStageApi';
 import { useCanvasGestures } from './useCanvasGestures';
+import { useMarquee } from './useMarquee';
 import { useRegionGestures } from './useRegionGestures';
 import { useTerrainGestures } from './useTerrainGestures';
 import { useWorldNorm } from './useWorldNorm';
 
 export function MapCanvas({
   map, pins, regions, terrain, tool, panMode, altHeld, viewMode, world, viewport, spots,
-  onNaturalSize, selectedPinId, selectedRegionId, selectedTerrainId, hoveredPinId, hoveredRegionId,
-  regionMode, resourceKey, showLabels, onCanvasClick, onPinMove, onPinSelect, onRegionSelect,
-  onRegionPointMove, onRegionPoints, onRegionRemovePoint, terrainBrush, onTerrainPlace,
-  onTerrainSelect, onTerrainMove, onTerrainResize, onTerrainRotate, className,
+  onNaturalSize, selectedPinIds, selectedRegionIds, selectedTerrainIds, hoveredPinId,
+  hoveredRegionId, regionMode, resourceKey, showLabels, onCanvasClick, onPinMove, onPinSelect,
+  onRegionSelect, onRegionPointMove, onRegionPoints, onRegionRemovePoint, terrainBrush,
+  onTerrainPlace, onTerrainSelect, onTerrainMove, onTerrainResize, onTerrainRotate,
+  onMarqueeSelect, onSelectionClear, className,
 }: MapCanvasProps) {
   const hasBackground = Boolean(map.asset_id);
   const worldNorm = useWorldNorm();
 
-  const selectedRegion = regions.find((r) => r.id === selectedRegionId) ?? null;
-  const selectedTerrain = terrain.find((p) => p.id === selectedTerrainId) ?? null;
+  /** 「那一个」单选对象：边缘热区与顶点手柄只对唯一选中的区域/地形有意义 */
+  const selectedRegion = selectedRegionIds.length === 1
+    ? regions.find((r) => r.id === selectedRegionIds[0]) ?? null
+    : null;
+  const selectedTerrain = selectedTerrainIds.length === 1
+    ? terrain.find((p) => p.id === selectedTerrainIds[0]) ?? null
+    : null;
   /**
    * 区域整体移动的适用面：编辑模式 + 「选择 / 区域」工具 + 非平移态 + **没有笔刷**。
    * 打点工具下不动区域、平移态让位给画布；画地形时同样让位 —— 区域是"大目标"，
@@ -73,6 +81,12 @@ export function MapCanvas({
     [onTerrainPlace, follow],
   );
 
+  /** 框选：起手条件、4px 阈值与"吃掉余波 click"都在 useMarquee 里 */
+  const marquee = useMarquee({
+    world: worldNorm, viewMode, tool, panMode, brushActive: terrainBrush !== null,
+    pins, terrain, regions, onSelect: onMarqueeSelect, onClear: onSelectionClear,
+  });
+
   const { startPinDrag, edgeHot, bind } = useCanvasGestures({
     world: worldNorm,
     viewMode,
@@ -89,6 +103,7 @@ export function MapCanvas({
     terrainBrush,
     panMode,
     onTerrainPlace: placeTerrain,
+    marquee,
   });
 
   /** 资源热度模式的归一化基准 */
@@ -98,19 +113,15 @@ export function MapCanvas({
   );
 
   /**
-   * size=1 的地形符号在屏幕上的边长 = 底图宽的 6%。
-   * 从视口的 toScreen 现算：两个归一化点的屏幕距离就是「世界宽 × 缩放」，
-   * 因此不必再往外暴露一个 scale。
+   * size=1 的地形符号在屏幕上的边长 = 底图宽的 6%。从视口的 toScreen 现算：
+   * 两个归一化点的屏幕距离就是「世界宽 × 缩放」，不必再往外暴露一个 scale。
    */
   const terrainUnitPx = useMemo(
     () => (viewport.toScreenPixel(1, 0)[0] - viewport.toScreenPixel(0, 0)[0]) * TERRAIN_BASE_RATIO,
     [viewport.toScreenPixel],
   );
 
-  /**
-   * 光标：拖拽中 = grabbing；平移态 / 预览 = grab；打点 = crosshair。
-   * 边缘热区改用自定义的「+」（见下 style），它比 class 优先。
-   */
+  /** 光标：拖拽中 = grabbing；平移态 / 预览 = grab；打点 = crosshair（边缘热区见下 style） */
   const cursorClass = mapCursorClass({
     panning: viewport.panning,
     panMode,
@@ -121,10 +132,8 @@ export function MapCanvas({
   return (
     <div
       ref={viewport.boxRef}
-      /*
-        指针事件逐个摊开而不是 `{...bind}`：mobile-lint 的「画布类组件必须有
-        pointer/touch 处理」按源码文本判定，整包展开会让静态检查看不见它。
-      */
+      /* 指针事件逐个摊开而不是 `{...bind}`：mobile-lint 按源码文本判「画布类组件
+         有没有 pointer/touch 处理」，整包展开会让它看不见。 */
       onPointerDownCapture={bind.onPointerDownCapture}
       onPointerDown={bind.onPointerDown}
       onPointerMove={bind.onPointerMove}
@@ -150,8 +159,8 @@ export function MapCanvas({
         data={{ map, world, pins, regions, terrain }}
         view={{
           viewMode, panMode, regionMovable, brushActive: terrainBrush !== null, showLabels,
-          regionMode, resourceKey, maxResource, selectedPinId, selectedRegionId, selectedTerrainId,
-          hoveredPinId, hoveredRegionId,
+          regionMode, resourceKey, maxResource, selectedPinIds, selectedRegionIds,
+          selectedTerrainIds, hoveredPinId, hoveredRegionId,
         }}
         actions={{
           onNaturalSize, onPinSelect, onPinDragStart: startPinDrag, onRegionSelect,
@@ -162,7 +171,7 @@ export function MapCanvas({
       {/* 屏幕空间的浮层：区域名称与顶点手柄、地形控制点、缩放胶囊与底图提示 */}
       <MapOverlays
         regions={regions}
-        selectedRegionId={selectedRegionId}
+        selectedRegionId={selectedRegion?.id ?? null}
         hoveredRegionId={hoveredRegionId}
         viewMode={viewMode}
         showLabels={showLabels}
@@ -179,6 +188,9 @@ export function MapCanvas({
         onZoom={(factor) => viewport.zoomAtAnchor(factor)}
         onFit={viewport.fit}
       />
+
+      {/* 框选的虚框：拖到一半时跟着鼠标走（屏幕空间、不吃指针事件） */}
+      <MapMarqueeLayer box={marquee.box} mode={marquee.mode} />
     </div>
   );
 }
