@@ -184,6 +184,8 @@ export function MapModule() {
               // 框选提交（Shift 追加）与 Esc 清空：都落在同一个选择集上
               onMarqueeSelect: sel.selectMany,
               onSelectionClear: sel.clear,
+              // Esc 的第三支：打点工具下退出工具（前两支是"撤框"与"清选中"，同见 useMarquee）
+              onToolExit: () => setTool('select'),
             }}
           />
         )}

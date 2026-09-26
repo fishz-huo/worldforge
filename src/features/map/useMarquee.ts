@@ -38,6 +38,13 @@ interface Options {
   onSelect: (items: MapSelectionItem[], additive: boolean) => void;
   /** Esc 清空选中（没在画笔刷时） */
   onClear: () => void;
+  /**
+   * 打点工具下按 Esc：请调用方把工具收回「选择」。这一支必须留在这里 ——
+   * 两个 window keydown 处理器的先后由挂载顺序决定，实测 useMapTool 先跑、它的
+   * 状态更新在框选处理时已经可见（工具已变成"选择"），于是顺手把选中也清了。
+   * 集中成一个决策点后，「一次 Esc 只做一件事」与顺序无关。
+   */
+  onToolExit?: () => void;
   /** 别处正在拉框建区域时返回 true：那一下 Esc 归它撤框，不在这里清选中 */
   suppressEsc?: () => boolean;
 }
@@ -58,8 +65,10 @@ export interface MarqueeControls {
   /** 这一下 click 是不是"框选的余波"（是就吃掉，免得顺手把选中取消掉） */
   consumeClick: () => boolean;
   /**
-   * 这一次按下是否已被框选接管（Shift+拖动可以从对象上起手）——
-   * 图层据此让路：不要同时再选中 / 拖动那个对象，等松手由框选统一提交。
+   * 这一次手势是否已被框选接管（Shift+拖动可以从对象上起手）：图层据此让路，
+   * 别再选中 / 拖动那个对象，等松手由框选统一提交。成框提交后它**留到下一次按下**
+   * —— 松手补的那次 click 会顺手选中单个对象，不留着就把刚框好的一批覆盖了；
+   * 没成框（Shift+单击）则当场复位，于是"Shift 单击仍然只是选中它"照样成立。
    */
   owns: () => boolean;
 }
@@ -77,7 +86,7 @@ interface Live {
 
 export function useMarquee({
   world, viewMode, tool, panMode, brushActive, pins, terrain, regions, onSelect, onClear,
-  suppressEsc,
+  onToolExit, suppressEsc,
 }: Options): MarqueeControls {
   const [drag, setDrag] = useState<{ box: MarqueeBox; mode: MarqueeMode } | null>(null);
   const liveRef = useRef<Live | null>(null);
@@ -86,13 +95,14 @@ export function useMarquee({
   /** 这一次按下已被框选接管（Shift+从对象上起手）：图层要据此让路，见 MarqueeControls.owns */
   const ownsRef = useRef(false);
   /** 松手那一刻要读的最新数据（effect 只装一次，处理时从这里取） */
-  const latest = useRef({ world, pins, terrain, regions, onSelect, onClear, viewMode, brushActive, suppressEsc });
+  const latest = useRef({ world, pins, terrain, regions, onSelect, onClear, onToolExit, viewMode, brushActive, suppressEsc, tool });
   useEffect(() => {
-    latest.current = { world, pins, terrain, regions, onSelect, onClear, viewMode, brushActive, suppressEsc };
+    latest.current = { world, pins, terrain, regions, onSelect, onClear, onToolExit, viewMode, brushActive, suppressEsc, tool };
   });
 
   const cancel = () => {
     liveRef.current = null;
+    ownsRef.current = false;
     setDrag(null);
   };
 
@@ -133,7 +143,11 @@ export function useMarquee({
     const live = liveRef.current;
     liveRef.current = null;
     setDrag(null);
-    if (!live || !live.started) return; // 没成框：这是普通点击，什么都不做
+    // 没成框（Shift+单击对象）：这一下不算框选接管，松手后图层照旧处理它的 click
+    if (!live || !live.started) {
+      ownsRef.current = false;
+      return;
+    }
     consumedRef.current = true;
     const now = latest.current;
     const rect = now.world.worldRect();
@@ -162,6 +176,11 @@ export function useMarquee({
       if (now.viewMode !== 'edit' || now.brushActive) return;
       // 正在拉框建区域：Esc 归它撤框（见 useRegionDraw），这里别顺手把选中也清了
       if (now.suppressEsc?.()) return;
+      // 打点工具下的 Esc 是"退出这个工具"（见 useMapTool）：一次只做一件事，不清选中
+      if (now.tool === 'pin') {
+        now.onToolExit?.();
+        return;
+      }
       now.onClear();
     };
     window.addEventListener('keydown', onKey);

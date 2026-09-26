@@ -12,7 +12,7 @@
  * 三条退出路径互不重复：再点按钮（pick）、Esc、切别的工具（pick 别的值）；
  * 切预览由调用方 reset（预览是只读的）。
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { MapTool } from '@/types';
 
 export interface MapToolState {
@@ -32,16 +32,6 @@ export function useMapTool(clearBrush: () => void): MapToolState {
     setTool((cur) => (cur === next ? 'select' : next));
     clearBrush();
   }, [clearBrush]);
-
-  /** Esc 退出打点。框选的 Esc（清空选中）与笔刷的 Esc（放下笔刷）各管一段，不抢 */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setTool((cur) => (cur === 'pin' ? 'select' : cur));
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   return { tool, pick, set };
 }

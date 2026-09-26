@@ -32,7 +32,7 @@ export function MapCanvas({
   hoveredRegionId, regionMode, resourceKey, showLabels, onCanvasClick, onPinMove, onPinSelect,
   onRegionSelect, onRegionPointMove, onRegionPoints, onRegionRemovePoint, terrainBrush,
   onTerrainPlace, onTerrainSelect, onTerrainMove, onTerrainResize, onTerrainRotate,
-  onMarqueeSelect, onSelectionClear, onRegionCreate, className,
+  onMarqueeSelect, onSelectionClear, onToolExit, onRegionCreate, className,
 }: MapCanvasProps) {
   const hasBackground = Boolean(map.asset_id);
   const worldNorm = useWorldNorm();
@@ -76,7 +76,7 @@ export function MapCanvas({
   const marquee = useMarquee({
     world: worldNorm, viewMode, tool, panMode, brushActive: terrainBrush !== null,
     pins, terrain, regions, onSelect: onMarqueeSelect, onClear: onSelectionClear,
-    suppressEsc: regionDraw.active,
+    onToolExit, suppressEsc: regionDraw.active,
   });
 
   const pinDrag = usePinDrag({ toNorm: worldNorm.toNorm, onMove: onPinMove, enabled: viewMode === 'edit' });

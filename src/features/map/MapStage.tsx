@@ -62,6 +62,7 @@ export function MapStage({
           onTerrainRotate={actions.onTerrainRotate}
           onMarqueeSelect={actions.onMarqueeSelect}
           onSelectionClear={actions.onSelectionClear}
+          onToolExit={actions.onToolExit}
         />
       </div>
     </div>

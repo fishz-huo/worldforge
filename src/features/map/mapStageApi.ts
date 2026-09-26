@@ -70,6 +70,8 @@ export interface MapCanvasProps {
   onMarqueeSelect: (items: MapSelectionItem[], additive: boolean) => void;
   /** Esc 清空选中（没在画笔刷时，见 useMarquee） */
   onSelectionClear: () => void;
+  /** 打点工具下按 Esc：把工具收回「选择」（同一个 Esc 决策点里的一支，见 useMarquee） */
+  onToolExit: () => void;
   className?: string;
 }
 
@@ -116,6 +118,7 @@ export interface MapStageActions {
   /** 框选的提交与 Esc 清空（都落到 useMapSelection 的选择集上） */
   onMarqueeSelect: (items: MapSelectionItem[], additive: boolean) => void;
   onSelectionClear: () => void;
+  onToolExit: () => void;
 }
 
 /** MapStage 的全部入参 */
