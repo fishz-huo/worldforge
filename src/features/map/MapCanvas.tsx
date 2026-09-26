@@ -23,6 +23,7 @@ import { usePinDrag } from './usePinDrag';
 import { useRegionDraw } from './useRegionDraw';
 import { useRegionGestures } from './useRegionGestures';
 import { useTerrainGestures } from './useTerrainGestures';
+import { useWorldActions } from './useWorldActions';
 import { useWorldNorm } from './useWorldNorm';
 
 export function MapCanvas({
@@ -80,12 +81,21 @@ export function MapCanvas({
 
   const pinDrag = usePinDrag({ toNorm: worldNorm.toNorm, onMove: onPinMove, enabled: viewMode === 'edit' });
 
+  /** 世界层的动作总入口：落点在这里过一遍防重叠（见 useWorldActions） */
+  const worldActions = useWorldActions({
+    world: worldNorm, pins, onNaturalSize, onCanvasClick, onPinSelect, onPinDragStart: pinDrag.start,
+    onRegionSelect, onRegionDragStart: regionGestures.startMove, onTerrainSelect,
+    onTerrainDragStart: startMove,
+  });
+  /** 打点工具下区域内的点击要穿到画布上落点（问题三 F：区域里点半天落不下标记） */
+  const regionClickThrough = viewMode === 'edit' && !panMode && tool === 'pin';
+
   const { edgeHot, bind } = useCanvasGestures({
     world: worldNorm,
     viewMode,
     tool,
     viewport,
-    onCanvasClick,
+    onCanvasClick: worldActions.onSurfaceClick,
     onPinSelect,
     onRegionSelect,
     onTerrainSelect,
@@ -154,12 +164,9 @@ export function MapCanvas({
         view={{
           viewMode, panMode, regionMovable, brushActive: terrainBrush !== null, showLabels,
           regionMode, resourceKey, maxResource, selectedPinIds, selectedRegionIds,
-          selectedTerrainIds, hoveredPinId, hoveredRegionId,
+          selectedTerrainIds, hoveredPinId, hoveredRegionId, regionClickThrough,
         }}
-        actions={{
-          onNaturalSize, onPinSelect, onPinDragStart: pinDrag.start, onRegionSelect,
-          onRegionDragStart: regionGestures.startMove, onTerrainSelect, onTerrainDragStart: startMove,
-        }}
+        actions={worldActions.actions}
       />
 
       {/* 屏幕空间的浮层：区域名称与顶点手柄、地形控制点、缩放胶囊与底图提示 */}

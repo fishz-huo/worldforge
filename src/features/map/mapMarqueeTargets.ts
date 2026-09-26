@@ -73,3 +73,24 @@ export function buildCandidates(
   }
   return out;
 }
+
+/**
+ * 落点防重叠（2026-09-26 问题三）：离这个落点最近的已有标记，没有就 null。
+ * 打点常驻之后，同一点上连点两下会叠出第二个**完全看不见**的标记（24px 圆完全重合），
+ * 所以落点前先问它：中心距小于半个命中盒（12px）就当作"点在同一个地方"，
+ * 改为选中已有那个，不再落新的。
+ */
+export function pinNear(pins: MapPin[], rect: RectLike, x: number, y: number): MapPin | null {
+  const px = rect.left + x * rect.width;
+  const py = rect.top + y * rect.height;
+  let best: MapPin | null = null;
+  let bestDist = PIN_HIT_SIZE / 2;
+  for (const pin of pins) {
+    const d = Math.hypot(rect.left + pin.x * rect.width - px, rect.top + pin.y * rect.height - py);
+    if (d <= bestDist) {
+      best = pin;
+      bestDist = d;
+    }
+  }
+  return best;
+}

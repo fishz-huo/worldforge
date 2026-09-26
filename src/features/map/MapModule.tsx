@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Map as MapIcon } from 'lucide-react';
 import { EmptyState } from '@/components/ui/primitives';
 import { ModuleBody, ModuleLayout } from '@/components/layout/Panel';
-import type { MapTool, RegionResources } from '@/types';
+import type { RegionResources } from '@/types';
 import { MapInspector } from './MapInspector';
 import { MapSidebar } from './MapSidebar';
 import { MapStage } from './MapStage';
@@ -26,6 +26,7 @@ import { useMapKeys } from './useMapKeys';
 import { useMapSelection } from './useMapSelection';
 import { useMapStore } from './useMapStore';
 import { useMapTerrain } from './useMapTerrain';
+import { useMapTool } from './useMapTool';
 import { useMapViewport } from './useMapViewport';
 import { useTerrainStage } from './useTerrainStage';
 import type { MapViewMode } from './mapRender';
@@ -37,9 +38,8 @@ export function MapModule() {
   } = useMapStore();
   const { place, patch } = useMapTerrain();
 
-  const [tool, setTool] = useState<MapTool>('select');
-  /** 视图模式：只活在组件里（不动 store 与偏好），所以刷新后回到「编辑」 */
   const [mode, setMode] = useState<MapViewMode>('edit');
+  /** 视图模式：只活在组件里（不动 store 与偏好），所以刷新后回到「编辑」 */
   const [showLabels, setShowLabels] = useState(true);
   const [regionMode, setRegionMode] = useState<'fill' | 'outline' | 'resource'>('fill');
   const [resourceKey, setResourceKey] = useState<keyof RegionResources>('population');
@@ -80,6 +80,8 @@ export function MapModule() {
     // 落下就选中它（另外两种选中由 useMapSelection 一并清掉）
     onPlaced: (id) => sel.selectTerrain(id),
   });
+  /** 工具（选择 / 打点 / 区域 / 平移）："再点一次收回选择"与"Esc 退出打点"见 useMapTool */
+  const { tool, pick: pickTool, set: setTool } = useMapTool(terrain.clear);
 
   /**
    * 平移的两个量（第三轮）：panLive = 左键能不能平移（预览/平移工具/空格）；
@@ -90,12 +92,6 @@ export function MapModule() {
   const panMode = tool === 'pan' || keys.space;
   const panLive = mode === 'preview' || panMode;
   const viewport = useMapViewport(world, map?.id ?? '', panLive, spots.hide);
-
-  /** 换工具 = 放下笔刷（两个都"在用"会让左栏同时高亮两处，落点也容易打架） */
-  const changeTool = (next: MapTool) => {
-    setTool(next);
-    terrain.clear();
-  };
 
   /** 切模式时把工具复位成「选择」：否则从打点切预览再切回来，随手一点就多一个标记 */
   const changeMode = (next: MapViewMode) => {
@@ -111,7 +107,7 @@ export function MapModule() {
       <MapSidebar
         viewMode={mode}
         tool={tool}
-        setTool={changeTool}
+        setTool={pickTool}
         showLabels={showLabels}
         setShowLabels={setShowLabels}
         regionMode={regionMode}
@@ -162,9 +158,9 @@ export function MapModule() {
               onModeChange: changeMode,
               onNaturalSize: setMeasured,
               onCanvasClick: (x, y) => {
+                // 落点后**保持打点**（问题三）：连点可连续落；退出走 Esc / 再点按钮 / 换工具
                 const id = addPin(map.id, x, y, { label: `标记 ${mapPins.length + 1}`, color: '#ef4444' });
                 sel.selectPin(id);
-                changeTool('select');
               },
               onPinMove: (id, x, y) => updatePin(id, { x, y }),
               onPinSelect: sel.selectPin,

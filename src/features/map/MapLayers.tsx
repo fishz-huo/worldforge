@@ -29,6 +29,8 @@ interface Props {
   panMode: boolean;
   /** 编辑模式且工具允许：按住区域内部整体移动 */
   regionMovable: boolean;
+  /** 打点工具下的区域点击穿透：区域不吃这一下，让画布落一个标记（问题三 F） */
+  regionClickThrough: boolean;
   /** 地形笔刷激活：地形符号让点击穿到画布上落新符号 */
   brushActive: boolean;
   showLabels: boolean;
@@ -51,10 +53,10 @@ interface Props {
 }
 
 export function MapLayers({
-  map, world, pins, regions, terrain, viewMode, panMode, regionMovable, brushActive, showLabels,
-  regionMode, resourceKey, maxResource, selectedPinIds, selectedRegionIds, selectedTerrainIds,
-  hoveredPinId, hoveredRegionId, spots, onNaturalSize, onPinSelect, onPinDragStart,
-  onRegionSelect, onRegionDragStart, onTerrainSelect, onTerrainDragStart,
+  map, world, pins, regions, terrain, viewMode, panMode, regionMovable, regionClickThrough,
+  brushActive, showLabels, regionMode, resourceKey, maxResource, selectedPinIds, selectedRegionIds,
+  selectedTerrainIds, hoveredPinId, hoveredRegionId, spots, onNaturalSize, onPinSelect,
+  onPinDragStart, onRegionSelect, onRegionDragStart, onTerrainSelect, onTerrainDragStart,
 }: Props) {
   return (
     <>
@@ -70,6 +72,7 @@ export function MapLayers({
         viewMode={viewMode}
         panMode={panMode}
         regionMovable={regionMovable}
+        clickThrough={regionClickThrough}
         mode={regionMode}
         metric={String(resourceKey)}
         maxValue={maxResource}

@@ -29,6 +29,8 @@ interface Props {
   panMode: boolean;
   /** 编辑模式 + 工具允许：按住区域内部整体移动 */
   regionMovable: boolean;
+  /** 打点工具下：区域不吃点击，让它穿到画布上落一个标记（问题三 F） */
+  clickThrough: boolean;
   mode: 'fill' | 'outline' | 'resource';
   metric: string;
   maxValue: number;
@@ -41,8 +43,8 @@ interface Props {
 }
 
 export function MapRegionLayer({
-  regions, selectedRegionIds, hoveredRegionId, viewMode, panMode, regionMovable, mode, metric,
-  maxValue, onSelect, onDragStart, onSpotHover, onSpotLeave, onSpotTap,
+  regions, selectedRegionIds, hoveredRegionId, viewMode, panMode, regionMovable, clickThrough,
+  mode, metric, maxValue, onSelect, onDragStart, onSpotHover, onSpotLeave, onSpotTap,
 }: Props) {
   const interactive = viewMode === 'preview';
 
@@ -83,6 +85,8 @@ export function MapRegionLayer({
             onClick={(e) => {
               // 平移态下单击不改选中（与「拖动只平移画布」同一套口径）
               if (panMode) return;
+              // 打点工具：这一下要让到画布上落标记（问题三 F）—— 不选中、也不阻止冒泡
+              if (clickThrough) return;
               e.stopPropagation();
               onSelect(region.id);
             }}

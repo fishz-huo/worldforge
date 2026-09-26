@@ -26,7 +26,7 @@ export interface MapWorldLayerProps {
   /** 视图与选中（regionMovable / brushActive / maxResource 是画布现算出来的） */
   view: Pick<Canvas, 'viewMode' | 'panMode' | 'showLabels' | 'regionMode' | 'resourceKey'
     | 'selectedPinIds' | 'selectedRegionIds' | 'selectedTerrainIds' | 'hoveredPinId' | 'hoveredRegionId'>
-    & { regionMovable: boolean; brushActive: boolean; maxResource: number };
+    & { regionMovable: boolean; brushActive: boolean; maxResource: number; regionClickThrough: boolean };
   /** 悬停/点击浮窗的三个上报（见 MapSpotLayer） */
   spots: Canvas['spots'];
   /** 图层要的动作：4 个来自 props，3 个是画布里的手势入口 */
@@ -49,6 +49,7 @@ export function MapWorldLayer({ worldRef, style, data, view, spots, actions }: M
         viewMode={view.viewMode}
         panMode={view.panMode}
         regionMovable={view.regionMovable}
+        regionClickThrough={view.regionClickThrough}
         brushActive={view.brushActive}
         showLabels={view.showLabels}
         regionMode={view.regionMode}

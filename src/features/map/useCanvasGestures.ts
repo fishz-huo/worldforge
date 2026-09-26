@@ -166,22 +166,25 @@ export function useCanvasGestures({
         brushPlacedRef.current = false;
         return;
       }
-      // 这一下是按在图钉/区域/顶点/地形上的：它们自己已经选中了，别因为重排把选中取消掉
-      if (pressOnSpotRef.current) {
-        pressOnSpotRef.current = false;
-        return;
-      }
-      // 只有点在「底图/SVG」上才算落在图上：标记与区域内部会 stopPropagation
-      const onSurface = (e.target as HTMLElement).dataset.surface === 'true';
-      if (onSurface && viewMode === 'edit' && tool === 'pin') {
+      const target = e.target as HTMLElement;
+      const onSpot = pressOnSpotRef.current;
+      pressOnSpotRef.current = false;
+      // 点在「底图 / SVG」上才算落在图上：区域多边形也在那个 SVG 里，所以用 closest
+      const onSurface = Boolean(target.closest('[data-surface="true"]'));
+      // 按在区域多边形上、却不是按在图钉 / 地形 / 顶点 / 手柄上 —— 打点工具下这一下要落标记
+      const regionOnly = Boolean(target.closest('[data-wf-map-region]'))
+        && !target.closest('[data-wf-map-pin],[data-wf-map-terrain],[data-wf-map-vertex],[data-wf-map-terrain-handle]');
+      if (onSurface && viewMode === 'edit' && tool === 'pin' && (!onSpot || regionOnly)) {
         const [x, y] = toNorm(e.clientX, e.clientY);
         onCanvasClick(x, y);
-      } else {
-        // 点空白（包括底图之外的留白）取消选中；预览模式只允许取消选中
-        onPinSelect(null);
-        onRegionSelect(null);
-        onTerrainSelect(null);
+        return;
       }
+      // 按在图钉 / 区域 / 顶点 / 地形上：它们自己已经选中了，别因为重排把选中取消掉
+      if (onSpot) return;
+      // 点空白（包括底图之外的留白）取消选中；预览模式只允许取消选中
+      onPinSelect(null);
+      onRegionSelect(null);
+      onTerrainSelect(null);
     },
   };
 
