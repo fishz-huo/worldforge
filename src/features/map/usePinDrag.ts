@@ -12,6 +12,7 @@
  * 不像区域那样要按包围盒夹取位移；越出 0~1 由 toNorm 收进边界。
  */
 import { useCallback, useEffect, useRef } from 'react';
+import { createFrameCommit } from './mapDragFrame';
 import { trackPointer } from './useRegionGestures';
 
 interface Options {
@@ -35,12 +36,13 @@ export function usePinDrag({ toNorm, onMove, enabled }: Options): PinDrag {
   });
 
   const start = useCallback((pinId: string) => {
+    /** 每帧最多写一次库（拖拽成本的大头，见 mapDragFrame） */
+    const commit = createFrameCommit<[number, number]>(([x, y]) => latest.current.onMove(pinId, x, y));
     trackPointer((ev) => {
       const now = latest.current;
       if (!now.enabled) return;
-      const [x, y] = now.toNorm(ev.clientX, ev.clientY);
-      now.onMove(pinId, x, y);
-    });
+      commit.push(now.toNorm(ev.clientX, ev.clientY));
+    }, () => commit.flush());
   }, []);
 
   return { start };

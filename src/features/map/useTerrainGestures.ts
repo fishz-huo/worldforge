@@ -19,6 +19,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { MapPin } from '@/types';
 import { clampNorm } from './mapRender';
 import { angleFrom, readTerrain, scaleFromDrag } from './mapTerrain';
+import { createFrameCommit } from './mapDragFrame';
 import { DRAG_MIN, trackPointer } from './useRegionGestures';
 
 interface Options {
@@ -62,15 +63,17 @@ export function useTerrainGestures({
       const [sx, sy] = toNorm(e.clientX, e.clientY);
       const { x: bx, y: by } = pin;
       const press = { x: e.clientX, y: e.clientY };
+      const commit = createFrameCommit<[number, number]>(([x, y]) => {
+        onMove(pin.id, clampNorm(bx + (x - sx)), clampNorm(by + (y - sy)));
+      });
       let armed = false;
       trackPointer((ev) => {
         if (!armed) {
           if (Math.hypot(ev.clientX - press.x, ev.clientY - press.y) < DRAG_MIN) return;
           armed = true;
         }
-        const [x, y] = toNorm(ev.clientX, ev.clientY);
-        onMove(pin.id, clampNorm(bx + (x - sx)), clampNorm(by + (y - sy)));
-      });
+        commit.push(toNorm(ev.clientX, ev.clientY));
+      }, () => commit.flush());
     },
     [toNorm, onMove],
   );
@@ -84,10 +87,8 @@ export function useTerrainGestures({
       if (!meta || !center) return;
       const [cx, cy] = center;
       const r0 = Math.hypot(e.clientX - cx, e.clientY - cy);
-      trackPointer((ev) => {
-        const r = Math.hypot(ev.clientX - cx, ev.clientY - cy);
-        onResize(pin.id, scaleFromDrag(meta.size, r0, r));
-      });
+      const commit = createFrameCommit<number>((r) => onResize(pin.id, scaleFromDrag(meta.size, r0, r)));
+      trackPointer((ev) => commit.push(Math.hypot(ev.clientX - cx, ev.clientY - cy)), () => commit.flush());
     },
     [centerOf, onResize],
   );
@@ -99,17 +100,16 @@ export function useTerrainGestures({
       const center = centerOf(pin);
       if (!center) return;
       const [cx, cy] = center;
-      trackPointer((ev) => onRotate(pin.id, angleFrom(cx, cy, ev.clientX, ev.clientY)));
+      const commit = createFrameCommit<number>((a) => onRotate(pin.id, a));
+      trackPointer((ev) => commit.push(angleFrom(cx, cy, ev.clientX, ev.clientY)), () => commit.flush());
     },
     [centerOf, onRotate],
   );
 
   const follow = useCallback(
     (pinId: string) => {
-      trackPointer((ev) => {
-        const [x, y] = toNorm(ev.clientX, ev.clientY);
-        onMove(pinId, x, y);
-      });
+      const commit = createFrameCommit<[number, number]>(([x, y]) => onMove(pinId, x, y));
+      trackPointer((ev) => commit.push(toNorm(ev.clientX, ev.clientY)), () => commit.flush());
     },
     [toNorm, onMove],
   );

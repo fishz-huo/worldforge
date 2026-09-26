@@ -16,16 +16,19 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { MapRegion } from '@/types';
 import { clampShift, shiftPoints } from './mapRegionEdit';
 import type { Point } from './mapRegionEdit';
+import { createFrameCommit } from './mapDragFrame';
 
 /** 位移小于它算「点」：免得单击时手抖 1px 就把区域挪走并写一次库 */
 export const DRAG_MIN = 4;
 
 /** 一次拖拽：全局监听指针，松手 / 取消都要摘干净（地形手势也用同一份） */
-export function trackPointer(onMove: (e: PointerEvent) => void): void {
+export function trackPointer(onMove: (e: PointerEvent) => void, onEnd?: () => void): void {
   const up = () => {
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', up);
     window.removeEventListener('pointercancel', up);
+    // 合帧写库的收尾（见 mapDragFrame）：最后一次移动可能还没到下一帧
+    onEnd?.();
   };
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', up);
@@ -58,16 +61,19 @@ export function useRegionGestures({ toNorm, onPoints, onPointMove, onRemovePoint
       const [sx, sy] = toNorm(e.clientX, e.clientY);
       const base = region.points.map(([x, y]) => [x, y] as Point);
       const start = { x: e.clientX, y: e.clientY };
+      /** 每帧最多写一次库（拖拽成本的大头，见 mapDragFrame） */
+      const commit = createFrameCommit<Point>(([x, y]) => {
+        const [dx, dy] = clampShift(base, x - sx, y - sy);
+        onPoints(region.id, shiftPoints(base, dx, dy));
+      });
       let armed = false;
       trackPointer((ev) => {
         if (!armed) {
           if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < DRAG_MIN) return;
           armed = true;
         }
-        const [x, y] = toNorm(ev.clientX, ev.clientY);
-        const [dx, dy] = clampShift(base, x - sx, y - sy);
-        onPoints(region.id, shiftPoints(base, dx, dy));
-      });
+        commit.push(toNorm(ev.clientX, ev.clientY));
+      }, () => commit.flush());
     },
     [toNorm, onPoints],
   );
