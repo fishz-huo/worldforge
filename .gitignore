@@ -48,3 +48,8 @@ samples/*.sqlite
 
 # 临时探测脚本
 scripts/_tmp-*.mjs
+
+# 设计稿（.pen / 导出的设计图 / 原型 HTML）与根目录那份单独的设计文件：
+# 只作本地参考，不进仓库（2026-10-01 从跟踪里摘出，文件仍在本地）
+designs/
+worldforge-design02.pen
