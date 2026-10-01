@@ -5,16 +5,19 @@
  *  - 纯文本 Markdown 输入（不引入重型富文本编辑器，保持产物体积）；
  *  - 工具条一键插入标题 / 列表 / 引用 / 双链 / 图片（见 MarkdownToolbar）；
  *  - 输入 `[[` 自动弹出卡片选择器（见 WikiSuggestPopup）；
- *  - 支持粘贴与拖拽图片，图片存进本地资源库并以 `asset:` 引用。
+ *  - 支持粘贴与拖拽图片，图片存进本地资源库并以 `asset:` 引用；
+ *  - 可选的语法着色层（见 MarkdownHighlightLayer）：**只影响显示**，
+ *    正文一个字都不改，关掉即回到纯文本。
+ * 输入逻辑在 useMarkdownEditing 里，本文件只负责把几块拼起来。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Card } from '@/types';
-import { cn, matches } from '@/lib/utils';
-import { wikiRefOf } from '@/lib/card-code';
-import { importImageBlob } from '@/lib/assets';
+import type { ReactNode } from 'react';
 import { useStore } from '@/store';
+import { cn } from '@/lib/utils';
 import { MarkdownToolbar } from './MarkdownToolbar';
 import { WikiSuggestPopup } from './WikiSuggestPopup';
+import { EDITOR_METRICS, MarkdownHighlightLayer } from './MarkdownHighlightLayer';
+import { toggleEditorHighlight, useEditorHighlight } from './editorHighlight';
+import { useMarkdownEditing } from './useMarkdownEditing';
 
 interface Props {
   value: string;
@@ -23,7 +26,7 @@ interface Props {
   className?: string;
   textareaClassName?: string;
   /** 工具条右侧附加信息（如「已保存」） */
-  footer?: React.ReactNode;
+  footer?: ReactNode;
   /** 隐藏字数统计 */
   hideStats?: boolean;
 }
@@ -37,103 +40,9 @@ export function MarkdownEditor({
   footer,
   hideStats,
 }: Props) {
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const cards = useStore((s) => s.cards);
-  const worldId = useStore((s) => s.currentWorldId);
-  const toast = useStore((s) => s.toast);
+  const editing = useMarkdownEditing(value, onChange);
   const fontSize = useStore((s) => s.editorFontSize);
-  const createCard = useStore((s) => s.createCard);
-  const [suggest, setSuggest] = useState<{ query: string; start: number } | null>(null);
-
-  /** 在光标处包裹 / 插入文本 */
-  const wrap = useCallback(
-    (before: string, after = '', placeholderText = '文本') => {
-      const el = ref.current;
-      if (!el) return;
-      const start = el.selectionStart;
-      const end = el.selectionEnd;
-      const selected = value.slice(start, end) || placeholderText;
-      onChange(value.slice(0, start) + before + selected + after + value.slice(end));
-      requestAnimationFrame(() => {
-        el.focus();
-        el.setSelectionRange(start + before.length, start + before.length + selected.length);
-      });
-    },
-    [onChange, value],
-  );
-
-  /** 行首插入前缀（标题、列表、引用） */
-  const prefixLine = useCallback(
-    (prefix: string) => {
-      const el = ref.current;
-      if (!el) return;
-      const start = el.selectionStart;
-      const lineStart = value.lastIndexOf('\n', start - 1) + 1;
-      onChange(value.slice(0, lineStart) + prefix + value.slice(lineStart));
-      requestAnimationFrame(() => {
-        el.focus();
-        el.setSelectionRange(start + prefix.length, start + prefix.length);
-      });
-    },
-    [onChange, value],
-  );
-
-  /** 输入时判断是否唤起了双链选择器 */
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const next = e.target.value;
-    onChange(next);
-    const caret = e.target.selectionStart ?? 0;
-    const before = next.slice(0, caret);
-    const open = before.lastIndexOf('[[');
-    const close = before.lastIndexOf(']]');
-    if (open > -1 && open > close && caret - open <= 30) {
-      setSuggest({ query: before.slice(open + 2), start: open });
-    } else {
-      setSuggest(null);
-    }
-  };
-
-  /** 候选卡片：标题与编号都能搜；编号完全命中的排最前（回车即中） */
-  const candidates = useMemo(() => {
-    if (!suggest) return [];
-    const q = suggest.query.trim().toLowerCase();
-    return cards
-      .filter((c) => matches(suggest.query, c.title, c.code, c.summary))
-      .sort((a, b) => Number((b.code ?? '').toLowerCase() === q) - Number((a.code ?? '').toLowerCase() === q))
-      .slice(0, 8);
-  }, [suggest, cards]);
-
-  /** 把 `[[query` 替换成 `[[编号|标题]]`（未编号的卡片退回 `[[标题]]`） */
-  const applySuggestion = (card: Card) => {
-    if (!suggest) return;
-    const el = ref.current;
-    const caret = el?.selectionStart ?? value.length;
-    const link = wikiRefOf(card);
-    onChange(`${value.slice(0, suggest.start)}${link}${value.slice(caret)}`);
-    setSuggest(null);
-    requestAnimationFrame(() => {
-      el?.focus();
-      const pos = suggest.start + link.length;
-      el?.setSelectionRange(pos, pos);
-    });
-  };
-
-  /** 插入本地图片（粘贴 / 拖拽 / 工具条共用） */
-  const insertImage = async (file: File) => {
-    if (!worldId) return;
-    const asset = await importImageBlob(file, worldId, file.name || '插图.png');
-    wrap(`![${asset.name}](asset:${asset.id})`);
-    toast('图片已插入并存入本地资源库', 'success');
-  };
-
-  /** 光标位置同步（供选择器定位与快捷键使用） */
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const handler = () => setSuggest((s) => s);
-    el.addEventListener('keyup', handler);
-    return () => el.removeEventListener('keyup', handler);
-  }, []);
+  const highlight = useEditorHighlight();
 
   return (
     <div className={cn('relative flex min-h-0 flex-1 flex-col', className)}>
@@ -141,56 +50,63 @@ export function MarkdownEditor({
         value={value}
         footer={footer}
         hideStats={hideStats}
-        onWrap={wrap}
-        onPrefixLine={prefixLine}
-        onPickImage={(file) => void insertImage(file)}
+        highlight={highlight}
+        onToggleHighlight={toggleEditorHighlight}
+        onWrap={editing.wrap}
+        onPrefixLine={editing.prefixLine}
+        onPickImage={(file) => void editing.insertImage(file)}
       />
 
-      <textarea
-        ref={ref}
-        value={value}
-        onChange={handleChange}
-        onPaste={(e) => {
-          const item = [...e.clipboardData.items].find((i) => i.type.startsWith('image/'));
-          const file = item?.getAsFile();
-          if (!file) return;
-          e.preventDefault();
-          void insertImage(file);
-        }}
-        onDrop={(e) => {
-          const file = e.dataTransfer.files?.[0];
-          if (file?.type.startsWith('image/')) {
-            e.preventDefault();
-            void insertImage(file);
-          }
-        }}
-        onKeyDown={(e) => {
-          if (suggest && candidates.length > 0 && (e.key === 'Enter' || e.key === 'Tab')) {
-            e.preventDefault();
-            applySuggestion(candidates[0]);
-          } else if (e.key === 'Escape') {
-            setSuggest(null);
-          } else if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-            e.preventDefault();
-            wrap('**', '**', '加粗');
-          }
-        }}
-        spellCheck={false}
-        placeholder={placeholder}
-        style={{ fontSize: `${fontSize}px` }}
-        className={cn(
-          'min-h-0 flex-1 resize-none bg-transparent px-3 py-2 font-sans leading-7 outline-none',
-          'placeholder:text-muted-foreground/60',
-          textareaClassName,
+      {/* 文本区与着色层同处一个定位容器：渲染层要严丝合缝贴在 textarea 的盒子上，
+          若相对外层定位，会连工具条一起盖住。 */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        {highlight && (
+          <MarkdownHighlightLayer text={value} fontSize={fontSize} targetRef={editing.ref} />
         )}
-      />
 
-      {suggest && (
+        <textarea
+          ref={editing.ref}
+          value={value}
+          onChange={editing.handleChange}
+          onKeyDown={editing.handleKeyDown}
+          onPaste={(e) => {
+            const item = [...e.clipboardData.items].find((i) => i.type.startsWith('image/'));
+            const file = item?.getAsFile();
+            if (!file) return;
+            e.preventDefault();
+            void editing.insertImage(file);
+          }}
+          onDrop={(e) => {
+            const file = e.dataTransfer.files?.[0];
+            if (file?.type.startsWith('image/')) {
+              e.preventDefault();
+              void editing.insertImage(file);
+            }
+          }}
+          spellCheck={false}
+          placeholder={placeholder}
+          style={{
+            fontSize: `${fontSize}px`,
+            // 开着色时 textarea 自己的字是透明的（只留光标），
+            // 而 caret-color 默认跟随 color —— 不显式设回来，光标会一起消失。
+            caretColor: highlight ? 'hsl(var(--foreground))' : undefined,
+          }}
+          className={cn(
+            'min-h-0 w-full flex-1 resize-none bg-transparent outline-none',
+            EDITOR_METRICS,
+            'placeholder:text-muted-foreground/60',
+            highlight ? 'text-transparent' : 'text-foreground',
+            textareaClassName,
+          )}
+        />
+      </div>
+
+      {editing.suggest && (
         <WikiSuggestPopup
-          candidates={candidates}
-          query={suggest.query}
-          onPick={applySuggestion}
-          onCreate={(title) => applySuggestion(createCard('concept', { title }))}
+          candidates={editing.candidates}
+          query={editing.suggest.query}
+          onPick={editing.applySuggestion}
+          onCreate={editing.createFromSuggest}
         />
       )}
     </div>

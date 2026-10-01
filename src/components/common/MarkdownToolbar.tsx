@@ -6,7 +6,7 @@
  */
 import {
   Bold, Code2, Heading2, Image as ImageIcon, Italic, Link2, List, ListOrdered,
-  Minus, Quote, ScrollText,
+  Minus, Palette, Quote, ScrollText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Hint } from '@/components/ui/tooltip';
@@ -21,21 +21,46 @@ interface Props {
   hideStats?: boolean;
   /** 右侧附加信息 */
   footer?: React.ReactNode;
+  /** 语法着色是否开启（纯显示层，不影响正文） */
+  highlight: boolean;
+  onToggleHighlight: () => void;
 }
 
-export function MarkdownToolbar({ onWrap, onPrefixLine, onPickImage, value, hideStats, footer }: Props) {
+export function MarkdownToolbar({
+  onWrap,
+  onPrefixLine,
+  onPickImage,
+  value,
+  hideStats,
+  footer,
+  highlight,
+  onToggleHighlight,
+}: Props) {
   /** 小按钮工厂，避免重复 JSX */
   const ToolBtn = ({
     icon: Ico,
     label,
     onClick,
+    active,
+    keepFocus,
   }: {
     icon: typeof Bold;
     label: string;
     onClick: () => void;
+    /** 开关类按钮：开启时用灰底表示状态（与顶栏专注模式同一套写法） */
+    active?: boolean;
+    /** 点它不要让文本区失去焦点（着色开关是"看一眼"的操作，不该打断输入） */
+    keepFocus?: boolean;
   }) => (
     <Hint label={label}>
-      <Button variant="ghost" size="icon-sm" onClick={onClick} type="button">
+      <Button
+        variant={active ? 'secondary' : 'ghost'}
+        size="icon-sm"
+        aria-pressed={active}
+        type="button"
+        onMouseDown={keepFocus ? (e) => e.preventDefault() : undefined}
+        onClick={onClick}
+      >
         <Ico />
       </Button>
     </Hint>
@@ -53,6 +78,13 @@ export function MarkdownToolbar({ onWrap, onPrefixLine, onPickImage, value, hide
       <ToolBtn icon={Minus} label="分隔线" onClick={() => onWrap('\n---\n')} />
       <ToolBtn icon={Link2} label="插入链接" onClick={() => onWrap('[', '](https://)', '链接文字')} />
       <ToolBtn icon={ScrollText} label="引用设定卡 [[…]]" onClick={() => onWrap('[[', ']]', '卡片标题')} />
+      <ToolBtn
+        icon={Palette}
+        label={`语法着色：${highlight ? '开（点击关闭）' : '关（点击开启）'}`}
+        active={highlight}
+        keepFocus
+        onClick={onToggleHighlight}
+      />
 
       <label className="inline-flex">
         <input
