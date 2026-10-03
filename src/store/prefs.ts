@@ -22,7 +22,6 @@ export const UI_SCALE_OPTIONS: { value: UiScale; label: string }[] = [
 /** 可持久化的界面偏好 */
 export interface Prefs {
   theme: 'dark' | 'light';
-  accent: string;
   railOpen: boolean;
   sidebarOpen: boolean;
   inspectorOpen: boolean;
@@ -76,7 +75,6 @@ export function clampWidth(value: number, limit: { min: number; max: number }): 
 export const DEFAULT_PREFS: Prefs = {
   /** 首次打开默认亮色（原来是暗色）；已经设置过主题的用户不受影响，见 loadPrefs */
   theme: 'light',
-  accent: '262 83% 58%',
   railOpen: true,
   sidebarOpen: true,
   inspectorOpen: true,
@@ -92,13 +90,27 @@ export const DEFAULT_PREFS: Prefs = {
   autoReplaceCodeRefs: true,
 };
 
+/**
+ * 只挑当前已知的偏好字段。
+ * 老版本存过的字段可能已经下线（例如已移除的「强调色」accent）：
+ * 多余的键既不读取、也不再写回 localStorage，但它**仍然留在浏览器里**
+ * —— 不删用户的数据，哪天真要加回来还能读得到。
+ */
+function pickKnownPrefs(stored: Partial<Prefs>): Partial<Prefs> {
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(DEFAULT_PREFS)) {
+    if (key in stored) out[key] = (stored as Record<string, unknown>)[key];
+  }
+  return out as Partial<Prefs>;
+}
+
 /** 读取偏好（容错：解析失败回落默认值，数值越界一律夹回合法区间） */
 export function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_PREFS };
     const stored = JSON.parse(raw) as Partial<Prefs>;
-    const merged = { ...DEFAULT_PREFS, ...stored };
+    const merged = { ...DEFAULT_PREFS, ...pickKnownPrefs(stored) };
     // 老版本存过的偏好里没有 theme 字段：那说明用户从没自己选过主题，
     // 他实际看到的始终是当时的默认暗色 —— 按暗色继续，别因为默认值改成亮色就被"跳变"。
     if (stored.theme === undefined) merged.theme = 'dark';

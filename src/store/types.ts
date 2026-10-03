@@ -62,7 +62,6 @@ export interface UiState {
   inspectorOpen: boolean;
   focusMode: boolean;
   theme: 'dark' | 'light';
-  accent: string;
   paletteOpen: boolean;
   branchScope: 'current' | 'all';
   selectedCardId: string | null;

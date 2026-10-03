@@ -11,6 +11,7 @@ import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 import { flush } from '@/lib/db';
+import { applyPluginTheme } from '@/lib/theme-scope';
 import { MODULES } from '@/components/layout/modules';
 import { useStore } from '@/store';
 
@@ -42,20 +43,20 @@ export default function App() {
   const ready = useStore((s) => s.ready);
   const error = useStore((s) => s.error);
   const theme = useStore((s) => s.theme);
-  const accent = useStore((s) => s.accent);
   const registry = usePluginRegistry();
 
-  /** 应用主题：明暗类名 + 强调色 + 插件注册的配色变量 */
+  /** 应用主题：明暗类名 + 插件注册的配色变量（亮暗两套调色板在 index.css 里） */
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle('dark', theme === 'dark');
     root.classList.toggle('light', theme === 'light');
-    root.style.setProperty('--primary', accent);
-    root.style.setProperty('--ring', accent);
-    // 插件主题：最后注册的、模式匹配的主题生效
+    // 插件主题：最后注册的、模式匹配的主题生效。
+    // 没有匹配主题（插件被停用/卸载）时传 null —— 作用域会**先清掉上一次写过的
+    // 变量**再交还给默认调色板，否则旧值会继续盖住亮暗两套，表现为「切亮暗只有
+    // 一部分元素变化」。详见 lib/theme-scope.ts。
     const match = registry.themes.filter((t) => t.mode === theme).pop();
-    if (match) Object.entries(match.vars).forEach(([k, v]) => root.style.setProperty(k, v));
-  }, [theme, accent, registry.themes]);
+    applyPluginTheme(match ? match.vars : null);
+  }, [theme, registry.themes]);
 
   /** 全局快捷键 */
   const hotkeys = useMemo(() => {

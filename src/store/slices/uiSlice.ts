@@ -22,7 +22,6 @@ export interface UiSlice extends UiState {
   /** 一键专注模式：三栏全部收起，只留内容区 */
   toggleFocus: () => void;
   setTheme: (theme: 'dark' | 'light') => void;
-  setAccent: (accent: string) => void;
   setPaletteOpen: (open: boolean) => void;
   setBranchScope: (scope: 'current' | 'all') => void;
   /** 选中一张卡片（会展开右侧检查器） */
@@ -62,7 +61,6 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
   inspectorOpen: saved.inspectorOpen,
   focusMode: false,
   theme: saved.theme,
-  accent: saved.accent,
   paletteOpen: false,
   branchScope: saved.branchScope,
   selectedCardId: null,
@@ -113,10 +111,6 @@ export const createUiSlice: Slice<UiSlice> = (set, get) => ({
   setTheme: (theme) => {
     set({ theme });
     savePrefs({ theme });
-  },
-  setAccent: (accent) => {
-    set({ accent });
-    savePrefs({ accent });
   },
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setBranchScope: (branchScope) => {

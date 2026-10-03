@@ -3,7 +3,7 @@
  * ------------------------------------------------------------------
  * 需求 6：界面简约易看；需求 14：插件可提供配色（registerTheme）。
  */
-import { Check, Moon, Palette, Sun } from 'lucide-react';
+import { Moon, Palette, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -14,21 +14,9 @@ import { UI_SCALE_OPTIONS } from '@/store/prefs';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 
-/** 内置强调色 */
-const ACCENTS: { name: string; value: string }[] = [
-  { name: '紫', value: '262 83% 58%' },
-  { name: '青', value: '187 85% 45%' },
-  { name: '翠', value: '160 84% 39%' },
-  { name: '琥珀', value: '38 92% 50%' },
-  { name: '绯', value: '347 77% 50%' },
-  { name: '靛', value: '221 83% 53%' },
-];
-
 export function AppearanceSettings() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
-  const accent = useStore((s) => s.accent);
-  const setAccent = useStore((s) => s.setAccent);
   const railOpen = useStore((s) => s.railOpen);
   const sidebarOpen = useStore((s) => s.sidebarOpen);
   const inspectorOpen = useStore((s) => s.inspectorOpen);
@@ -97,22 +85,12 @@ export function AppearanceSettings() {
       </section>
 
       <section className="space-y-2">
-        <SectionTitle>强调色</SectionTitle>
-        <div className="flex flex-wrap gap-2 px-1">
-          {ACCENTS.map((a) => (
-            <button
-              key={a.value}
-              onClick={() => setAccent(a.value)}
-              title={a.name}
-              className={cn(
-                'flex size-7 items-center justify-center rounded-full border-2 transition-transform hover:scale-110',
-                accent === a.value ? 'border-foreground' : 'border-transparent',
-              )}
-              style={{ background: `hsl(${a.value})` }}
-            >
-              {accent === a.value && <Check className="size-3.5 text-white" />}
-            </button>
-          ))}
+        <SectionTitle>配色方案</SectionTitle>
+        <div className="px-1">
+          <p className="text-[10px] leading-relaxed text-muted-foreground">
+            配色由「插件配色」提供（内置的深海配色含深海 · 暗 / 羊皮纸 · 亮两套）。
+            插件停用或卸载后使用默认配色，亮暗两套同样完整。
+          </p>
         </div>
       </section>
 
@@ -143,6 +121,8 @@ export function AppearanceSettings() {
             ))}
             <p className="text-[10px] leading-relaxed text-muted-foreground">
               插件主题会在对应的明暗模式下自动生效（同模式下最后注册的优先）。
+              <br />
+              停用或卸载插件后立刻回到默认配色，亮暗两套完整生效，不需要重启。
             </p>
           </div>
         </section>
