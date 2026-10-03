@@ -96,6 +96,14 @@ export function MarkdownEditor({
             EDITOR_METRICS,
             'placeholder:text-muted-foreground/60',
             highlight ? 'text-transparent' : 'text-foreground',
+            // 选区配色：浏览器默认的选区底是饱和蓝（实测 #3068d0），会把着色层
+            // 按米色纸面配的彩色字压成一片（对比度掉到 1.35~1.95）。
+            // 换成主题色淡底后，选中的字仍然读得出来；selection:text-transparent
+            // 是防御性写法（Chrome 本就不给 textarea 的选区文字上色）。
+            // 透明度必须写成 /[0.18]：18 不在 Tailwind 默认刻度里，写 /18 会
+            // 整条规则不生成 —— 而一旦有 ::selection 作者样式，UA 的蓝底就不再
+            // 兜底，选区会变成完全透明（实测踩过）。
+            highlight && 'selection:bg-primary/[0.18] dark:selection:bg-primary/30 selection:text-transparent',
             textareaClassName,
           )}
         />
