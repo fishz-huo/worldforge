@@ -8,13 +8,23 @@
  * 安全模型：v0.1 的插件运行在页面同一上下文里，属于「可信任插件」，
  * 请只载入你自己写的或信任来源的插件（详见 docs/插件开发指南.md）。
  */
-import type { PluginAPI, PluginDocExportAPI, PluginFileAPI, PluginModule, PluginRecord, PluginSettingDef } from '@/types';
+import type { PluginAPI, PluginDocExportAPI, PluginFileAPI, PluginManifest, PluginModule, PluginRecord } from '@/types';
 import * as React from 'react';
 import { onPluginEvent } from './events';
 import * as reg from './registry';
 
 /** 宿主（软件）版本号，插件可据此做兼容判断 */
 export const HOST_VERSION = '0.2.1';
+
+/**
+ * 插件在 manifest 里声明的版本号：没声明 / 不是字符串 / 只有空白 → null。
+ * 返回 null 表示「插件自己没说」，此时插件记录里原来的值（建表默认 0.1.0）保持不变 ——
+ * 宿主不替插件猜版本号，因为记录里那一列此前只有硬编码的 0.1.0，改它没有依据。
+ */
+export function manifestVersion(manifest: PluginManifest | undefined): string | null {
+  const v = manifest?.version;
+  return typeof v === 'string' && v.trim() ? v.trim() : null;
+}
 
 /** 宿主与 store 之间的桥接：避免 lib → store 的反向依赖 */
 export interface HostBridge {
@@ -26,10 +36,10 @@ export interface HostBridge {
   readSettings: (pluginId: string) => Record<string, unknown>;
   saveSettings: (pluginId: string, settings: Record<string, unknown>) => void;
   /**
-   * 回填插件在 manifest 里声明的设置结构，使宿主能自动渲染设置表单。
-   * 声明来自插件源码，持久化归 store 管，所以通过桥接回调而不是直接写库。
+   * 回填插件在 manifest 里声明的信息（版本号 + 设置结构）：详情页才能显示正确版本、
+   * 自动渲染设置表单。声明来自插件源码，持久化归 store 管，所以通过桥接回调写库。
    */
-  applyManifest: (pluginId: string, schema: Record<string, PluginSettingDef>) => void;
+  applyManifest: (pluginId: string, manifest: PluginManifest) => void;
 }
 
 /** 构造某插件的 API 实例 */
@@ -99,8 +109,8 @@ export async function loadPlugin(record: PluginRecord, bridge: HostBridge): Prom
   let cleanup: (() => void) | void;
   try {
     const mod = (await import(/* @vite-ignore */ url)) as PluginModule;
-    // 插件在 manifest 里声明了设置项 → 回填给宿主，详情页才能渲染出设置表单
-    if (mod.manifest?.settings) bridge.applyManifest(record.id, mod.manifest.settings);
+    // manifest 整份交给宿主：既回填设置结构，也把插件声明的版本号写回记录（否则永远显示 0.1.0）
+    if (mod.manifest) bridge.applyManifest(record.id, mod.manifest);
     const api = createPluginAPI(record, bridge);
     cleanup = mod.activate(api);
   } finally {

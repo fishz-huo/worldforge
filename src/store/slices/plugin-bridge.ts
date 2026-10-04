@@ -8,8 +8,8 @@
  *
  * 反向依赖提醒：lib 不许 import store，所以写盘/导出这些 lib 能力要在这里被接上。
  */
-import type { ExportSource, PluginDocExportAPI, PluginFileAPI } from '@/types';
-import type { HostBridge } from '@/lib/plugin/host';
+import type { ExportSource, PluginDocExportAPI, PluginFileAPI, PluginRecord } from '@/types';
+import { manifestVersion, type HostBridge } from '@/lib/plugin/host';
 import { pluginsRepo } from '@/lib/db';
 import { buildExportFiles } from '@/lib/export/build';
 import { summarizeAreas } from '@/lib/export/collect';
@@ -81,11 +81,21 @@ export function makeBridge(get: () => AppStore, set: (partial: Partial<AppStore>
       pluginsRepo.save(next);
       set({ plugins: upsert(get().plugins, next) });
     },
-    /** 插件声明的设置结构只需回填一次：已有结构就不再覆盖，避免冲掉用户看到过的表单 */
-    applyManifest: (pluginId, schema) => {
+    /**
+     * 回填 manifest 里声明的两样东西，两者规则相反：
+     *   · 设置结构只回填一次 —— 已有结构就不再覆盖，避免冲掉用户看到过的表单；
+     *   · 版本号相反，插件源码才是真相源 —— 声明了且与记录里的现值不同就更新。
+     * 一次 save 写完两者，避免为同一个插件记录连写两次。
+     */
+    applyManifest: (pluginId, manifest) => {
       const record = get().plugins.find((p) => p.id === pluginId);
-      if (!record || Object.keys(record.settings_schema).length > 0) return;
-      const next = { ...record, settings_schema: schema };
+      if (!record) return;
+      const patch: Partial<PluginRecord> = {};
+      if (manifest.settings && Object.keys(record.settings_schema).length === 0) patch.settings_schema = manifest.settings;
+      const version = manifestVersion(manifest);
+      if (version && version !== record.version) patch.version = version;
+      if (!patch.version && !patch.settings_schema) return;
+      const next = { ...record, ...patch };
       pluginsRepo.save(next);
       set({ plugins: upsert(get().plugins, next) });
     },

@@ -3,13 +3,11 @@
  * ------------------------------------------------------------------
  * 用法：node scripts/plugin-selftest.mjs
  *
- * 插件与宿主之间有几处「写错了也不报错，只是静默失效」的耦合，
- * typecheck / 构建 / 运行时都拦不住，所以单独守住：
- *   1. 插件调用了 PluginAPI 里不存在的成员；
- *   2. 插件依赖的 DOM 契约（data-wf-*）被宿主改名或删掉 → 插件永远找不到图；
- *   3. 插件里写了 import、监听没有配套移除、设置项声明了却没人读；
- *   4. 内置清单 ?raw 引用的插件文件与 manifest 的 id 对不上。
- * 检查器本身先用可证伪样本验证有效，再对真实插件要求零违规。
+ * 插件与宿主之间有几处「写错了也不报错，只是静默失效」的耦合，typecheck / 构建 /
+ * 运行时都拦不住，所以单独守住：① 插件调用了 PluginAPI 里不存在的成员；② 插件依赖的
+ * DOM 契约（data-wf-*）被宿主改名或删掉；③ 插件里写了 import、监听没有配套移除、
+ * 设置项声明了却没人读；④ 内置清单 ?raw 引用的文件与 manifest 的 id 对不上。检查器
+ * 先用可证伪样本验证有效，再对真实插件要求零违规。
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { register } from 'node:module';
@@ -25,12 +23,8 @@ import { assert, finish, group, test } from './test-runner.mjs';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PLUGIN_DIR = join(ROOT, 'plugins');
 
-/* --------------------------- 准备真实数据 --------------------------- */
-
 /** PluginAPI 的成员清单 = 插件能用的全部能力 */
-const apiMembers = extractInterfaces([
-  { fileName: 'plugin-api.ts', text: readFileSync(join(ROOT, 'src/types/plugin-api.ts'), 'utf8') },
-]).get('PluginAPI').members;
+const apiMembers = extractInterfaces([{ fileName: 'plugin-api.ts', text: readFileSync(join(ROOT, 'src/types/plugin-api.ts'), 'utf8') }]).get('PluginAPI').members;
 
 /** 递归读取目录下所有源码文本 */
 function readSources(dir, filter, out = []) {
@@ -171,8 +165,7 @@ await test('内置插件 id 不重复，且与各插件 manifest 的 id 对得�
   const listed = [...list.matchAll(/id:\s*'(builtin\.[\w.]+)'/g)].map((m) => m[1]);
   assert.ok(listed.length >= 4, `内置清单里只解析出 ${listed.length} 项，解析可能失效`);
   assert.equal(new Set(listed).size, listed.length, `内置插件 id 有重复：${listed.join(', ')}`);
-  // 源码内联写死的两个插件（写作统计、随机命名器）；另外三个在 plugins/ 里，
-  // 由上一个用例逐个校验「?raw 引用的文件存在 + manifest.id 出现在清单里」
+  // 内联写死的两个插件（写作统计、随机命名器）；另外几个在 plugins/ 里，由上一个用例逐个校验
   const declared = [...builtinsText.matchAll(/export const manifest\s*=\s*\{[\s\S]*?id:\s*'(builtin\.[\w.]+)'/g)].map((m) => m[1]);
   assert.ok(declared.length >= 2, `只解析出 ${declared.length} 个 manifest，解析可能失效`);
   const off = declared.filter((id) => !listed.includes(id));
@@ -181,7 +174,7 @@ await test('内置插件 id 不重复，且与各插件 manifest 的 id 对得�
 
 await test('api.settings 是实时访问器（改了设置不必重新启用插件）', async () => {
   register('./alias-hook.mjs', import.meta.url);
-  const { createPluginAPI } = await import('@/lib/plugin/host.ts');
+  const { createPluginAPI, manifestVersion } = await import('@/lib/plugin/host.ts');
   const values = { warnAt: 1 };
   const bridge = { query: {}, toast: () => {}, readSettings: () => values, saveSettings: () => {}, applyManifest: () => {} };
   const record = {
@@ -193,6 +186,14 @@ await test('api.settings 是实时访问器（改了设置不必重新启用插�
   values.warnAt = 2; // 用户在设置表单里改了值
   assert.equal(api.settings.warnAt, 2, '又读到旧值：settings 退化成了 activate 时的快照');
   assert.equal(createPluginAPI(record, bridge).settings.warnAt, 2);
+
+  // manifest.version 回填：插件声明了才用（去掉首尾空白），没声明 / 非字符串 / 空白 → 回落记录里的默认值
+  const manis = [{ id: 'p', name: 'p', version: ' 0.2.0 ' }, { id: 'p', name: 'p' }, { id: 'p', name: 'p', version: 2 }, undefined];
+  assert.deepEqual(manis.map(manifestVersion), ['0.2.0', null, null, null], '版本号归一化错了');
+
+  // 接线守卫：loadPlugin 把整份 manifest 交给桥接、桥接用 manifestVersion 回填（Node 的 ESM 加载器不支持 blob:，跑不了全链路）
+  const hostSrc = readFileSync(join(ROOT, 'src/lib/plugin/host.ts'), 'utf8'), bridgeSrc = readFileSync(join(ROOT, 'src/store/slices/plugin-bridge.ts'), 'utf8');
+  assert.ok(hostSrc.includes('bridge.applyManifest(record.id, mod.manifest);') && bridgeSrc.includes('manifestVersion(manifest)'), '宿主或桥接的版本回填接线断了');
 });
 
 finish('插件与宿主契约');
