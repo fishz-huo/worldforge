@@ -382,7 +382,7 @@ IndexedDB（`scripts/fake-idb.mjs`）—— `map-terrain-selftest`、`card-code-
 > 两处都改成了"只算一次"：文字分隔线用 `background` 渐变画在**内部**（不占宽度），
 > 坐标统一由 `toX(t)` 与 `toLaneX(t) = toX(t) - gutter` 两个函数给出。
 
-代码规范自查：审计范围内共 **350 个源文件，没有任何文件超过 200 行**（`README`/文档/样式表除外），
+代码规范自查：审计范围内共 **346 个源文件，没有任何文件超过 200 行**（`README`/文档/样式表除外），
 该规则由 `scripts/selftest-source.mjs` 自动校验，不依赖人工统计。
 
 > ⚠️ 统计行数时不要用 PowerShell 的 `Get-Content` / `Measure-Object -Line`：
