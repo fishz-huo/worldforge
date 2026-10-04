@@ -10,7 +10,14 @@
  * registerTheme 的 vars 是**整张作用域覆盖**：没给的变量会回落 index.css 的默认
  * 调色板（紫色主色系）。半套配色会出现「深海底色 + 紫色聚焦环」这种明显不搭，
  * 实测亮色 muted-foreground 对羊皮纸底只有 4.38（不达 WCAG AA 4.5），而它被用在
- * 269 处。补全到 19 个之后：muted-foreground 对底色 4.64，聚焦环跟着主色走。
+ * 269 处。补全到 19 个之后：muted-foreground 对底色 5.41，聚焦环跟着主色走。
+ *
+ * 2026-10-04 微调两处次要文字色（原先在浅色调面上不达 4.5 的最后两处来源）
+ * ------------------------------------------------------------------
+ *   · 亮 muted-foreground 42% → 38%：对 muted / secondary / accent 由 3.98~4.27 升到 4.64~4.97；
+ *   · 暗 muted-foreground 64% → 66%：对 accent 由 4.41 升到 4.67。
+ * 主色保持 45% 不动（审美优先）：亮色主色按钮上的白字 3.57 是全表唯一低于 4.5 的组合，
+ * 已作为白名单写在 scripts/theme-cases.mjs，断言只要求它别再恶化。
  *
  * 11 个补全值的选值三原则（镜像 index.css 默认调色板里变量之间的关系）
  * ------------------------------------------------------------------
@@ -47,7 +54,7 @@ export function activate(api) {
       '--secondary': '205 32% 14%',
       '--secondary-foreground': '195 30% 92%',
       '--muted': '205 30% 16%',
-      '--muted-foreground': '200 20% 64%',
+      '--muted-foreground': '200 20% 66%',
       '--accent': '187 40% 20%',
       '--accent-foreground': '195 30% 92%',
       '--destructive': '0 55% 48%',
@@ -72,7 +79,7 @@ export function activate(api) {
       '--secondary': '40 35% 92%',
       '--secondary-foreground': '30 25% 15%',
       '--muted': '42 30% 90%',
-      '--muted-foreground': '35 15% 42%',
+      '--muted-foreground': '35 16% 38%',
       '--accent': '42 40% 88%',
       '--accent-foreground': '30 25% 15%',
       '--destructive': '0 65% 45%',

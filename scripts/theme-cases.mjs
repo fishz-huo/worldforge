@@ -8,8 +8,9 @@
  * 2026-10-03 把插件从「只给 8 个变量」补全到 19 个，这里守五条：
  *   1. 键集合：两套主题都给齐 index.css 的 19 个调色板变量；
  *   2. 色相窗口：深海收在 187–205°、羊皮纸收在 28–42°，破坏性色保持红；
- *   3. 对比度：正文与次要文字对各自的面 ≥ 4.5（含当年只有 4.38 的那一处），
- *      且「低于 4.5 的组合」必须恰好是白名单里那几处、且一处都不得低于 3.5；
+ *   3. 对比度：13 对前景/面 × 亮暗共 26 组里，除白名单那一处外必须全部 ≥ 4.5
+ *      （2026-10-03 时还有 5 处不达标，2026-10-04 修好 4 处，只剩「亮色主色按钮上的
+ *      白字」一处继续"锁住不恶化" —— 主色 45% 是用户定的审美优先项）；
  *   4. 语义锁定：ring==primary、各 *-foreground==foreground、input 与 border 的关系；
  *   5. 逐值 golden：19 个值就是定稿值 —— 改色必须同步改这里。
  */
@@ -41,7 +42,7 @@ const DARK = varsOf('deepsea-dark');
 /** [叫法, 变量表, 色相下限, 色相上限] */
 const MODES = [['亮', LIGHT, 28, 42], ['暗', DARK, 187, 205]];
 
-/** 定稿值（2026-10-03 用户在 24 张预览图上确认）：变量 → [亮, 暗] */
+/** 定稿值（2026-10-03 用户在 24 张预览图上确认；2026-10-04 微调两处 muted-foreground）：变量 → [亮, 暗] */
 const GOLDEN = {
   '--background': ['42 45% 96%', '205 45% 7%'],
   '--foreground': ['30 25% 15%', '195 30% 92%'],
@@ -54,7 +55,7 @@ const GOLDEN = {
   '--secondary': ['40 35% 92%', '205 32% 14%'],
   '--secondary-foreground': ['30 25% 15%', '195 30% 92%'],
   '--muted': ['42 30% 90%', '205 30% 16%'],
-  '--muted-foreground': ['35 15% 42%', '200 20% 64%'],
+  '--muted-foreground': ['35 16% 38%', '200 20% 66%'],
   '--accent': ['42 40% 88%', '187 40% 20%'],
   '--accent-foreground': ['30 25% 15%', '195 30% 92%'],
   '--destructive': ['0 65% 45%', '0 55% 48%'],
@@ -74,21 +75,22 @@ const PAIRS = [
 ];
 
 /**
- * 已知低于 4.5 的组合（补全前就存在，或与不许动的主色按钮有关）：
- *   · 亮色 primary-foreground/primary 3.57 —— 主色按钮上的白字，改它要动主色或按钮字色
- *   · 亮色 muted-foreground 在 muted/secondary/accent 这类浅色调面上 3.98~4.27
- *   · 暗色 muted-foreground 在 accent 上 4.41 —— 补全 accent 后从 5.07 掉下来
- * 它们只是被"锁住"：不许再恶化，也不许出现新的低于 4.5 组合。
+ * 唯一一处仍低于 4.5 的组合：亮色主色按钮上的白字（45% 主色下 3.57）。
+ * 2026-10-04 用户拍板「主色保持 45%，审美优先」，所以它继续"锁住不恶化"。
+ * 它的两个色值本身由下面的 golden 用例逐字锁住 → 3.57 不可能自己漂走，
+ * 这里的 ≥3.5 只是兜底；白名单之外必须一处都不低于 4.5。
  */
-const KNOWN_GAPS = [
-  '亮 --primary-foreground on --primary',
-  '亮 --muted-foreground on --muted',
-  '亮 --muted-foreground on --secondary',
-  '亮 --muted-foreground on --accent',
-  '暗 --muted-foreground on --accent',
+const KNOWN_GAPS = ['亮 --primary-foreground on --primary'];
+
+/** 2026-10-04 修好的四处（原白名单里的后四条）：逐条点名要求 ≥4.5，掉回来要能一眼看出是哪一对 */
+const FIXED_GAPS = [
+  ['亮', '--muted-foreground', '--muted'],
+  ['亮', '--muted-foreground', '--secondary'],
+  ['亮', '--muted-foreground', '--accent'],
+  ['暗', '--muted-foreground', '--accent'],
 ];
 
-/** 深海配色补全：5 类断言（由 theme-selftest.mjs 的分组标题引出） */
+/** 深海配色：6 条用例（由 theme-selftest.mjs 的分组标题引出） */
 export async function runDeepseaCases() {
   await test('键集合：两套主题都给齐 19 个调色板变量，与 index.css 的变量名一一对应', () => {
     assert.equal(CSS_KEYS.length, 19, `index.css 里解析出 ${CSS_KEYS.length} 个调色板变量，解析可能失效`);
@@ -126,6 +128,12 @@ export async function runDeepseaCases() {
     const keys = gaps.map((g) => g.split(' ').slice(0, 4).join(' '));
     assert.deepEqual(keys.sort(), [...KNOWN_GAPS].sort(), `低于 4.5 的组合变了：${gaps.join('；') || '一处都没有'}`);
     for (const g of gaps) assert.ok(Number(g.split(' ').pop()) >= 3.5, `已知缺口继续恶化：${g}`);
+    // 2026-10-04 修好的四处：逐条点名，不许再掉回 4.5 以下
+    for (const [name, fg, bg] of FIXED_GAPS) {
+      const vars = name === '亮' ? LIGHT : DARK;
+      const r = ratio(vars[fg], vars[bg]);
+      assert.ok(r >= 4.5, `${name} ${fg} on ${bg} 实测只有 ${r.toFixed(2)}（2026-10-04 已修好）`);
+    }
   });
 
   await test('语义锁定：ring==primary、各 *-foreground==foreground、input 与 border 的关系', () => {
