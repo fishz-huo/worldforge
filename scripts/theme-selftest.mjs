@@ -152,4 +152,46 @@ await test('偏好读取会丢弃已下线的老字段（不写回、也不删�
   assert.equal(src.includes('Object.keys(DEFAULT_PREFS)'), true);
 });
 
+group('语法着色配色（2026-10-03 定稿：方向 C，保留四个色相、只降饱和）');
+/** 着色层里那两张配色表就是配色的唯一真相源，直接从源码抠出来断言 */
+const layerSrc = read('src/components/common/MarkdownHighlightLayer.tsx');
+const table = (name) => {
+  const hit = new RegExp(`const\\s+${name}\\s*:[^=]*=\\s*\\{([\\s\\S]*?)\\n\\};`).exec(layerSrc);
+  assert.ok(hit, `渲染层里没找到 ${name}`);
+  return Object.fromEntries([...hit[1].matchAll(/(\w+):\s*'([^']*)'/g)].map((m) => [m[1], m[2]]));
+};
+const pair = (cls) => (/^text-\[(#[0-9A-F]{6})\] dark:text-\[(#[0-9A-F]{6})\]$/.exec(cls) ?? []).slice(1);
+const TONE = table('TONE');
+const LINE_TONE = table('LINE_TONE');
+const TONE_ALL = { ...TONE, lineUl: LINE_TONE.ul, lineOl: LINE_TONE.ol };
+/** 定稿值：['亮', '暗']；以后改色必须同步改这里（这一组就是配色的 golden） */
+const WANT = {
+  heading: ['#437396', '#7DA8D0'], marker: ['#5C6C99', '#98A8C8'],
+  bold: ['#B25555', '#E09696'], italic: ['#8E5C7B', '#C89CB8'],
+  lineUl: ['#5C6C99', '#98A8C8'], lineOl: ['#5C6C99', '#98A8C8'],
+};
+const chan = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+const lum = (h) => [0, 2, 4].reduce((s, i, k) => s + [0.2126, 0.7152, 0.0722][k] * chan(parseInt(h.slice(i + 1, i + 3), 16) / 255), 0);
+const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+
+await test('配色表只剩自定义色值，且没有把排版度量一起改了', () => {
+  assert.equal(/(sky|red|rose|indigo)-\d{3}/.test(layerSrc), false, '还残留 Tailwind 默认色板类名');
+  for (const [kind, cls] of Object.entries(TONE_ALL)) assert.equal(pair(cls).length, 2, `${kind}: ${cls}`);
+  assert.equal(layerSrc.includes("EDITOR_METRICS = 'px-3 py-2 font-sans leading-7 whitespace-pre-wrap break-words'"), true, '两层共用的度量被碰过了');
+});
+await test('六处颜色与定稿值逐一相符（golden）', () => {
+  for (const [kind, want] of Object.entries(WANT)) assert.deepEqual(pair(TONE_ALL[kind]), want, kind);
+});
+await test('列表符号跟列表正文同色，不跟标题走', () => {
+  assert.deepEqual(pair(TONE.marker), pair(LINE_TONE.ul));
+  assert.notDeepEqual(pair(TONE.marker), pair(TONE.heading));
+});
+await test('六处颜色在亮暗两种底色上都达到 WCAG AA 4.5', () => {
+  for (const [kind, cls] of Object.entries(TONE_ALL)) {
+    const [light, dark] = pair(cls);
+    assert.ok(ratio(light, '#F9F7F0') >= 4.5, `${kind} 亮色对羊皮纸仅 ${ratio(light, '#F9F7F0').toFixed(2)}`);
+    assert.ok(ratio(dark, '#0A131A') >= 4.5, `${kind} 暗色对深海仅 ${ratio(dark, '#0A131A').toFixed(2)}`);
+  }
+});
+
 finish('主题变量作用域');
