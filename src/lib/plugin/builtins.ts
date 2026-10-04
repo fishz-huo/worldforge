@@ -7,49 +7,13 @@
  * 注意：插件以 Blob 模块载入，不能 `import 'react'`，
  * 需要 React 时使用 `const { React } = api.ui`。
  *
- * 第 4、5 个内置插件（图库灯箱、文档导出）的源码是仓库里真实的独立文件
+ * 三个内置插件（深海配色、图库灯箱、文档导出）的源码是仓库里真实的独立文件
  * `plugins/*.js`，这里用 Vite 的 `?raw` 读进来，与插件页「从文件载入」共用同一份源码。
+ * 深海配色原先内联在本文件里，2026-10-03 因为补全到 19 个变量、内容变长而抽出。
  */
 import GALLERY_LIGHTBOX from '../../../plugins/gallery-lightbox.js?raw';
 import EXPORT_DOCS from '../../../plugins/export-docs.js?raw';
-
-/** 插件 1：主题插件 —— 注册两套配色 */
-export const THEME_PLUGIN = /* js */ `
-export const manifest = {
-  id: 'builtin.deepsea',
-  name: '深海配色',
-  version: '0.1.0',
-  author: 'WorldForge 内置示例',
-  description: '提供「深海 · 暗」「羊皮纸 · 亮」两套配色，可在 设置 → 外观 中选用。',
-};
-
-export function activate(api) {
-  api.registerTheme({
-    id: 'deepsea-dark', name: '深海 · 暗', mode: 'dark',
-    vars: {
-      '--background': '205 45% 7%', '--foreground': '195 30% 92%',
-      '--card': '205 42% 10%', '--muted': '205 30% 16%',
-      '--primary': '187 85% 53%', '--primary-foreground': '205 45% 8%',
-      '--accent': '187 40% 20%', '--border': '205 30% 20%',
-    },
-  });
-  api.registerTheme({
-    id: 'parchment-light', name: '羊皮纸 · 亮', mode: 'light',
-    vars: {
-      '--background': '42 45% 96%', '--foreground': '30 25% 15%',
-      '--card': '42 50% 98%', '--muted': '42 30% 90%',
-      '--primary': '28 75% 45%', '--primary-foreground': '42 50% 98%',
-      '--accent': '42 40% 88%', '--border': '38 25% 80%',
-    },
-  });
-  api.registerCommand({
-    id: 'deepsea.hint',
-    title: '配色插件：如何切换主题',
-    hint: '插件',
-    run: () => api.toast('到「设置 → 外观 → 配色方案」即可选用本插件提供的主题', 'info'),
-  });
-}
-`;
+import DEEPSEA_THEME from '../../../plugins/deepsea-theme.js?raw';
 
 /** 插件 2：写作统计面板 —— 展示各文稿字数与卡片构成 */
 export const STATS_PLUGIN = /* js */ `
@@ -184,7 +148,7 @@ export const BUILTIN_PLUGINS: {
   code: string;
   defaultEnabled?: boolean;
 }[] = [
-  { id: 'builtin.deepsea', name: '深海配色', description: '两套配色方案，可在设置中选用', code: THEME_PLUGIN, defaultEnabled: true },
+  { id: 'builtin.deepsea', name: '深海配色', description: '两套配色方案，可在设置中选用', code: DEEPSEA_THEME, defaultEnabled: true },
   { id: 'builtin.stats', name: '写作统计', description: '统计文稿字数与卡片构成', code: STATS_PLUGIN },
   { id: 'builtin.namer', name: '随机命名器', description: '一键生成人名地名，可留档', code: NAMER_PLUGIN },
   {

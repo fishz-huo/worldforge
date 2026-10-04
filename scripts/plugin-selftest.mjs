@@ -171,9 +171,10 @@ await test('内置插件 id 不重复，且与各插件 manifest 的 id 对得�
   const listed = [...list.matchAll(/id:\s*'(builtin\.[\w.]+)'/g)].map((m) => m[1]);
   assert.ok(listed.length >= 4, `内置清单里只解析出 ${listed.length} 项，解析可能失效`);
   assert.equal(new Set(listed).size, listed.length, `内置插件 id 有重复：${listed.join(', ')}`);
-  // 源码里写死的三个插件（第 4 个在 plugins/ 里，由上一个用例校验）
+  // 源码内联写死的两个插件（写作统计、随机命名器）；另外三个在 plugins/ 里，
+  // 由上一个用例逐个校验「?raw 引用的文件存在 + manifest.id 出现在清单里」
   const declared = [...builtinsText.matchAll(/export const manifest\s*=\s*\{[\s\S]*?id:\s*'(builtin\.[\w.]+)'/g)].map((m) => m[1]);
-  assert.ok(declared.length >= 3, `只解析出 ${declared.length} 个 manifest，解析可能失效`);
+  assert.ok(declared.length >= 2, `只解析出 ${declared.length} 个 manifest，解析可能失效`);
   const off = declared.filter((id) => !listed.includes(id));
   assert.equal(off.length, 0, `manifest 里的 id 不在内置清单里：${off.join(', ')}`);
 });
