@@ -22,20 +22,28 @@ import type { MdLine, MdLineKind, MdTokenKind } from '@/lib/markdown/highlight';
  */
 export const EDITOR_METRICS = 'px-3 py-2 font-sans leading-7 whitespace-pre-wrap break-words';
 
-/** 区间配色：亮色 / 暗色各一套，全部用 Tailwind 默认调色板（不动 index.css） */
+/**
+ * 区间配色：亮色 / 暗色各一套，全部写成自定义色值（任意值写法，不动 index.css）。
+ * 定稿 2026-10-03「方向 C」：保留原来那四个色相方向（蓝 / 靛 / 玫 / 红），
+ * 饱和度从 84~98% 压到 21~47%；亮暗两套都按 WCAG AA（4.5）校准过，
+ * 数值表与断言在 scripts/theme-selftest.mjs 的「语法着色配色」一组里。
+ *
+ * 铁律：这里**只许写颜色类**。字形宽度由 EDITOR_METRICS 决定，一旦加上
+ * font- / italic / tracking- / leading- 之类，折行点就会漂移、两层错位。
+ */
 const TONE: Record<MdTokenKind, string> = {
-  heading: 'text-sky-600 dark:text-sky-400',
-  marker: 'text-sky-600 dark:text-sky-400',
-  bold: 'text-red-500 dark:text-red-400',
-  italic: 'text-rose-800 dark:text-rose-300',
+  heading: 'text-[#437396] dark:text-[#7DA8D0]',
+  marker: 'text-[#5C6C99] dark:text-[#98A8C8]',
+  bold: 'text-[#B25555] dark:text-[#E09696]',
+  italic: 'text-[#8E5C7B] dark:text-[#C89CB8]',
 };
 
-/** 行配色：列表正文整体压成深紫蓝，其余行用默认前景色 */
+/** 行配色：列表整行用「列表」色；列表符号与它是同一个色值（见上面的 TONE.marker） */
 const LINE_TONE: Record<MdLineKind, string> = {
   plain: '',
   heading: '',
-  ul: 'text-indigo-800 dark:text-indigo-200',
-  ol: 'text-indigo-800 dark:text-indigo-200',
+  ul: 'text-[#5C6C99] dark:text-[#98A8C8]',
+  ol: 'text-[#5C6C99] dark:text-[#98A8C8]',
 };
 
 /** 把一行的区间切成 span；区间之外的原样输出（字符一个不多、一个不少） */
