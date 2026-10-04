@@ -91,7 +91,7 @@ npm install           # 安装依赖
 npm run dev           # 开发服务器（默认 http://localhost:5173）
 npm run build         # 类型检查 + 生产构建 → dist/
 npm run preview       # 预览生产构建
-npm test              # 运行 370 项自测（22 个自检套件，Node 环境，无需浏览器）
+npm test              # 运行 563 项自测（32 个自检套件，Node 环境，无需浏览器）
 npm run test:sample   # 由测试世界观手册重新生成 samples/ 里的可导入备份并校验
 npm run test:backup   # 导出 / 导入回归自测（含损坏备份的回滚验证）
 npm run test:export   # 文档导出（Markdown / 文本 / Word / PDF）的采集、排版与文件清单自测
@@ -162,7 +162,7 @@ npm run tauri:build   # Windows 安装包（NSIS + MSI）→ src-tauri/target/re
 | 3 | 可视化时间轴（时长、年龄、状态、地理与科技变化） | `src/features/timeline/` | 泳道分事件/角色生命线/地理变化/科技水平/底层设定；**横向排布 + 原生滚动条**，放大后拖动滚动条即可看完整个跨度；条目可**拖动平移、拖两端改起止**，按住 Shift 吸附到刻度，Ctrl + 滚轮以指针为锚点缩放；拖动游标即得「该时刻各角色年龄 + 状态 + 正在发生的事件」；数值型泳道画折线 |
 | 4 | 世界观底层逻辑写作区 | 卡片类型 `lore` + 总览「底层逻辑」区 | 类别（魔法/修炼/神系/关键物质/世界规则/科技树…）、核心规则、代价限制、对世界的影响、演变趋势 |
 | 5 | 插入图片 | `src/features/cards/CardGallery.tsx` + `plugins/gallery-lightbox.js` | 元数据入 SQLite、二进制入 IndexedDB；一张卡片多张图、可设封面；正文里可直接粘贴/拖入图片（`asset:` 引用）；点图库任意一张图即全屏放大，可左右切换、键盘翻页、滚轮缩放 |
-| 6 | 界面简约可隐藏、操作符合直觉、尽量可视化又保留纯文本 | `src/components/layout/` | 三栏（导航 / 侧栏 / 检查器）均可一键显隐 + 专注模式；**左右栏宽度可拖拽调整（双击复位）**，整界面四档缩放；Ctrl+K 命令面板；31 个键盘快捷键；可视化视图与 Markdown 文本视图随处可切 |
+| 6 | 界面简约可隐藏、操作符合直觉、尽量可视化又保留纯文本 | `src/components/layout/` | 三栏（导航 / 侧栏 / 检查器）均可一键显隐 + 专注模式；**左右栏宽度可拖拽调整（双击复位）**，整界面四档缩放；Ctrl+K 命令面板；8 条全局快捷键（含 1–9 模块切换）；可视化视图与 Markdown 文本视图随处可切 |
 | 7 | 多端运行（Windows / 安卓 / 鸿蒙 / iOS） | `src-tauri/` + `public/manifest.webmanifest` | 同一份前端代码：Tauri 2 打包桌面与移动，PWA 覆盖其余平台；**移动端**底部标签栏收敛为 4 个高频模块 + 「更多」，抽屉避开标签栏且互斥，十余处「悬停才出现」的按钮在触屏上改为常显，命中区不小于 24px |
 | 8 | 平行世界设定 | `src/components/layout/WorldSwitcher.tsx` + `src/store/slices/dataSlice.ts` | 一个世界观下多条世界线；主世界卡片在所有分支可见，分支可「派生」出独立副本；可记录分歧点与分歧刻度；顶栏可切「全部分支」总览 |
 | 9 | 参考资料区与关联 | 卡片类型 `reference` + 关联 | 资料类型/作者/链接/年份/关键摘录/可借鉴点；通过关联挂到任意角色、事件或设定上，卡片检查器反查「谁引用了我」 |
@@ -183,22 +183,21 @@ React 18 + Vite 6 + TypeScript 5 + Tailwind CSS 3 + shadcn/ui(Radix) + sql.js(SQ
 
 | 资源 | 原始 | gzip |
 | --- | --- | --- |
-| `index.js`（业务代码，含内置插件源码与文档导出） | 438 KB | 129 KB |
-| `vendor-react` | 162 KB | 53 KB |
-| `vendor-radix` | 109 KB | 34 KB |
-| `vendor-sqljs` | 40 KB | 14 KB |
-| `index.css`（含打印成 PDF 的排版样式） | 45 KB | 9 KB |
-| 两个入口小分块 | 3 KB | 1 KB |
-| `sql-wasm.wasm`（按需加载） | 643 KB | 323 KB |
-| **合计（含按需加载的 wasm）** | **≈ 1.41 MB** | **≈ 564 KB** |
+| `index.js`（业务代码，含内置插件源码与文档导出） | 540 KB | 165 KB |
+| `vendor-react` | 166 KB | 55 KB |
+| `vendor-radix` | 112 KB | 35 KB |
+| `vendor-sqljs` | 40 KB | 15 KB |
+| `index.css`（含打印成 PDF 的排版样式） | 52 KB | 10 KB |
+| 三个按需小分块（Tauri 的 `core` / `window` / 对话框） | 19 KB | 5 KB |
+| `sql-wasm.wasm`（按需加载） | 658 KB | 323 KB |
+| **合计（含按需加载的 wasm）** | **≈ 1.55 MB** | **≈ 607 KB** |
 
-> 只算首屏必需的 JS + CSS 是 **≈ 798 KB / ≈ 241 KB（gzip）**；
+> 只算首屏必需的 JS + CSS 是 **≈ 930 KB / ≈ 284 KB（gzip）**；
 > SQLite 的 wasm 在初始化数据库时才拉取。表里的数字用 `gzip` 实测，
 > 与打包器打印的 kB（十进制）略有差异。
 >
 > 文档导出（Markdown / 纯文本 / HTML / Word 的排版与 OOXML + ZIP 写入）全部是自研的，
-> 没有引入 jsPDF / docx / exceljs 之类的库 —— 换来的是 `index.js` 比上一版大约 60 KB，
-> 以及 PDF 交给系统打印引擎（中文字体与分页才靠得住）。
+> 没有引入 jsPDF / docx / exceljs 之类的库，PDF 交给系统打印引擎（中文字体与分页才靠得住）。
 
 刻意**没有**引入的重量级依赖：TipTap/ProseMirror（自研 Markdown 编辑器）、ECharts/Recharts
 （地图、时间轴、思维导图、资源图全部手绘 SVG/DOM）、MUI/AntD、idb/dexie（自写 IndexedDB 封装）、
@@ -233,7 +232,7 @@ docs/               需求规格说明书、架构设计、数据模型、插件
                     测试世界观手册（潮线之外 · 纯文本，可直接照抄录入）
 samples/            由手册生成的测试数据备份（可用「设置 → 数据 → 导入设定」直接导入）
 plugins/            以独立 .js 文件发布的插件源码（内置「图库灯箱」「文档导出」就在这里，可单独分享）
-scripts/            图标生成 + 15 个自测套件（运行器、解析钩子、假 IndexedDB、selector / 表描述 / 插件 / 导出静态检查器，均零依赖）
+scripts/            图标生成 + 32 个自测套件（运行器、解析钩子、假 IndexedDB、selector / 表描述 / 插件 / 导出静态检查器，均零依赖）
 src-tauri/          Tauri 2 壳（Cargo 配置、权限清单、入口）
 public/             PWA manifest、Service Worker、图标
 ```
@@ -259,7 +258,7 @@ public/             PWA manifest、Service Worker、图标
 
 ```bash
 npm run typecheck   # TypeScript 严格模式，0 错误
-npm test            # 370 项自测（22 个自检套件，全部跑在 Node 里，不需要浏览器）
+npm test            # 563 项自测（32 个自检套件，全部跑在 Node 里，不需要浏览器）
 ```
 
 > 排版类的问题（刻度是否对齐、抽屉会不会互相盖住）Node 测不出来 ——
@@ -278,19 +277,37 @@ npm test            # 370 项自测（22 个自检套件，全部跑在 Node 里
 | `scripts/export-zip-test.mjs` | 5 | **手写 ZIP 写入器**：CRC32 已知向量、自写解析器读回条目、deflate 往返、压缩无收益时退回存储、头部字段合法性（版本 / DOS 时间范围） |
 | `scripts/export-docx-test.mjs` | 11 | **Markdown → 文档块 → OOXML**：行内片段（粗体/斜体/代码/双链/转义/不成对标记）、段落与列表与表格、7 个部件齐全、XML 转义、样式与页面设置、真实样例可被外部解压校验 |
 | `scripts/mobile-selftest.mjs` | 7 | **移动端能力边界**：桌面壳 / Android 壳 / iOS 壳 / 手机浏览器四种环境的判定；**移动端写文件必须明确报错而不是假装成功**；静态守住 Rust 的 `print_window` 有桌面与移动两份实现（桌面版才允许 `.print()`）、前端打印分支排除移动端 |
-| `scripts/sample-check.mjs` | 135 | **测试世界观数据自测**：手册里的字段名与 `card-types.ts` 的 FieldDef 逐个对照、下拉取值必须在 options 内、id 引用与坐标刻度约束、手册声明的数量必须等于实际数量、**把生成的备份喂给真实 `importBackup()` 走一遍事务写库再读回核对**、手册指纹比对（改了手册忘记重新生成会直接报错） |
+| `scripts/sample-check.mjs` | 88 | **测试世界观数据自测**：手册里的字段名与 `card-types.ts` 的 FieldDef 逐个对照、下拉取值必须在 options 内、id 引用与坐标刻度约束、手册声明的数量必须等于实际数量、**把生成的备份喂给真实 `importBackup()` 走一遍事务写库再读回核对**、手册指纹比对（改了手册忘记重新生成会直接报错） |
 | `scripts/db-selftest.mjs` | 13 | 建表 DDL（20 张表）、首次播种、落盘到 IndexedDB、卡片/标签/关联/地图/区域 CRUD、图库封面引用清理与装载自愈、插件记录字段完整性与往返 |
 | `scripts/db-selftest-scene.mjs` | 10 | 时间轴条目（含瞬时事件判定、从卡片生成）、大纲树重建与回写、平行世界派生与清理 |
 | `scripts/db-selftest-persist.mjs` | 6 | 版本快照 → 改动 → 还原、关闭应用后重新开库读回数据、级联删除不留孤儿数据 |
 | `scripts/backup-selftest.mjs` | 47 | **导出 / 导入回归**：导出 → 新建空世界观 → 导入（数量必须一致）、**导入不得搬走来源世界的数据**（id 重映射）、同文件导两次不重复、导回原世界不变、预检挡住 5 类损坏备份、**故意让写库失败并验证整体回滚**、**图库图片往返（含旧备份缺 cardAssets 的兼容路径）**、错误提示必须是人话 |
-| `scripts/layout-selftest.mjs` | 11 | 左右栏宽度偏好：钳制（Infinity / NaN / 越界）、落盘校验、CSS 兜底默认值与 JS 默认值一致（两处写错会首帧闪一下） |
+| `scripts/layout-selftest.mjs` | 19 | 左右栏宽度偏好：钳制（Infinity / NaN / 越界）、落盘校验、CSS 兜底默认值与 JS 默认值一致（两处写错会首帧闪一下） |
 | `scripts/timeline-scale-selftest.mjs` | 18 | 时间 ↔ 像素往返、缩放锚点不动、刻度步长随缩放变密变疏、拖动吸附 |
 | `scripts/timeline-align-selftest.mjs` | 6 | **刻度与条目必须落在同一屏幕位置**（扣掉泳道名称列之后相等）、"适配全部"后内容不得比可视区宽、游标换算与渲染互逆，含"不扣名称列就会错开整整一个名称列"的回归防护 |
+| `scripts/map-viewport-selftest.mjs` | 19 | **地图视口与浮窗摆位**：适应屏幕、缩放锚点与上下限、平移边界、坐标换算、浮窗边缘碰撞 |
+| `scripts/map-gesture-selftest.mjs` | 20 | **地图第三轮交互数学**：平移让路判定、区域整体位移、边缘命中（屏幕像素） |
+| `scripts/map-terrain-selftest.mjs` | 16 | **地形符号**：符号表、大小与角度（纯函数）、`meta` 读写、数据安全（老库 / 老备份 / 快照；走真实 sql.js） |
+| `scripts/map-export-selftest.mjs` | 22 | **地图导出**：范围与折算、倍数夹取、扩展名 / MIME 与文件名、SVG 拼装 |
+| `scripts/map-delete-selftest.mjs` | 11 | **地图删除快捷键**：按键白名单、输入框豁免（焦点在「打字的地方」就不删对象）、待删除清单、确认文案 |
+| `scripts/map-marquee-selftest.mjs` | 32 | **地图框选几何**：方向语义（CAD 习惯）、矩形规范化、起手判定、窗选（完全框住才算）/ 交叉选（碰到就算）、命中清单的屏幕投影、选择集 |
+| `scripts/map-drag-selftest.mjs` | 11 | **地图拖拽与建区域**：拖拽合帧提交（一帧只写一次库）、拉框建区域的矩形、落点防重叠（`pinNear`） |
+| `scripts/props-selftest.mjs` | 13 | **卡片属性区**：标量排版与转义、往返（卡片 → 文本 → 卡片）、关联行、容错 |
+| `scripts/export-props-test.mjs` | 11 | **导出里的属性区**：条目带上卡片标记、Markdown 里的属性区、**界面 ↔ 导出两条路逐字一致**、编号跟着属性区往返 |
+| `scripts/mobile-lint-selftest.mjs` | 12 | **移动端审计器自身有效性**：规则本身、已知问题必须被报出来、修好之后不再误报、当前仓库的真实状态 |
+| `scripts/card-code-selftest.mjs` | 12 | **卡片编号**：发号规则、改编号时的查重与替换引用、分支与老数据 |
+| `scripts/md-highlight-selftest.mjs` | 17 | **语法着色解析**：硬契约（区间只切分、字符零变化）、四类语法、不该着色的地方一律原样、行结构契约（两层对齐的前提） |
+| `scripts/theme-selftest.mjs` | 25 | **主题变量作用域**：应用与清理、非法值守卫（插件写坏了也不许把主题变量抹掉）、回归守卫、语法着色配色、深海配色补全（19 个变量齐了） |
 
-前 11 个套件是纯逻辑与静态检查（其中 4 个专测文档导出、1 个专测移动端边界），后 5 个套件使用**真实 sql.js**（SQLite WASM）+ 内存版
-IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alias-hook.mjs`）
+表里 32 个套件合计 **563 项**。其中 25 个是纯逻辑与静态检查（5 个专测文档导出、1 个专测卡片属性区、
+2 个专测移动端边界），另外 7 个使用**真实 sql.js**（SQLite WASM）+ 内存版
+IndexedDB（`scripts/fake-idb.mjs`）—— `map-terrain-selftest`、`card-code-selftest`、`sample-check`、
+`backup-selftest`、`db-selftest`、`db-selftest-scene`、`db-selftest-persist`。它们通过模块解析钩子（`scripts/alias-hook.mjs`）
 把 `@/` 别名与 Vite 的 `?url` / `?raw` 资源导入补齐，
 因此无需浏览器即可端到端验证数据层、内置插件源码的装载路径，以及导入备份的完整流程。
+
+> 链上还有两道不计项的闸：`set-version.mjs` 校验版本号在 6 个文件里一致（`npm run test:version`），
+> `mobile-lint.mjs` 扫描 277 个 src 文件（13 条触屏规则，0 阻塞 / 0 提示）。
 
 > 这些脚本在开发中抓到了真实缺陷。一例：版本还原时 `saveMany` 与外层事务嵌套，
 > 触发 SQLite `cannot start a transaction within a transaction`，
@@ -365,7 +382,7 @@ IndexedDB（`scripts/fake-idb.mjs`），通过模块解析钩子（`scripts/alia
 > 两处都改成了"只算一次"：文字分隔线用 `background` 渐变画在**内部**（不占宽度），
 > 坐标统一由 `toX(t)` 与 `toLaneX(t) = toX(t) - gutter` 两个函数给出。
 
-代码规范自查：审计范围内共 **220 个源文件，没有任何文件超过 200 行**（`README`/文档/样式表除外），
+代码规范自查：审计范围内共 **350 个源文件，没有任何文件超过 200 行**（`README`/文档/样式表除外），
 该规则由 `scripts/selftest-source.mjs` 自动校验，不依赖人工统计。
 
 > ⚠️ 统计行数时不要用 PowerShell 的 `Get-Content` / `Measure-Object -Line`：
@@ -428,7 +445,7 @@ v0.2.1 紧接着又按"打开界面用一遍"的反馈返工了一次 —— 见
 ## 关于这个项目
 
 - **本项目由 AI 协作完成（vibe coding）**：需求与取舍来自作者，代码由 AI 模型（DeepSeek）生成。
-- **370 项自动化测试、每个源码文件不超过 200 行、Word 与 ZIP 结构自校验** —— 这些护栏是刻意加的，
+- **563 项自动化测试、每个源码文件不超过 200 行、Word 与 ZIP 结构自校验** —— 这些护栏是刻意加的，
   由 `npm test` 守着。它不一定优雅，但被反复验证过。
 - **不是活跃维护的项目**，可能长期不更新，也不承诺响应时间。哪天突发奇想才会再动。
 - **没有任何担保**：不担保满足特定用途、不担保没有缺陷、**不担保数据不会丢失**。
@@ -490,4 +507,4 @@ about an unknown publisher — choose "More info" → "Run anyway". To build fro
   is not guaranteed to be safe. Please use *Settings → Data → Export full backup* regularly.
   See [`LICENSE`](LICENSE).
 
-Tests: `npm test` (370 checks).
+Tests: `npm test` (563 checks).
