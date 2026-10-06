@@ -53,7 +53,9 @@ export const createOutlineSlice: Slice<OutlineSlice> = (set, get) => ({
       meta: {},
     };
     outlineRepo.save(node);
-    set({ outlineNodes: [...get().outlineNodes, node], selectedOutlineId: node.id });
+    // 注意：这里绝不能写 selectedOutlineId —— 它存的是 doc id，
+    // 写成 node.id 会让 OutlineModule 找不到当前文稿而回落到第一篇大纲。
+    set({ outlineNodes: [...get().outlineNodes, node] });
     return node.id;
   },
 
