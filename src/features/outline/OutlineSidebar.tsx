@@ -1,9 +1,11 @@
 /**
  * 大纲侧栏
  * ------------------------------------------------------------------
- * 大纲文稿列表 + 文本/树的同步动作 + 状态图例。
+ * 大纲文稿列表 + 完成度 + 状态图例。
+ * 「文本 ⇄ 树形」两个手动按钮已移除：结构现在由文本自动驱动，
+ * 手动"重建"会连状态一起删掉（见 PRD 的 D2），与实时同步互斥。
  */
-import { ArrowLeftRight, FileText, Plus, Trash2 } from 'lucide-react';
+import { FileText, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SectionTitle } from '@/components/ui/primitives';
 import { SidePanel } from '@/components/layout/Panel';
@@ -18,8 +20,6 @@ export function OutlineSidebar({ progress }: { progress: { done: number; total: 
   const selectOutline = useStore((s) => s.selectOutline);
   const createDoc = useStore((s) => s.createDoc);
   const deleteDoc = useStore((s) => s.deleteDoc);
-  const outlineFromText = useStore((s) => s.outlineFromText);
-  const textFromOutline = useStore((s) => s.textFromOutline);
 
   const list = docs.filter((d) => d.kind === 'outline');
   const current = list.find((d) => d.id === selectedOutlineId);
@@ -72,29 +72,6 @@ export function OutlineSidebar({ progress }: { progress: { done: number; total: 
               <div className="mt-1 text-[10px] text-muted-foreground">
                 {progress.done} / {progress.total} 已完成（{progress.percent}%）
               </div>
-            </div>
-
-            <SectionTitle>文本 ⇄ 树形</SectionTitle>
-            <div className="space-y-1 px-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-1.5 text-[11px]"
-                onClick={() => outlineFromText(current.id)}
-              >
-                <ArrowLeftRight className="size-3" /> 用文本标题重建大纲树
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-1.5 text-[11px]"
-                onClick={() => textFromOutline(current.id)}
-              >
-                <ArrowLeftRight className="size-3" /> 把大纲树写回文本
-              </Button>
-              <p className="text-[10px] leading-relaxed text-muted-foreground">
-                两种视图共用同一份文稿：文本里的 # 层级就是树的层级。重建时会按标题保留已有的状态与卡片挂接。
-              </p>
             </div>
 
             <SectionTitle>状态图例</SectionTitle>

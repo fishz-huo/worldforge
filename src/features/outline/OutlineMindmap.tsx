@@ -6,9 +6,11 @@
  * 父节点纵向居中于子节点之间，连线用三次贝塞尔。
  */
 import { useMemo, useState } from 'react';
-import { OUTLINE_STATUS, type OutlineTreeNode } from '@/types';
+import { OUTLINE_STATUS } from '@/types';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
+import type { ProjectedNode } from './outlineProjection';
+import { ensureOutlineRow } from './outlineStore';
 
 /** 布局参数 */
 const COL_W = 200;
@@ -17,18 +19,18 @@ const NODE_W = 168;
 const NODE_H = 34;
 
 interface Placed {
-  node: OutlineTreeNode;
+  node: ProjectedNode;
   x: number;
   y: number;
 }
 
 /** 计算所有节点坐标 */
-function layout(tree: OutlineTreeNode[]): { placed: Placed[]; edges: [Placed, Placed][]; height: number } {
+function layout(tree: ProjectedNode[]): { placed: Placed[]; edges: [Placed, Placed][]; height: number } {
   const placed: Placed[] = [];
   const edges: [Placed, Placed][] = [];
   let cursorY = 0;
 
-  const walk = (node: OutlineTreeNode, depth: number): Placed => {
+  const walk = (node: ProjectedNode, depth: number): Placed => {
     const x = depth * COL_W + 16;
     let y: number;
     if (node.children.length === 0) {
@@ -51,7 +53,7 @@ function layout(tree: OutlineTreeNode[]): { placed: Placed[]; edges: [Placed, Pl
   return { placed, edges, height: Math.max(120, cursorY + 20) };
 }
 
-export function OutlineMindmap({ nodes }: { nodes: OutlineTreeNode[] }) {
+export function OutlineMindmap({ docId, nodes }: { docId: string; nodes: ProjectedNode[] }) {
   const updateOutlineNode = useStore((s) => s.updateOutlineNode);
   const selectCard = useStore((s) => s.selectCard);
   const cards = useStore((s) => s.cards);
@@ -130,7 +132,11 @@ export function OutlineMindmap({ nodes }: { nodes: OutlineTreeNode[] }) {
             {OUTLINE_STATUS.map((s) => (
               <button
                 key={s.status}
-                onClick={() => updateOutlineNode(active.node.id, { status: s.status })}
+                onClick={() => {
+                  // 节点可能还没建行（打字后 500ms 内），先补一行再改状态
+                  const id = ensureOutlineRow(docId, active.node);
+                  if (id) updateOutlineNode(id, { status: s.status });
+                }}
                 className={cn(
                   'rounded border px-1.5 py-0.5 text-[10px]',
                   active.node.status === s.status ? 'border-primary text-primary' : 'border-border hover:bg-accent',

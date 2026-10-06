@@ -2,8 +2,10 @@
  * 大纲模块
  * ------------------------------------------------------------------
  * 需求 10：故事大纲区，可写大纲、可切换树形图展现，编辑器与写作层一致。
- * 三种视图共享同一份数据：
- *  文本（Markdown 编辑） / 树形（节点编辑） / 思维导图（全局结构）
+ * 四种视图共享同一份真相源 —— 文稿正文（docs.content）里的 Markdown 标题：
+ *  文本（Markdown 编辑） / 树形 / 思维导图 / 分栏
+ * outline_nodes 只提供额外信息（状态、摘要、卡片挂接），由 useOutlineSync
+ * 按「标题 + 第几次出现」自动对齐，不需要用户手动点任何同步按钮。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Columns2, ListTree, Network, Pencil } from 'lucide-react';
@@ -13,18 +15,20 @@ import { ModuleBody, ModuleLayout } from '@/components/layout/Panel';
 import { MarkdownEditor } from '@/components/common/MarkdownEditor';
 import { MarkdownView } from '@/components/common/MarkdownView';
 import { AutoInput } from '@/components/common/AutoField';
-import { buildOutlineTree, outlineProgress } from '@/types';
+import { outlineProgress } from '@/types';
 import { useDebouncedValue } from '@/hooks/useDebounced';
 import { useStore } from '@/store';
 import { OutlineMindmap } from './OutlineMindmap';
 import { OutlineSidebar } from './OutlineSidebar';
+import { OutlineSyncNotice } from './OutlineSyncNotice';
 import { OutlineTree } from './OutlineTree';
+import { useOutlineSync } from './useOutlineSync';
+import { writeTreeToText } from './outlineStore';
 
 type View = 'text' | 'tree' | 'map';
 
 export function OutlineModule() {
   const docs = useStore((s) => s.docs);
-  const outlineNodes = useStore((s) => s.outlineNodes);
   const selectedOutlineId = useStore((s) => s.selectedOutlineId);
   const selectOutline = useStore((s) => s.selectOutline);
   const updateDoc = useStore((s) => s.updateDoc);
@@ -40,9 +44,9 @@ export function OutlineModule() {
     if (!doc && outlines.length > 0) selectOutline(outlines[0].id);
   }, [doc, outlines, selectOutline]);
 
-  const nodes = useMemo(() => outlineNodes.filter((n) => n.doc_id === doc?.id), [outlineNodes, doc]);
-  const tree = useMemo(() => buildOutlineTree(nodes), [nodes]);
-  const progress = useMemo(() => outlineProgress(nodes), [nodes]);
+  // 投影 = 文本标题（结构） + 库行（状态/摘要/卡片）；写库按 500ms 去抖
+  const { projection, showGuide, dismissGuide } = useOutlineSync(doc?.id ?? null, doc?.content ?? '');
+  const progress = useMemo(() => outlineProgress(projection.flat), [projection]);
   const debounced = useDebouncedValue(doc?.content ?? '', 400);
 
   if (!doc) {
@@ -80,7 +84,7 @@ export function OutlineModule() {
             className="h-7 max-w-[14rem] border-0 bg-transparent px-0 text-sm font-semibold shadow-none focus-visible:ring-0"
           />
           <span className="text-[10px] text-muted-foreground">
-            {nodes.length} 个节点 · 完成 {progress.percent}%
+            {projection.flat.length} 个节点 · 完成 {progress.percent}%
           </span>
           <div className="ml-auto flex items-center gap-1">
             {view === 'text' && (
@@ -111,6 +115,14 @@ export function OutlineModule() {
           </div>
         </div>
 
+        {showGuide && (
+          <OutlineSyncNotice
+            stats={projection.stats}
+            onWriteTree={() => writeTreeToText(doc.id)}
+            onUseText={dismissGuide}
+          />
+        )}
+
         {view === 'text' && (
           <div className={`grid min-h-0 flex-1 ${split ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
             <MarkdownEditor
@@ -129,12 +141,12 @@ export function OutlineModule() {
         )}
         {view === 'tree' && (
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <OutlineTree docId={doc.id} nodes={tree} />
+            <OutlineTree docId={doc.id} nodes={projection.roots} />
           </div>
         )}
         {view === 'map' && (
           <div className="min-h-0 flex-1">
-            <OutlineMindmap nodes={tree} />
+            <OutlineMindmap docId={doc.id} nodes={projection.roots} />
           </div>
         )}
       </ModuleBody>

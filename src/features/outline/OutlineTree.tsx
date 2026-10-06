@@ -1,32 +1,37 @@
 /**
  * 大纲树视图
  * ------------------------------------------------------------------
- * 需求 10：可切换树形图展现大纲。
- * 每个节点可直接改标题、切状态、挂接卡片、增删子节点、上下移动与升降层级。
+ * 树 = 文本里的 Markdown 标题（结构） + outline_nodes 行（额外信息）。
+ * 所以这里只改「额外信息」：状态、摘要、卡片挂接。
+ * 增删节点、改层级、改标题一律回文本里做 —— 结构编辑的按钮因此全部移除。
  */
 import { useState } from 'react';
-import {
-  ChevronDown, ChevronRight, CornerDownRight, CornerUpLeft, GripVertical,
-  Link2, Minus, Plus, Trash2,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, GripVertical, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/Icon';
 import { getCardType } from '@/lib/plugin/registry';
-import { OUTLINE_STATUS, type OutlineStatus, type OutlineTreeNode } from '@/types';
+import { OUTLINE_STATUS, type OutlineNode, type OutlineStatus } from '@/types';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import { CardPicker } from '@/features/cards/CardPicker';
+import type { ProjectedNode } from './outlineProjection';
+import { ensureOutlineRow } from './outlineStore';
 
-/** 状态切换按钮：点击循环到下一个状态 */
-function StatusDot({ nodeId, status }: { nodeId: string; status: OutlineStatus }) {
+/** 状态切换圆点：点击循环到下一个状态（R2 会换成文字底色色块） */
+function StatusDot({ docId, node }: { docId: string; node: ProjectedNode }) {
   const updateOutlineNode = useStore((s) => s.updateOutlineNode);
-  const index = OUTLINE_STATUS.findIndex((s) => s.status === status);
+  const index = OUTLINE_STATUS.findIndex((s) => s.status === node.status);
   const current = OUTLINE_STATUS[index] ?? OUTLINE_STATUS[0];
   return (
     <button
       title={`状态：${current.label}（点击切换）`}
-      onClick={() => updateOutlineNode(nodeId, { status: OUTLINE_STATUS[(index + 1) % OUTLINE_STATUS.length].status })}
+      onClick={() => {
+        const id = ensureOutlineRow(docId, node);
+        if (!id) return;
+        const next = OUTLINE_STATUS[(index + 1) % OUTLINE_STATUS.length].status as OutlineStatus;
+        updateOutlineNode(id, { status: next });
+      }}
       className="size-2.5 shrink-0 rounded-sm ring-offset-1 ring-offset-background hover:ring-1 hover:ring-border"
       style={{ background: current.color }}
     />
@@ -34,17 +39,19 @@ function StatusDot({ nodeId, status }: { nodeId: string; status: OutlineStatus }
 }
 
 /** 单个节点行 */
-function NodeRow({ node, docId }: { node: OutlineTreeNode; docId: string }) {
+function NodeRow({ node, docId }: { node: ProjectedNode; docId: string }) {
   const updateOutlineNode = useStore((s) => s.updateOutlineNode);
-  const deleteOutlineNode = useStore((s) => s.deleteOutlineNode);
-  const addOutlineNode = useStore((s) => s.addOutlineNode);
-  const moveOutlineNode = useStore((s) => s.moveOutlineNode);
-  const indentOutlineNode = useStore((s) => s.indentOutlineNode);
   const card = useStore((s) => (node.card_id ? s.cards.find((c) => c.id === node.card_id) : undefined));
   const selectCard = useStore((s) => s.selectCard);
   const [open, setOpen] = useState(true);
   const [picking, setPicking] = useState(false);
   const hasChildren = node.children.length > 0;
+
+  /** 改「额外信息」前先确保库里有行（打字后 500ms 内也能点到这个节点） */
+  const write = (patch: Partial<OutlineNode>) => {
+    const id = ensureOutlineRow(docId, node);
+    if (id) updateOutlineNode(id, patch);
+  };
 
   return (
     <div>
@@ -58,17 +65,18 @@ function NodeRow({ node, docId }: { node: OutlineTreeNode; docId: string }) {
         >
           {hasChildren ? open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" /> : <GripVertical className="size-3.5" />}
         </button>
-        <StatusDot nodeId={node.id} status={node.status} />
+        <StatusDot docId={docId} node={node} />
         <div className="min-w-0 flex-1">
+          <div className="truncate px-1 text-xs font-medium" title={node.title}>
+            {node.title}
+          </div>
           <input
-            defaultValue={node.title}
-            onBlur={(e) => updateOutlineNode(node.id, { title: e.target.value })}
-            className="w-full rounded border border-transparent bg-transparent px-1 text-xs font-medium hover:border-border focus:border-border focus:outline-none"
-          />
-          <input
+            key={node.id}
             defaultValue={node.summary}
             placeholder="补充说明…"
-            onBlur={(e) => updateOutlineNode(node.id, { summary: e.target.value })}
+            onBlur={(e) => {
+              if (e.target.value !== node.summary) write({ summary: e.target.value });
+            }}
             className="w-full rounded border border-transparent bg-transparent px-1 text-[10px] text-muted-foreground hover:border-border focus:border-border focus:outline-none"
           />
           {card && (
@@ -82,32 +90,8 @@ function NodeRow({ node, docId }: { node: OutlineTreeNode; docId: string }) {
           )}
         </div>
         <div className="mt-0.5 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button variant="ghost" size="icon-sm" title="添加子节点" onClick={() => addOutlineNode(docId, node.id)}>
-            <Plus />
-          </Button>
-          <Button variant="ghost" size="icon-sm" title="上移" onClick={() => moveOutlineNode(node.id, 'up')}>
-            <CornerUpLeft />
-          </Button>
-          <Button variant="ghost" size="icon-sm" title="下移" onClick={() => moveOutlineNode(node.id, 'down')}>
-            <CornerDownRight />
-          </Button>
-          <Button variant="ghost" size="icon-sm" title="降低层级" onClick={() => indentOutlineNode(node.id, 1)}>
-            <Minus />
-          </Button>
-          <Button variant="ghost" size="icon-sm" title="提升层级" onClick={() => indentOutlineNode(node.id, -1)}>
-            <Plus className="rotate-45" />
-          </Button>
           <Button variant="ghost" size="icon-sm" title="挂接卡片" onClick={() => setPicking(true)}>
             <Link2 />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title="删除节点"
-            className="text-destructive"
-            onClick={() => deleteOutlineNode(node.id)}
-          >
-            <Trash2 />
           </Button>
         </div>
         {node.status === 'done' && <Badge variant="success" className="mt-0.5 shrink-0 text-[9px]">完成</Badge>}
@@ -125,27 +109,24 @@ function NodeRow({ node, docId }: { node: OutlineTreeNode; docId: string }) {
         open={picking}
         onOpenChange={setPicking}
         title="把大纲节点挂接到哪张卡片？"
-        onSelect={(id) => updateOutlineNode(node.id, { card_id: id })}
+        onSelect={(id) => write({ card_id: id })}
       />
     </div>
   );
 }
 
 /** 大纲树 */
-export function OutlineTree({ docId, nodes }: { docId: string; nodes: OutlineTreeNode[] }) {
-  const addOutlineNode = useStore((s) => s.addOutlineNode);
+export function OutlineTree({ docId, nodes }: { docId: string; nodes: ProjectedNode[] }) {
   return (
     <div className="p-2">
-      <div className="mb-2 flex items-center gap-2 px-1 text-[10px] text-muted-foreground">
-        <span>点击色块切换状态</span>
-        <span>· 悬停节点显示操作</span>
-        <Button variant="outline" size="sm" className="ml-auto h-6 gap-1 text-[10px]" onClick={() => addOutlineNode(docId, null)}>
-          <Plus className="size-3" /> 添加根节点
-        </Button>
+      <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 text-[10px] text-muted-foreground">
+        <span>点击圆点切换状态</span>
+        <span>· 节点的增删与层级请在「纯文本」里改 # 标题</span>
       </div>
       {nodes.length === 0 ? (
-        <div className="px-2 py-8 text-center text-xs text-muted-foreground">
-          还没有节点。可以「添加根节点」，或在侧栏用「文本标题重建大纲树」一键生成。
+        <div className="px-2 py-8 text-center text-xs leading-relaxed text-muted-foreground">
+          还没有节点。切到「纯文本」，用 <span className="font-mono"># 第一幕</span> 这样的标题写大纲，
+          树形与思维导图会自动跟着长出来。
         </div>
       ) : (
         nodes.map((node) => <NodeRow key={node.id} node={node} docId={docId} />)
