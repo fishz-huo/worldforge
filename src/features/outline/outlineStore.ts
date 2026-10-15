@@ -11,7 +11,7 @@
 import type { Id } from '@/types';
 import { useStore } from '@/store';
 import { projectOutline, type ProjectedNode, type Projection } from './outlineProjection';
-import { outlineRowsToText, planNodeSync } from './outlineSync';
+import { outlineRowsToText, planNodeSync, planTitleWrite } from './outlineSync';
 
 /** 文本停手多久之后才写库 */
 export const SYNC_DELAY = 500;
@@ -75,4 +75,25 @@ export function writeTreeToText(docId: string): number {
   if (rows.length === 0) return 0;
   st.updateDoc(docId, { content: outlineRowsToText(rows) });
   return rows.length;
+}
+
+/**
+ * 用户显式改标题（R3-1）：先算好要写的新文本（I4 护栏在 planTitleWrite 里），
+ * 再按 I3 「先改行、后写文本」落地 —— 这样紧随其后的去抖重解析会按标题自证命中，
+ * 不会把这次改名误判成「新增标题 + 孤立行」。
+ *
+ * 返回 false = 护栏拦下了（这期间文本又被改过），此时一个字都没写。
+ */
+export function renameOutlineNode(docId: string, node: ProjectedNode, nextTitle: string): boolean {
+  const st = useStore.getState();
+  const doc = st.docs.find((d) => d.id === docId);
+  if (!doc) return false;
+  const planned = planTitleWrite(doc.content ?? '', node, nextTitle);
+  if (!planned) return false;
+
+  // I3：先改行（还没建行就先补一行），再写文本
+  const rowId = ensureOutlineRow(docId, node);
+  if (rowId) st.updateOutlineNode(rowId, { title: planned.title });
+  st.updateDoc(docId, { content: planned.content });
+  return true;
 }
