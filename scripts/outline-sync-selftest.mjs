@@ -18,7 +18,7 @@ import { boot, state } from './db-harness.mjs';
 await boot();
 
 const { needsGuide, projectOutline } = await import('@/features/outline/outlineProjection.ts');
-const { applyNodeSync, writeTreeToText } = await import('@/features/outline/outlineStore.ts');
+const { applyNodeSync, renameOutlineNode, writeTreeToText } = await import('@/features/outline/outlineStore.ts');
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -111,6 +111,71 @@ await test('导入「潮线之外」：文本 4 个标题 / 库里 12 行 → �
   assert.equal(needsGuide(after.stats), false, '引导条应当消失');
   assert.equal(rowsOf(doc.id).length, 12, '一行都不许删');
   assert.ok(!textOf(doc.id).includes('✅'));
+});
+
+group('树里改标题写回文本（R3-1）');
+
+await test('只替换那一行：其余行、空行、摘要行逐字不动', () => {
+  const text = '# 第一幕\n\n## 开场 · 清点巢区\n- 出发前夜的巢区清点\n\n## 大潮提前\n- 比往年早一个月\n';
+  const id = newOutline(text, 'R3 单行替换');
+  applyNodeSync(id);
+  const node = projectOf(id).flat.find((n) => n.title === '开场 · 清点巢区');
+  assert.ok(node, '先得有这个节点');
+  assert.equal(renameOutlineNode(id, node, '开场 · 清点巢区（改）'), true);
+  assert.equal(textOf(id), text.replace('开场 · 清点巢区', '开场 · 清点巢区（改）'));
+  assert.equal(textOf(id).split('\n').length, text.split('\n').length, '行数也不许变');
+});
+
+await test('行尾的旧版 ✅ 徽章与尾随空格会被一并清掉', () => {
+  const id = newOutline('# 甲 ✅   \n# 乙\n', 'R3 徽章');
+  applyNodeSync(id);
+  const node = projectOf(id).flat.find((n) => n.title === '甲');
+  assert.equal(renameOutlineNode(id, node, '甲改名'), true);
+  assert.equal(textOf(id), '# 甲改名\n# 乙\n');
+});
+
+await test('先改行再写文本：写完重投影 missing + orphans = 0，且没新建行（I3）', () => {
+  const id = newOutline('# 甲\n## 甲一\n# 乙\n', 'R3 I3');
+  applyNodeSync(id);
+  const before = rowsOf(id).find((n) => n.title === '甲一');
+  const node = projectOf(id).flat.find((n) => n.title === '甲一');
+  assert.equal(renameOutlineNode(id, node, '甲一改名'), true);
+  const p = projectOf(id);
+  assert.equal(p.stats.missing + p.stats.orphans, 0, '两边必须一一对上');
+  const row = rowsOf(id).find((n) => n.id === before.id);
+  assert.equal(row.title, '甲一改名', '库里那一行跟着改名');
+  assert.equal(rowsOf(id).length, 3, '不许新建行');
+});
+
+await test('这期间文本被外部改过 → 丢弃本次写回，一个字都不写（I4）', () => {
+  const id = newOutline('# 甲\n# 乙\n', 'R3 I4');
+  applyNodeSync(id);
+  const stale = projectOf(id).flat.find((n) => n.title === '甲');
+  state().updateDoc(id, { content: '# 丙\n# 乙\n' });
+  const before = textOf(id);
+  assert.equal(renameOutlineNode(id, stale, '甲改名'), false, '护栏必须拦下');
+  assert.equal(textOf(id), before, '拦下时文本零变化');
+});
+
+await test('重名标题按「第几次出现」定位：只改我点的那一个', () => {
+  const id = newOutline('# 开场\n# 开场\n', 'R3 重名');
+  applyNodeSync(id);
+  const second = projectOf(id).flat.find((n) => n.title === '开场' && n.occurrence === 1);
+  assert.ok(second, '应当有第二个同名标题');
+  assert.equal(renameOutlineNode(id, second, '开场（第二处）'), true);
+  const lines = textOf(id).split('\n');
+  assert.equal(lines[0], '# 开场', '第一个一个字不许动');
+  assert.equal(lines[1], '# 开场（第二处）');
+});
+
+await test('空标题与同值提交都不写库', () => {
+  const id = newOutline('# 甲\n', 'R3 空值');
+  applyNodeSync(id);
+  const node = projectOf(id).flat[0];
+  const before = textOf(id);
+  assert.equal(renameOutlineNode(id, node, '   '), false);
+  assert.equal(renameOutlineNode(id, node, '甲'), false);
+  assert.equal(textOf(id), before);
 });
 
 finish('大纲同步');

@@ -82,7 +82,11 @@ await test('文案只有一处真相源：statusStyle 的 label 来自 types 的
 });
 
 await test('色号只在 outlineStatus 一处定义，组件里不写 hex、不自己拼色名', () => {
-  ['src/features/outline/OutlineStatusChip.tsx', 'src/features/outline/OutlineLegend.tsx'].forEach((p) => {
+  [
+    'src/features/outline/OutlineStatusChip.tsx',
+    'src/features/outline/OutlineLegend.tsx',
+    'src/features/outline/OutlineTreeTitle.tsx',
+  ].forEach((p) => {
     const src = read(p);
     assert.ok(!/#[0-9a-fA-F]{6}/.test(src), `${p} 里出现了 inline hex`);
     assert.ok(!/bg-(amber|blue|emerald|slate)-/.test(src), `${p} 里自己拼了色号`);
@@ -96,12 +100,12 @@ await test('侧栏不再有「状态图例」，顶部不再有「N 个节点」
   assert.ok(mod.includes("useState<OutlineView>('text')"), '默认视图必须是纯文本');
 });
 
-await test('树与导图都改用 OutlineStatusChip，不再用旧的内联 color', () => {
-  ['src/features/outline/OutlineTree.tsx', 'src/features/outline/OutlineMindmap.tsx'].forEach((p) => {
-    const src = read(p);
-    assert.ok(src.includes('OutlineStatusChip'), `${p} 没用色块组件`);
-    assert.ok(!src.includes('status.color'), `${p} 还在用旧的 inline color`);
-  });
+await test('标题色块只经 OutlineStatusChip 渲染，且不再用旧的内联 color', () => {
+  ['src/features/outline/OutlineTree.tsx', 'src/features/outline/OutlineTreeTitle.tsx', 'src/features/outline/OutlineMindmap.tsx']
+    .forEach((p) => assert.ok(!read(p).includes('status.color'), `${p} 还在用旧的 inline color`));
+  ['src/features/outline/OutlineTreeTitle.tsx', 'src/features/outline/OutlineMindmap.tsx']
+    .forEach((p) => assert.ok(read(p).includes('OutlineStatusChip'), `${p} 没用色块组件`));
+  assert.ok(read('src/features/outline/OutlineTree.tsx').includes('OutlineTreeTitle'), '树的标题要走可编辑组件');
 });
 
 finish('大纲状态配色');
