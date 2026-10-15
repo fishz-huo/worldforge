@@ -4,36 +4,38 @@
  * 树 = 文本里的 Markdown 标题（结构） + outline_nodes 行（额外信息）。
  * 所以这里只改「额外信息」：状态、摘要、卡片挂接。
  * 增删节点、改层级、改标题一律回文本里做 —— 结构编辑的按钮因此全部移除。
+ * 状态呈现：左侧小色点（点击循环，方案乙）+ 标题色块（底色只包文字）。
  */
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, GripVertical, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/Icon';
 import { getCardType } from '@/lib/plugin/registry';
-import { OUTLINE_STATUS, type OutlineNode, type OutlineStatus } from '@/types';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import { CardPicker } from '@/features/cards/CardPicker';
+import type { OutlineNode } from '@/types';
 import type { ProjectedNode } from './outlineProjection';
 import { ensureOutlineRow } from './outlineStore';
+import { OutlineStatusChip } from './OutlineStatusChip';
+import { nextStatus, statusStyle } from './outlineStatus';
 
-/** 状态切换圆点：点击循环到下一个状态（R2 会换成文字底色色块） */
+/** 状态切换圆点：点一下循环到下一个状态 */
 function StatusDot({ docId, node }: { docId: string; node: ProjectedNode }) {
   const updateOutlineNode = useStore((s) => s.updateOutlineNode);
-  const index = OUTLINE_STATUS.findIndex((s) => s.status === node.status);
-  const current = OUTLINE_STATUS[index] ?? OUTLINE_STATUS[0];
+  const current = statusStyle(node.status);
   return (
     <button
       title={`状态：${current.label}（点击切换）`}
       onClick={() => {
         const id = ensureOutlineRow(docId, node);
         if (!id) return;
-        const next = OUTLINE_STATUS[(index + 1) % OUTLINE_STATUS.length].status as OutlineStatus;
-        updateOutlineNode(id, { status: next });
+        updateOutlineNode(id, { status: nextStatus(node.status) });
       }}
-      className="size-2.5 shrink-0 rounded-sm ring-offset-1 ring-offset-background hover:ring-1 hover:ring-border"
-      style={{ background: current.color }}
+      className={cn(
+        'mt-1 size-2.5 shrink-0 rounded-sm ring-offset-1 ring-offset-background hover:ring-1 hover:ring-border',
+        current.dot,
+      )}
     />
   );
 }
@@ -67,8 +69,10 @@ function NodeRow({ node, docId }: { node: ProjectedNode; docId: string }) {
         </button>
         <StatusDot docId={docId} node={node} />
         <div className="min-w-0 flex-1">
-          <div className="truncate px-1 text-xs font-medium" title={node.title}>
-            {node.title}
+          <div className="px-1">
+            <OutlineStatusChip status={node.status} title={node.title} className="text-xs">
+              {node.title}
+            </OutlineStatusChip>
           </div>
           <input
             key={node.id}
@@ -94,7 +98,6 @@ function NodeRow({ node, docId }: { node: ProjectedNode; docId: string }) {
             <Link2 />
           </Button>
         </div>
-        {node.status === 'done' && <Badge variant="success" className="mt-0.5 shrink-0 text-[9px]">完成</Badge>}
       </div>
 
       {open && hasChildren && (
@@ -118,9 +121,9 @@ function NodeRow({ node, docId }: { node: ProjectedNode; docId: string }) {
 /** 大纲树 */
 export function OutlineTree({ docId, nodes }: { docId: string; nodes: ProjectedNode[] }) {
   return (
-    <div className="p-2">
+    <div className="p-2 pr-12">
       <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 text-[10px] text-muted-foreground">
-        <span>点击圆点切换状态</span>
+        <span>点左侧小色点切换状态</span>
         <span>· 节点的增删与层级请在「纯文本」里改 # 标题</span>
       </div>
       {nodes.length === 0 ? (

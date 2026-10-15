@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import type { ProjectedNode } from './outlineProjection';
 import { ensureOutlineRow } from './outlineStore';
+import { OutlineStatusChip } from './OutlineStatusChip';
 
 /** 布局参数 */
 const COL_W = 200;
@@ -103,14 +104,17 @@ export function OutlineMindmap({ docId, nodes }: { docId: string; nodes: Project
                   height={NODE_H}
                   rx={6}
                   fill="hsl(var(--card))"
-                  stroke={isActive ? 'hsl(var(--primary))' : status.color}
+                  stroke={isActive ? 'hsl(var(--primary))' : 'hsl(var(--border))'}
                   strokeWidth={isActive ? 2 : 1.2}
                 />
-                <rect width={4} height={NODE_H} rx={2} fill={status.color} />
-                <text x={12} y={15} className="fill-foreground" style={{ fontSize: 11 }}>
-                  {p.node.title.length > 14 ? `${p.node.title.slice(0, 14)}…` : p.node.title}
-                </text>
-                <text x={12} y={27} className="fill-muted-foreground" style={{ fontSize: 9 }}>
+                <rect width={4} height={NODE_H} rx={2} fill="hsl(var(--border))" />
+                {/* foreignObject：把 HTML 状态色块塞进 SVG 节点（底色只包文字） */}
+                <foreignObject x={10} y={2} width={NODE_W - 14} height={22}>
+                  <OutlineStatusChip status={p.node.status} title={p.node.title} className="text-[11px]">
+                    {p.node.title.length > 14 ? `${p.node.title.slice(0, 14)}…` : p.node.title}
+                  </OutlineStatusChip>
+                </foreignObject>
+                <text x={12} y={31} className="fill-muted-foreground" style={{ fontSize: 9 }}>
                   {p.node.summary
                     ? p.node.summary.length > 18
                       ? `${p.node.summary.slice(0, 18)}…`

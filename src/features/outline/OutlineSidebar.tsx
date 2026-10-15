@@ -1,15 +1,16 @@
 /**
  * 大纲侧栏
  * ------------------------------------------------------------------
- * 大纲文稿列表 + 完成度 + 状态图例。
+ * 大纲文稿列表 + 完成度。
  * 「文本 ⇄ 树形」两个手动按钮已移除：结构现在由文本自动驱动，
  * 手动"重建"会连状态一起删掉（见 PRD 的 D2），与实时同步互斥。
+ * 侧栏原本那节四色说明也已移除 —— 图例改成树形 / 思维导图右上角的浮层
+ * （OutlineLegend），侧栏不再重复占一块地方。
  */
 import { FileText, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SectionTitle } from '@/components/ui/primitives';
 import { SidePanel } from '@/components/layout/Panel';
-import { OUTLINE_STATUS } from '@/types';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store';
 import { askConfirm } from '@/lib/confirm';
@@ -72,16 +73,6 @@ export function OutlineSidebar({ progress }: { progress: { done: number; total: 
               <div className="mt-1 text-[10px] text-muted-foreground">
                 {progress.done} / {progress.total} 已完成（{progress.percent}%）
               </div>
-            </div>
-
-            <SectionTitle>状态图例</SectionTitle>
-            <div className="space-y-0.5 px-1">
-              {OUTLINE_STATUS.map((s) => (
-                <div key={s.status} className="flex items-center gap-1.5 text-[11px]">
-                  <span className="size-2 rounded-sm" style={{ background: s.color }} />
-                  {s.label}
-                </div>
-              ))}
             </div>
           </>
         )}
