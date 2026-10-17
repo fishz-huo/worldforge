@@ -17,7 +17,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Hint } from '@/components/ui/tooltip';
 import { ModuleBody, ModuleLayout } from '@/components/layout/Panel';
 import { MarkdownEditor } from '@/components/common/MarkdownEditor';
-import { AutoInput } from '@/components/common/AutoField';
 import { countWords } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import { useDebouncedValue } from '@/hooks/useDebounced';
@@ -25,6 +24,7 @@ import { useStore } from '@/store';
 import { WriterInspector } from './WriterInspector';
 import { WriterPreviewPane } from './WriterPreviewPane';
 import { WriterSidebar } from './WriterSidebar';
+import { DocTitleField } from './DocTitleField';
 
 /** 视图模式：纯文本 / 预览 / 分栏 */
 type WriterTab = 'text' | 'preview' | 'split';
@@ -101,7 +101,7 @@ export function WriterModule() {
 
       <ModuleBody>
         <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-1.5">
-          <AutoInput
+          <DocTitleField
             value={doc.title}
             onCommit={(title) => updateDoc(doc.id, { title })}
             className="h-7 max-w-xs border-0 bg-transparent px-0 text-sm font-semibold shadow-none focus-visible:ring-0"

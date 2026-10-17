@@ -15,6 +15,7 @@ import { DOC_KINDS } from '@/types';
 import { cn, relativeTime } from '@/lib/utils';
 import { useStore } from '@/store';
 import { askConfirm } from '@/lib/confirm';
+import { DocTitleField } from './DocTitleField';
 
 export function WriterSidebar() {
   const docs = useStore((s) => s.docs);
@@ -66,30 +67,48 @@ export function WriterSidebar() {
 
         <SectionTitle>{list.length} 篇</SectionTitle>
         <div className="space-y-0.5">
+          {/*
+            行容器是 div：标题输入框不能套在 button 里（点行内空白会让输入框失焦，
+            焦点交给 button 并触发 click —— 这正是「标题被写回旧值」的触发面）。
+            选中＝行内任意位置点击，图标另给一个 button 让键盘也能选。
+          */}
           {list.map((doc) => (
             <div
               key={doc.id}
+              onClick={() => selectDoc(doc.id)}
               className={cn(
                 'group rounded px-1.5 py-1.5 transition-colors',
                 doc.id === selectedDocId ? 'bg-primary/15 text-primary' : 'hover:bg-accent',
               )}
             >
-              <button onClick={() => selectDoc(doc.id)} className="flex w-full items-start gap-1.5 text-left">
-                <FileText className="mt-0.5 size-3.5 shrink-0" />
+              <div className="flex w-full items-start gap-1.5 text-left">
+                <button
+                  type="button"
+                  title={`打开「${doc.title}」`}
+                  aria-label={`打开「${doc.title}」`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectDoc(doc.id);
+                  }}
+                  className="mt-0.5 flex shrink-0"
+                >
+                  <FileText className="size-3.5" />
+                </button>
                 <span className="min-w-0 flex-1">
-                  <input
-                    defaultValue={doc.title}
-                    onClick={(e) => e.stopPropagation()}
-                    onBlur={(e) => updateDoc(doc.id, { title: e.target.value })}
+                  <DocTitleField
+                    value={doc.title}
+                    onCommit={(title) => updateDoc(doc.id, { title })}
+                    onFocus={() => selectDoc(doc.id)}
                     className="w-full truncate rounded border border-transparent bg-transparent text-xs hover:border-border focus:border-border focus:outline-none"
                   />
                   <span className="block truncate text-[10px] text-muted-foreground">
                     {countWords(doc.content)} 字 · {relativeTime(doc.updated_at)}
                   </span>
                 </span>
-                <span
-                  role="button"
-                  tabIndex={-1}
+                <button
+                  type="button"
+                  title={`删除「${doc.title}」`}
+                  aria-label={`删除「${doc.title}」`}
                   onClick={async (e) => {
                     e.stopPropagation();
                     if (await askConfirm(`删除文稿「${doc.title}」？`)) deleteDoc(doc.id);
@@ -97,8 +116,8 @@ export function WriterSidebar() {
                   className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
                 >
                   <Trash2 className="size-3" />
-                </span>
-              </button>
+                </button>
+              </div>
             </div>
           ))}
           {list.length === 0 && (
